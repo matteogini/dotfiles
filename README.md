@@ -145,3 +145,17 @@ phpinfo();
 systemctl restart httpd
 ```
 
+### shell
+
+To install fish, run:
+```
+sudo pacman -S fish
+```
+To list all installed shells, run: 
+```
+chsh -l
+```
+And to set one as default for your user do:
+```
+chsh -s /bin/fish
+```
