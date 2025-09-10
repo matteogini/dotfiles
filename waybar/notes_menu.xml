@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="GtkMenu" id="menu">
+    <child>
+        <object class="GtkMenuItem" id="Hyprland">
+            <property name="label">Hyprland</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Waybar">
+            <property name="label">Waybar</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Hyprlock">
+            <property name="label">Hyprlock</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Tofi">
+            <property name="label">Tofi</property>
+        </object>
+    </child>
+  </object>
+</interface>

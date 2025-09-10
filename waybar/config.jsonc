@@ -1,0 +1,135 @@
+{
+  "height": 30,
+  "spacing": 4,
+  "layer": "top",
+  "position": "top",
+  "reload_style_on_change": true,
+  "modules-left": ["custom/power", "group/stats"],
+  "modules-center": ["hyprland/workspaces"],
+  "modules-right": ["group/tools", "clock"],
+
+  "group/stats": {
+    "orientation": "inherit",
+    "drawer": { "transition-duration": 300, "transition-left-to-right": false },
+    "modules": [
+      "custom/arrow-right",
+      "cpu",
+      "memory",
+      "temperature",
+      "custom/notes",
+    ],
+  },
+
+  "group/tools": {
+    "orientation": "inherit",
+    "drawer": { "transition-duration": 300, "transition-right-to-left": false },
+    "modules": [
+      "custom/arrow-left",
+      "custom/gpu",
+      "pulseaudio",
+      "bluetooth",
+      "network",
+      "backlight",
+      "battery",
+    ],
+  },
+
+  "custom/arrow-left": { "format": "&lt;", "tooltip": false },
+  "custom/arrow-right": { "format": ">", "tooltip": false },
+
+  "hyprland/workspaces": {
+    "disable-scroll": true,
+    "all-outputs": true,
+    "format": "{name}",
+  },
+  "clock": {
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    "format": "{:%H:%M}",
+    "format-alt": "{:%d/%m}",
+  },
+  "cpu": {
+    "format": "C:{usage}%",
+    "tooltip": true,
+    "on-click": "kitty -e htop",
+  },
+  "memory": {
+    "format": "M:{}%",
+    "tooltip": true,
+    "on-click": "kitty -e htop",
+  },
+  "temperature": {
+    "critical-threshold": 80,
+    "format": "T:{temperatureC}°",
+  },
+  "backlight": {
+    "format": "L:{percent}%",
+    "on-scroll-up": "brightnessctl set +5%",
+    "on-scroll-down": "brightnessctl set 5%-",
+    "on-click": "brightnessctl set 100%",
+    "on-click-right": "brightnessctl set 30%",
+  },
+  "battery": {
+    "states": {
+      "warning": 30,
+      "critical": 15,
+    },
+    "format": "BT:{capacity}%",
+    "format-charging": "BT+:{capacity}%",
+    "format-plugged": "BT~:{capacity}%",
+  },
+  "network": {
+    "format-wifi": "W:{signalStrength}%",
+    "format-ethernet": "E",
+    "format-linked": "E?",
+    "format-disconnected": "!",
+    "on-click": "kitty -e nmtui",
+  },
+  "bluetooth": {
+    "format": "B:{status}",
+    "format-disconnected": "B",
+    "format-connected": "B {device_battery_percentage}%",
+    "tooltip-format": " {controller_alias}\t{controller_address}\n\n{num_connections} connected",
+    "tooltip-format-connected": " {controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+    "tooltip-format-enumerate-connected": " {device_alias}\t{device_address}",
+    "tooltip-format-enumerate-connected-battery": " {device_alias}\t{device_address}\t{device_battery_percentage}%",
+    "format-alt": "{ifname}",
+    "on-click": "blueberry",
+  },
+  "pulseaudio": {
+    "format": "V:{volume}%",
+    "format-bluetooth": "BT:{volume}%",
+    "format-bluetooth-muted": "BT:0",
+    "format-muted": "V:0",
+    "format-source": "M:{volume}%",
+    "format-source-muted": "M:0",
+    "on-click": "pavucontrol",
+  },
+  "custom/power": {
+    "format": "A",
+    "tooltip": false,
+    "on-click": "~/.config/tofi/powermenu.sh",
+  },
+  "custom/notes": {
+    "format": "Hyperland",
+    "tooltip": "Hyperland",
+    "menu": "on-click",
+    "menu-file": "~/.config/waybar/notes_menu.xml",
+    "menu-actions": {
+      "Hyprland": "code .config/hypr",
+      "Waybar": "code .config/waybar/",
+      "Hyprlock": "code .config/hypr/hyprlock.conf",
+      "Tofi": "code .config/tofi/",
+    },
+  },
+  "custom/gpu": {
+    "exec": "supergfxctl -g",
+    "format": "GPU: {}",
+    "tooltip": "GPU Mode",
+    "menu": "on-click",
+    "menu-file": "~/.config/waybar/gpu_menu.xml",
+    "menu-actions": {
+      "Integrated": "bash -c 'supergfxctl -m Integrated && hyprctl dispatch exit'",
+      "Hybrid": "bash -c 'supergfxctl -m Hybrid && hyprctl dispatch exit'",
+    },
+  },
+}
