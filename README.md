@@ -172,3 +172,11 @@ Fish config:
 ```
 fish_config
 ```
+
+### snapshot
+
+```
+sudo pacman -S timeshift grub-btrfs
+systemctl enable --now grub-btrfsd.service
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
