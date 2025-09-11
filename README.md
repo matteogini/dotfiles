@@ -159,3 +159,16 @@ And to set one as default for your user do:
 ```
 chsh -s /bin/fish
 ```
+Abbreviation:
+```
+abbr --add gco git checkout 
+git checkout
+```
+Update completions:
+```
+fish_update_completions
+```
+Fish config:
+```
+fish_config
+```
