@@ -175,6 +175,7 @@ fish_config
 
 ### snapshot
 
+[timeshift](https://wiki.archlinux.org/title/Timeshift)
 ```
 sudo pacman -S timeshift grub-btrfs
 systemctl enable --now grub-btrfsd.service

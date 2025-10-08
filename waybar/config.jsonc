@@ -6,7 +6,7 @@
   "reload_style_on_change": true,
   "modules-left": ["custom/power", "group/stats"],
   "modules-center": ["hyprland/workspaces"],
-  "modules-right": ["group/tools", "clock"],
+  "modules-right": ["group/tools", "battery", "clock"],
 
   "group/stats": {
     "orientation": "inherit",
@@ -16,6 +16,7 @@
       "cpu",
       "memory",
       "temperature",
+      "custom/updates",
       "custom/notes",
     ],
   },
@@ -131,5 +132,10 @@
       "Integrated": "bash -c 'supergfxctl -m Integrated && hyprctl dispatch exit'",
       "Hybrid": "bash -c 'supergfxctl -m Hybrid && hyprctl dispatch exit'",
     },
+  },
+  "custom/updates": {
+    "format": "U:{}",
+    "exec": "checkupdates | wc -l",
+    "tooltip": false
   },
 }
