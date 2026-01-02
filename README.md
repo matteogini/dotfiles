@@ -172,7 +172,10 @@ Fish config:
 ```
 fish_config
 ```
-
+Remove greeting message:
+```
+set -U fish_greeting
+```
 ### snapshot
 
 [timeshift](https://wiki.archlinux.org/title/Timeshift)

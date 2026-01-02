@@ -31,7 +31,6 @@
       "bluetooth",
       "network",
       "backlight",
-      "battery",
     ],
   },
 
@@ -74,6 +73,7 @@
       "warning": 30,
       "critical": 15,
     },
+    //"format": "BT:{capacity}% ({time})",
     "format": "BT:{capacity}%",
     "format-charging": "BT+:{capacity}%",
     "format-plugged": "BT~:{capacity}%",
@@ -111,8 +111,8 @@
     "on-click": "~/.config/tofi/powermenu.sh",
   },
   "custom/notes": {
-    "format": "Hyperland",
-    "tooltip": "Hyperland",
+    "format": "Hyprland",
+    "tooltip": "Hyprland",
     "menu": "on-click",
     "menu-file": "~/.config/waybar/notes_menu.xml",
     "menu-actions": {
