@@ -29,90 +29,114 @@
       "custom/gpu",
       "pulseaudio",
       "bluetooth",
-      "network",
+      "tray",
       "backlight",
     ],
   },
 
-  "custom/arrow-left": { "format": "&lt;", "tooltip": false },
-  "custom/arrow-right": { "format": ">", "tooltip": false },
+  "custom/arrow-left": { "format": "", "tooltip": false },
+  "custom/arrow-right": { "format": "", "tooltip": false },
 
   "hyprland/workspaces": {
     "disable-scroll": true,
     "all-outputs": true,
-    "format": "{name}",
+    "format": "{name}", 
   },
+  
   "clock": {
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
     "format": "{:%H:%M}",
     "format-alt": "{:%d/%m}",
   },
+
   "cpu": {
-    "format": "C:{usage}%",
+    "format": " {usage}%", 
     "tooltip": true,
     "on-click": "kitty -e htop",
   },
   "memory": {
-    "format": "M:{}%",
+    "format": " {}%", 
     "tooltip": true,
     "on-click": "kitty -e htop",
   },
   "temperature": {
     "critical-threshold": 80,
-    "format": "T:{temperatureC}°",
+    "format": " {temperatureC}° ", 
   },
+  "custom/updates": {
+    "format": "󰮯 {} ", 
+    "exec": "checkupdates | wc -l",
+    "tooltip": false
+  },
+
   "backlight": {
-    "format": "L:{percent}%",
+    "format": "{icon} {percent}%",
+    "format-icons": ["", "", "", "", "", "", "", "", ""], 
     "on-scroll-up": "brightnessctl set +5%",
     "on-scroll-down": "brightnessctl set 5%-",
     "on-click": "brightnessctl set 100%",
     "on-click-right": "brightnessctl set 30%",
   },
+
   "battery": {
     "states": {
       "warning": 30,
       "critical": 15,
     },
-    //"format": "BT:{capacity}% ({time})",
-    "format": "BT:{capacity}%",
-    "format-charging": "BT+:{capacity}%",
-    "format-plugged": "BT~:{capacity}%",
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄 {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-icons": ["", "", "", "", ""] 
   },
+
   "network": {
-    "format-wifi": "W:{signalStrength}%",
-    "format-ethernet": "E",
-    "format-linked": "E?",
-    "format-disconnected": "!",
+    "format-wifi": "{icon} {signalStrength}%",
+    "format-ethernet": "󰈀", 
+    "format-linked": "󰈀 ?",
+    "format-disconnected": "󰤮", 
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"], 
     "on-click": "kitty -e nmtui",
   },
+
   "bluetooth": {
-    "format": "B:{status}",
-    "format-disconnected": "B",
-    "format-connected": "B {device_battery_percentage}%",
-    "tooltip-format": " {controller_alias}\t{controller_address}\n\n{num_connections} connected",
-    "tooltip-format-connected": " {controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
-    "tooltip-format-enumerate-connected": " {device_alias}\t{device_address}",
-    "tooltip-format-enumerate-connected-battery": " {device_alias}\t{device_address}\t{device_battery_percentage}%",
-    "format-alt": "{ifname}",
+    "format": " {status}",
+    "format-disconnected": "󰂲", 
+    "format-connected": " {device_battery_percentage}%",
+    "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+    "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+    "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%",
     "on-click": "blueberry",
   },
+
   "pulseaudio": {
-    "format": "V:{volume}%",
-    "format-bluetooth": "BT:{volume}%",
-    "format-bluetooth-muted": "BT:0",
-    "format-muted": "V:0",
-    "format-source": "M:{volume}%",
-    "format-source-muted": "M:0",
+    "format": "{icon} {volume}%",
+    "format-bluetooth": "󰂰 {volume}%",
+    "format-bluetooth-muted": "󰂲 Muted",
+    "format-muted": " 0%", 
+    "format-source": " {volume}%",
+    "format-source-muted": "",
+    "format-icons": {
+        "headphone": "",
+        "hands-free": "",
+        "headset": "",
+        "phone": "",
+        "portable": "",
+        "car": "",
+        "default": ["", "", ""] 
+    },
     "on-click": "pavucontrol",
   },
+
   "custom/power": {
-    "format": "A",
+    "format": "", 
     "tooltip": false,
     "on-click": "~/.config/tofi/powermenu.sh",
   },
+
   "custom/notes": {
-    "format": "Hyprland",
-    "tooltip": "Hyprland",
+    "format": "", 
+    "tooltip": "Configuration",
     "menu": "on-click",
     "menu-file": "~/.config/waybar/notes_menu.xml",
     "menu-actions": {
@@ -122,9 +146,10 @@
       "Tofi": "code .config/tofi/",
     },
   },
+
   "custom/gpu": {
     "exec": "supergfxctl -g",
-    "format": "GPU: {}",
+    "format": "󰢮 {}", 
     "tooltip": "GPU Mode",
     "menu": "on-click",
     "menu-file": "~/.config/waybar/gpu_menu.xml",
@@ -132,10 +157,5 @@
       "Integrated": "bash -c 'supergfxctl -m Integrated && hyprctl dispatch exit'",
       "Hybrid": "bash -c 'supergfxctl -m Hybrid && hyprctl dispatch exit'",
     },
-  },
-  "custom/updates": {
-    "format": "U:{}",
-    "exec": "checkupdates | wc -l",
-    "tooltip": false
   },
 }
