@@ -1,5 +1,4 @@
 ### connection
-
 ```
 iwctl
 device list
@@ -7,45 +6,31 @@ station wlan0 get-networks
 station wlan0 connect rete
 exit
 ```
-
 ### install yay
-
 [yay installation](https://cloudcone.com/docs/article/how-to-install-yay-helper-on-archlinux/)
-
 ### sway
-
 to install only if you want to use sway
 ```
 sudo pacman -S firefox foot grim pavucontrol slurp swayidle swaylock xorg-xwayland dmenu brightnessctl sway swaybg polkit thunar 
 ```
-
-
 ### linux for rog
-
 [guide](https://asus-linux.org/guides/arch-guide/)
 ### nvidia
-
 ```
 sudo pacman -S nvidia-open-dkms nvtop
 ```
-
 ### bluetooth
-
 ```
 sudo pacman -S blueman bluez bluez-utils blueberry
 systemctl enable bluetooth.service
 systemctl start bluetooth.service
 ```
-
 ### hyprland
-
 ```
 sudo pacman -S hyprland kitty xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk waybar hyprpaper slurp grim zip unzip filelight brightnessctl
 yay -S tofi
 ```
-
 ### software
-
 ```
 sudo pacman -S telegram-desktop whatsapp-for-linux htop spotify-launcher gnome-disk-utility gnome-calculator cheese loupe discord nemo cmatrix cava easyeffects mysql-workbench gimp libreoffice-fresh
 ```
@@ -53,12 +38,10 @@ sudo pacman -S telegram-desktop whatsapp-for-linux htop spotify-launcher gnome-d
 ```
 yay -S google-chrome powerstat brave-bin whatsapp-for-linux zen-browser-bin
 ```
-
 ### jetbrains
 
 [download](https://www.jetbrains.com/)
 ### git
-
 ```
 sudo pacman -S git openssh rsync
 systemctl --user enable ssh-agent.service
@@ -75,14 +58,11 @@ ssh -T git@github.com
 ssh -T git@gitlab.com
 git --version
 ```
-
 ### dev
-
 ```
 sudo pacman -S python-poetry pycharm-community-edition docker dbeaver netbeans gparted mysql-workbench
 yay -S visual-studio-code-bin cursor-bin flutter zed-git docker-desktop lmstudio cursor-bin
 ```
-
 ### lamp
 ```
 sudo pacman -S apache
@@ -144,7 +124,6 @@ phpinfo();
 ?>
 systemctl restart httpd
 ```
-
 ### shell
 
 To install fish, run:
@@ -177,10 +156,21 @@ Remove greeting message:
 set -U fish_greeting
 ```
 ### snapshot
-
 [timeshift](https://wiki.archlinux.org/title/Timeshift)
 ```
 sudo pacman -S timeshift grub-btrfs
 systemctl enable --now grub-btrfsd.service
 sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+### clipboard
+```
+sudo pacman -S wl-clipboard wl-clip-persist cliphist
+```
+### Logitech
+```
+yay -S logi-mx-bin
+```
+### Pacman cache
+```
+sudo systemctl enable --now paccache.timer
 ```
