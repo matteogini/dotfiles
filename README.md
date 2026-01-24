@@ -181,3 +181,12 @@ hyprpm update
 hyprmp list
 hyprpm enable hyprexpo
 ```
+### hyprsunset
+```
+pacman -S hyprsunset
+systemctl --user enable --now hyprsunset.service
+```
+### Authentication
+```
+sudo pacman -S hyprpolkitagent
+```
