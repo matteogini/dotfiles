@@ -174,3 +174,10 @@ yay -S logi-mx-bin
 ```
 sudo systemctl enable --now paccache.timer
 ```
+### Hyprland plugins
+```
+hyprpm add https://github.com/hyprwm/hyprland-plugins
+hyprpm update
+hyprmp list
+hyprpm enable hyprexpo
+```
