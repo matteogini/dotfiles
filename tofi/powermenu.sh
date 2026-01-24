@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-options="Shutdown\nReboot\nSuspend\nLogout"
+# Aggiunto Lock alla lista delle opzioni
+options="Shutdown\nLock\nReboot\nSuspend\nLogout"
 
 choice=$(echo -e "$options" | tofi --config ~/.config/tofi/configpowermenu)
 
@@ -7,11 +8,16 @@ case "$choice" in
     "Shutdown")
         systemctl poweroff
         ;;
+    "Lock")
+        # Esegue hyprlock
+        hyprlock
+        ;;
     "Reboot")
         systemctl reboot
         ;;
     "Suspend")
-        systemctl suspend
+        # Spesso è meglio bloccare lo schermo PRIMA di sospendere
+        hyprlock & sleep 1 && systemctl suspend
         ;;
     "Logout")
         pkill -KILL -u "$USER"
