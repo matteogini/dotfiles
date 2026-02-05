@@ -1,12 +1,12 @@
 {
-  "height": 25,
-  "spacing": 4,
+  "height": 24,
+  "spacing": 1,
   "layer": "top",
   "position": "top",
   "reload_style_on_change": true,
-  "modules-left": ["custom/power", "group/stats"],
+  "modules-left": ["group/stats"],
   "modules-center": ["hyprland/workspaces"],
-  "modules-right": ["group/tools", "battery", "clock"],
+  "modules-right": ["group/tools", "battery"],
 
   "group/stats": {
     "orientation": "inherit",
@@ -31,11 +31,12 @@
       "bluetooth",
       "tray",
       "backlight",
+      "clock"
     ],
   },
 
-  "custom/arrow-left": { "format": "", "tooltip": false },
-  "custom/arrow-right": { "format": "", "tooltip": false },
+  "custom/arrow-left": { "format": " ", "tooltip": false },
+  "custom/arrow-right": { "format": " ", "tooltip": false },
 
   "hyprland/workspaces": {
     "disable-scroll": true,
@@ -83,10 +84,9 @@
       "warning": 30,
       "critical": 15,
     },
-    "format": "{icon} {capacity}%",
-    "format-charging": "󰂄 {capacity}%",
-    "format-plugged": " {capacity}%",
-    "format-icons": ["", "", "", "", ""] 
+    "format": "{capacity}",
+    "format-charging": "+{capacity}",
+    "format-plugged": " ",
   },
 
   "network": {
@@ -126,12 +126,6 @@
         "default": ["", "", ""] 
     },
     "on-click": "pavucontrol",
-  },
-
-  "custom/power": {
-    "format": "", 
-    "tooltip": false,
-    "on-click": "~/.config/tofi/powermenu.sh",
   },
 
   "custom/notes": {
