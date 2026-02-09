@@ -190,3 +190,38 @@ systemctl --user enable --now hyprsunset.service
 ```
 sudo pacman -S hyprpolkitagent
 ```
+### Watt limit
+```
+yay -S ryzendj
+yay -S ryzen_smu-dkms-git
+sudo ryzenadj --stapm-limit=10000 --fast-limit=10000 --slow-limit=10000
+sudo ryzenadj --set-coall=1048556 # undervolting
+```
+
+```
+nano /usr/local/bin/setwatt
+
+#!/bin/bash
+
+# Controlla se è stato passato un argomento
+if [ -z "$1" ]; then
+    echo "Utilizzo: setwatt <numero>"
+    echo "Esempio: setwatt 15"
+    exit 1
+fi
+
+# Converte i Watt in milliwatt (mW) per ryzenadj
+WATT=$1
+MW=$((WATT * 1000))
+
+# Applica i limiti
+sudo ryzenadj --stapm-limit=$MW --fast-limit=$MW --slow-limit=$MW
+```
+
+```
+sudo chmod +x /usr/local/bin/setwatt
+sudo visudo
+
+# power limit script
+matteo ALL=(ALL) NOPASSWD: /usr/bin/ryzenadj
+```

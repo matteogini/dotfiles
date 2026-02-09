@@ -37,7 +37,7 @@ button:active {
 
 #workspaces button {
     padding: 0 5px;
-    color: #3b3b3b;
+    color: #4b4b4b;
     transition: all 200ms ease-in-out;
 }
 
@@ -85,11 +85,10 @@ button:active {
 }
 
 #battery {
-    color: #3b3b3b;
+    color: #4b4b4b;
 }
 
 #battery.charging {
-    background-color: rgba(150, 150, 150, 0.902); 
     color: #ffffff;
 }
 

@@ -14,6 +14,7 @@
     "modules": [
       "custom/arrow-right",
       "cpu",
+      "custom/power_draw",
       "memory",
       "temperature",
       "custom/updates",
@@ -80,6 +81,7 @@
   },
 
   "battery": {
+    "interval": 60,
     "states": {
       "warning": 30,
       "critical": 15,
@@ -152,4 +154,11 @@
       "Hybrid": "bash -c 'supergfxctl -m Hybrid && hyprctl dispatch exit'",
     },
   },
+
+"custom/power_draw": {
+    "format": "󱐋 {}W", 
+    "interval": 5,
+    "exec": "awk '{line[NR]=$1} END {printf \"%.1f\\n\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null",
+    "tooltip": false
+},
 }
