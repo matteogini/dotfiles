@@ -6,16 +6,14 @@
   "reload_style_on_change": true,
   "modules-left": ["group/stats"],
   "modules-center": ["hyprland/workspaces"],
-  "modules-right": ["group/tools", "battery"],
+  "modules-right": ["battery", "group/tools"],
 
   "group/stats": {
     "orientation": "inherit",
     "drawer": { "transition-duration": 300, "transition-left-to-right": false },
     "modules": [
       "custom/arrow-right",
-      "cpu",
       "custom/power_draw",
-      "memory",
       "temperature",
       "custom/updates",
       "custom/notes",

@@ -1,3 +1,6 @@
+history = true
+sort-result = true
+
 anchor = top
 width = 100%
 height = 25
