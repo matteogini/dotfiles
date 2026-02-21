@@ -134,10 +134,10 @@
     "menu": "on-click",
     "menu-file": "~/.config/waybar/notes_menu.xml",
     "menu-actions": {
-      "Hyprland": "code .config/hypr",
-      "Waybar": "code .config/waybar/",
-      "Hyprlock": "code .config/hypr/hyprlock.conf",
-      "Tofi": "code .config/tofi/",
+      "Hyprland": "zeditor .config/hypr",
+      "Waybar": "zeditor .config/waybar/",
+      "Hyprlock": "zeditor .config/hypr/hyprlock.conf",
+      "Tofi": "zeditor .config/tofi/",
     },
   },
 
