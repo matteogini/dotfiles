@@ -1,6 +1,3 @@
-history = true
-sort-result = true
-
 anchor = top
 width = 100%
 height = 25
@@ -8,13 +5,15 @@ horizontal = true
 font-size = 10
 prompt-text = " run: "
 font = JetBrainsMono Nerd Font
-selection-color = #ff0000
 outline-width = 0
 border-width = 0
-background-color = #000000
 min-input-width = 120
-result-spacing = 15
+result-spacing = 25
 padding-top = 5
 padding-bottom = 5
-padding-left = 0
-padding-right = 0
+padding-left = 10
+padding-right = 10
+background-color = #1a1814
+text-color = #e8e9e1
+selection-color = #7c907a
+selection-background = #00000000
