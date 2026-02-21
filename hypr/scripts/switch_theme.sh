@@ -10,11 +10,10 @@ fi
 [ -z "$THEME_NAME" ] && exit 0
 THEME_FILE="$HOME/.config/hypr/themes/$THEME_NAME.conf"
 
-# --- 2. APPLICAZIONE TEMA ---
+# --- 2. APPLICAZIONE TEMA HYPRLAND ---
 cp "$THEME_FILE" "$HOME/.config/hypr/theme.conf"
 
-# --- 3. ESTRAZIONE VARIABILI (Versione Ultra-Robusta) ---
-# Usiamo awk per essere sicuri di prendere il valore esatto dopo l'uguale
+# --- 3. ESTRAZIONE VARIABILI ---
 WALLPAPER=$(grep '$wallpaper' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 ACCENT=$(grep '$accent_color' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 BG=$(grep '$bg_color' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
@@ -27,12 +26,11 @@ TOFI_SEL=$(grep '$tofi_selection' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs
 [[ ! $FG =~ ^# ]] && FG="#ffffff"
 
 # LOGICA SPECIALE PER IL TEMA NERO/BLACK
-# Se il tema si chiama nero o black, forziamo i colori come li volevi tu
 if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" ]]; then
-    ACCENT="#ffffff"  # Waybar bianca
-    BG="#000000"      # Sfondo nero
-    FG="#ffffff"      # Testo bianco
-    TOFI_SEL="#ff0000" # Selezione Tofi ROSSA
+    ACCENT="#ffffff"  
+    BG="#000000"      
+    FG="#ffffff"      
+    TOFI_SEL="#ff0000" 
 fi
 
 [ -z "$TOFI_SEL" ] && TOFI_SEL=$ACCENT
@@ -63,7 +61,6 @@ EOF
 done
 
 # --- 5. KITTY & WAYBAR ---
-# Qui scriviamo il CSS. Se i valori sono corretti, Waybar non darà più errore.
 printf "@define-color accent %s;\n@define-color bg %s;\n@define-color fg %s;\n" "$ACCENT" "$BG" "$FG" > ~/.config/waybar/theme.css
 
 cat > ~/.config/kitty/theme.conf <<EOF
@@ -72,17 +69,44 @@ background $BG
 cursor $ACCENT
 EOF
 
-# --- 6. HYPRPAPER ---
+# --- 6. OBSIDIAN (Sincronizzazione Colori) ---
+OBSIDIAN_SNIPPET="/home/matteo/obsidian_vault/.obsidian/snippets/system-theme.css"
+
+if [ -d "/home/matteo/obsidian_vault/.obsidian" ]; then
+cat > "$OBSIDIAN_SNIPPET" <<EOF
+/* Generato automaticamente da switch_theme.sh */
+:root {
+    --system-accent: $ACCENT;
+    --system-bg: $BG;
+    --system-fg: $FG;
+}
+
+.theme-dark, .theme-light {
+    --accent-component: var(--system-accent) !important;
+    --interactive-accent: var(--system-accent) !important;
+    --text-accent: var(--system-accent) !important;
+    --background-primary: var(--system-bg) !important;
+    --background-secondary: var(--system-bg) !important;
+    --background-primary-alt: var(--system-bg) !important;
+    --text-normal: var(--system-fg) !important;
+    --titlebar-background: var(--system-bg) !important;
+}
+EOF
+fi
+
+# --- 7. HYPRPAPER ---
 if [ "$WALLPAPER" != "black" ] && [ -f "$WALLPAPER" ]; then
     printf "preload = %s\nwallpaper = ,%s\nsplash = false\nipc = on\n" "$WALLPAPER" "$WALLPAPER" > ~/.config/hypr/hyprpaper.conf
     pgrep -x "hyprpaper" > /dev/null || hyprpaper &
-    sleep 1
+    sleep 0.8
     hyprctl hyprpaper preload "$WALLPAPER" > /dev/null 2>&1
     hyprctl hyprpaper wallpaper ",$WALLPAPER" > /dev/null 2>&1
 else
     pkill hyprpaper
 fi
 
-# --- 7. REFRESH ---
+# --- 8. REFRESH ---
 killall -SIGUSR2 waybar > /dev/null 2>&1
 killall -USR1 kitty > /dev/null 2>&1
+
+echo "Tema $THEME_NAME applicato con successo!"
