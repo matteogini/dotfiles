@@ -13,29 +13,25 @@ THEME_FILE="$HOME/.config/hypr/themes/$THEME_NAME.conf"
 # --- 2. APPLICAZIONE TEMA HYPRLAND ---
 cp "$THEME_FILE" "$HOME/.config/hypr/theme.conf"
 
-# --- 3. ESTRAZIONE VARIABILI ---
+# --- 3. ESTRAZIONE VARIABILI (Versione Ultra-Robusta) ---
 WALLPAPER=$(grep '$wallpaper' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 ACCENT=$(grep '$accent_color' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 BG=$(grep '$bg_color' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 FG=$(grep '$fg_color' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 TOFI_SEL=$(grep '$tofi_selection' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 
-# Fallback: se le variabili sono vuote o mancano di #
+# Fallback
 [[ ! $ACCENT =~ ^# ]] && ACCENT="#ffffff" 
 [[ ! $BG =~ ^# ]] && BG="#000000"
 [[ ! $FG =~ ^# ]] && FG="#ffffff"
 
 # LOGICA SPECIALE PER IL TEMA NERO/BLACK
 if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" ]]; then
-    ACCENT="#ffffff"  
-    BG="#000000"      
-    FG="#ffffff"      
-    TOFI_SEL="#ff0000" 
+    ACCENT="#ffffff" ; BG="#000000" ; FG="#ffffff" ; TOFI_SEL="#ff0000"
 fi
-
 [ -z "$TOFI_SEL" ] && TOFI_SEL=$ACCENT
 
-# --- 4. SINCRONIZZAZIONE TOFI ---
+# --- 4. SINCRONIZZAZIONE TOFI (Layout Originale) ---
 for CONFIG in "config" "configpowermenu"; do
 cat > ~/.config/tofi/$CONFIG <<EOF
 anchor = top
@@ -69,32 +65,62 @@ background $BG
 cursor $ACCENT
 EOF
 
-# --- 6. OBSIDIAN (Sincronizzazione Colori) ---
+# --- 6. OBSIDIAN (Con eccezione per tema nero) ---
 OBSIDIAN_SNIPPET="/home/matteo/obsidian_vault/.obsidian/snippets/system-theme.css"
-
 if [ -d "/home/matteo/obsidian_vault/.obsidian" ]; then
-cat > "$OBSIDIAN_SNIPPET" <<EOF
-/* Generato automaticamente da switch_theme.sh */
-:root {
-    --system-accent: $ACCENT;
-    --system-bg: $BG;
-    --system-fg: $FG;
-}
-
+    if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" ]]; then
+        # Reset ai colori classici del tema scelto in Obsidian
+        echo "/* Snippet disabilitato per tema nero/black */" > "$OBSIDIAN_SNIPPET"
+    else
+        # Sincronizzazione con i colori di sistema
+        cat > "$OBSIDIAN_SNIPPET" <<EOF
+:root { --system-accent: $ACCENT; --system-bg: $BG; --system-fg: $FG; }
 .theme-dark, .theme-light {
     --accent-component: var(--system-accent) !important;
     --interactive-accent: var(--system-accent) !important;
-    --text-accent: var(--system-accent) !important;
     --background-primary: var(--system-bg) !important;
     --background-secondary: var(--system-bg) !important;
     --background-primary-alt: var(--system-bg) !important;
     --text-normal: var(--system-fg) !important;
-    --titlebar-background: var(--system-bg) !important;
 }
+EOF
+    fi
+fi
+
+# --- 7. VS CODE (Con eccezione per tema nero) ---
+VSCODE_SETTINGS="$HOME/.config/Code/User/settings.json"
+if [ -f "$VSCODE_SETTINGS" ]; then
+    python3 <<EOF
+import json
+import os
+path = os.path.expanduser('$VSCODE_SETTINGS')
+with open(path, 'r') as f:
+    try:
+        data = json.load(f)
+    except:
+        data = {}
+
+if "$THEME_NAME" in ["nero", "black"]:
+    data['workbench.colorCustomizations'] = {}
+else:
+    data['workbench.colorCustomizations'] = {
+        "editor.background": "$BG",
+        "sideBar.background": "$BG",
+        "activityBar.background": "$BG",
+        "editor.lineHighlightBackground": "$BG",
+        "statusBar.background": "$ACCENT",
+        "statusBar.foreground": "$FG",
+        "titleBar.activeBackground": "$BG",
+        "list.activeSelectionBackground": "$ACCENT",
+        "list.activeSelectionForeground": "$FG"
+    }
+
+with open(path, 'w') as f:
+    json.dump(data, f, indent=4)
 EOF
 fi
 
-# --- 7. HYPRPAPER ---
+# --- 8. HYPRPAPER ---
 if [ "$WALLPAPER" != "black" ] && [ -f "$WALLPAPER" ]; then
     printf "preload = %s\nwallpaper = ,%s\nsplash = false\nipc = on\n" "$WALLPAPER" "$WALLPAPER" > ~/.config/hypr/hyprpaper.conf
     pgrep -x "hyprpaper" > /dev/null || hyprpaper &
@@ -105,8 +131,6 @@ else
     pkill hyprpaper
 fi
 
-# --- 8. REFRESH ---
+# --- 9. REFRESH ---
 killall -SIGUSR2 waybar > /dev/null 2>&1
 killall -USR1 kitty > /dev/null 2>&1
-
-echo "Tema $THEME_NAME applicato con successo!"
