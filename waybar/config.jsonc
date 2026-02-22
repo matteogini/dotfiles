@@ -30,7 +30,7 @@
       "bluetooth",
       "tray",
       "backlight",
-      "clock"
+      "clock",
     ],
   },
 
@@ -40,9 +40,9 @@
   "hyprland/workspaces": {
     "disable-scroll": true,
     "all-outputs": true,
-    "format": "{name}", 
+    "format": "{name}",
   },
-  
+
   "clock": {
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
     "format": "{:%H:%M}",
@@ -50,28 +50,28 @@
   },
 
   "cpu": {
-    "format": " {usage}%", 
+    "format": " {usage}%",
     "tooltip": true,
     "on-click": "kitty -e htop",
   },
   "memory": {
-    "format": " {}%", 
+    "format": " {}%",
     "tooltip": true,
     "on-click": "kitty -e htop",
   },
   "temperature": {
     "critical-threshold": 80,
-    "format": " {temperatureC}° ", 
+    "format": " {temperatureC}° ",
   },
   "custom/updates": {
-    "format": "󰮯 {} ", 
+    "format": "󰮯 {} ",
     "exec": "checkupdates | wc -l",
-    "tooltip": false
+    "tooltip": false,
   },
 
   "backlight": {
     "format": "{icon} {percent}%",
-    "format-icons": ["", "", "", "", "", "", "", "", ""], 
+    "format-icons": ["", "", "", "", "", "", "", "", ""],
     "on-scroll-up": "brightnessctl set +5%",
     "on-scroll-down": "brightnessctl set 5%-",
     "on-click": "brightnessctl set 100%",
@@ -91,16 +91,16 @@
 
   "network": {
     "format-wifi": "{icon} {signalStrength}%",
-    "format-ethernet": "󰈀", 
+    "format-ethernet": "󰈀",
     "format-linked": "󰈀 ?",
-    "format-disconnected": "󰤮", 
-    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"], 
+    "format-disconnected": "󰤮",
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
     "on-click": "kitty -e nmtui",
   },
 
   "bluetooth": {
     "format": " {status}",
-    "format-disconnected": "󰂲", 
+    "format-disconnected": "󰂲",
     "format-connected": " {device_battery_percentage}%",
     "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
     "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
@@ -113,23 +113,23 @@
     "format": "{icon} {volume}%",
     "format-bluetooth": "󰂰 {volume}%",
     "format-bluetooth-muted": "󰂲 Muted",
-    "format-muted": " 0%", 
+    "format-muted": " 0%",
     "format-source": " {volume}%",
     "format-source-muted": "",
     "format-icons": {
-        "headphone": "",
-        "hands-free": "",
-        "headset": "",
-        "phone": "",
-        "portable": "",
-        "car": "",
-        "default": ["", "", ""] 
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", "", ""],
     },
     "on-click": "pavucontrol",
   },
 
   "custom/notes": {
-    "format": "", 
+    "format": "",
     "tooltip": "Configuration",
     "menu": "on-click",
     "menu-file": "~/.config/waybar/notes_menu.xml",
@@ -143,7 +143,7 @@
 
   "custom/gpu": {
     "exec": "supergfxctl -g",
-    "format": "󰢮 {}", 
+    "format": "󰢮 {}",
     "tooltip": "GPU Mode",
     "menu": "on-click",
     "menu-file": "~/.config/waybar/gpu_menu.xml",
@@ -153,10 +153,10 @@
     },
   },
 
-"custom/power_draw": {
-    "format": "󱐋 {}W", 
+  "custom/power_draw": {
+    "format": " 󱐋 {}W",
     "interval": 5,
     "exec": "awk '{line[NR]=$1} END {printf \"%.1f\\n\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null",
-    "tooltip": false
-},
+    "tooltip": false,
+  },
 }

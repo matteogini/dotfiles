@@ -169,7 +169,30 @@ if os.path.exists(btop_conf_path):
     with open(btop_conf_path, 'r') as f: content = f.read()
     content = re.sub(r'color_theme = .*', 'color_theme = "dynamic.theme"', content)
     with open(btop_conf_path, 'w') as f: f.write(content)
+
+# 4. NEOVIM (Generazione palette dinamica)
+nvim_dir = os.path.expanduser('~/.config/nvim/lua')
+if not os.path.exists(nvim_dir): os.makedirs(nvim_dir)
+nvim_path = os.path.join(nvim_dir, 'theme_colors.lua')
+
+# Puliamo i colori per assicurarci che siano a 6 cifre per Neovim
+def clean_hex(h):
+    return h[:7] if h.startswith('#') else f"#{h[:6]}"
+
+with open(nvim_path, 'w') as f:
+    f.write(f'return {{\n')
+    f.write(f'    bg = "{clean_hex(bg)}",\n')
+    f.write(f'    fg = "{clean_hex(fg)}",\n')
+    f.write(f'    accent = "{clean_hex(accent)}",\n')
+    f.write(f'    syntax = "{clean_hex(syntax_accent)}",\n')
+    f.write(f'    param = "{clean_hex(color_param)}",\n')
+    f.write(f'    string = "{clean_hex(color_quote)}",\n')
+    f.write(f'    selection = "{clean_hex(accent)}",\n') # Niente 33 finale qui
+    f.write(f'}}\n')
+
 EOF
+
+
 
 # --- 7. OBSIDIAN ---
 OBSIDIAN_SNIPPET="/home/matteo/obsidian_vault/.obsidian/snippets/system-theme.css"
@@ -194,7 +217,7 @@ fi
 if [ "$WALLPAPER" != "black" ] && [ -f "$WALLPAPER" ]; then
     printf "preload = %s\nwallpaper = ,%s\nsplash = false\nipc = on\n" "$WALLPAPER" "$WALLPAPER" > ~/.config/hypr/hyprpaper.conf
     pgrep -x "hyprpaper" > /dev/null || hyprpaper &
-    sleep 0.8
+    sleep 1
     hyprctl hyprpaper preload "$WALLPAPER" > /dev/null 2>&1
     hyprctl hyprpaper wallpaper ",$WALLPAPER" > /dev/null 2>&1
 else
