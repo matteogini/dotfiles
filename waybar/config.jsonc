@@ -64,7 +64,8 @@
 
   "temperature": {
     "critical-threshold": 80,
-    "format": " {temperatureC}° "
+    "format": " {temperatureC}° ",
+    "interval": 10
   },
 
   "custom/updates": {
@@ -150,8 +151,13 @@
     "menu-actions": {
       "Hyprland": "zeditor .config/hypr",
       "Waybar": "zeditor .config/waybar/",
-      "Hyprlock": "zeditor .config/hypr/hyprlock.conf",
-      "Tofi": "zeditor .config/tofi/"
+      "Hyprlock": "zeditor .config/hypr",
+      "Tofi": "zeditor .config/tofi/",
+      "Hyprsunset": "zeditor .config/hypr",
+      "Hyprpaper": "zeditor .config/hypr",
+      "Kitty": "zeditor .config/kitty",
+      "Fish": "zeditor .config/fish",
+      "Fastfetch": "zeditor .config/fastfetch",
     }
   },
 
@@ -169,7 +175,7 @@
 
   "custom/power_draw": {
     "format": " 󱐋 {}W",
-    "interval": 5,
+    "interval": 10,
     "exec": "awk '{line[NR]=$1} END {printf \"%.1f\\n\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null",
     "tooltip": false
   }

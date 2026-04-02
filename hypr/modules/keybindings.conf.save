@@ -33,6 +33,7 @@ bind = , XF86Launch1, exec, $rog
 bind = $mainMod, V, exec, cliphist list | tofi | cliphist decode | wl-copy
 bind = $mainMod, T, exec, ~/.config/hypr/scripts/switch_theme.sh
 bind = , mouse:277, killactive
+bind = $mainMod, B, exec, ~/.local/bin/battery_mode.sh
 
 bind = $mainMod, left, movefocus, l
 bind = $mainMod, right, movefocus, r

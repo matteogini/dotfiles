@@ -21,5 +21,30 @@
             <property name="label">Tofi</property>
         </object>
     </child>
+    <child>
+        <object class="GtkMenuItem" id="Hyprsunset">
+            <property name="label">Hyprsunset</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Hyprpaper">
+            <property name="label">Hyprpaper</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Kitty">
+            <property name="label">Kitty</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Fish">
+            <property name="label">Fish</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Fastfetch">
+            <property name="label">Fastfetch</property>
+        </object>
+    </child>
   </object>
 </interface>
