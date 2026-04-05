@@ -4,7 +4,7 @@
   "layer": "top",
   "position": "top",
   "reload_style_on_change": true,
-  "modules-left": ["group/stats"],
+  "modules-left": ["group/stats", "group/spotify"],
   "modules-center": ["hyprland/workspaces"],
   "modules-right": ["battery", "group/tools"],
 
@@ -178,5 +178,53 @@
     "interval": 10,
     "exec": "awk '{line[NR]=$1} END {printf \"%.1f\\n\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null",
     "tooltip": false
-  }
+  },
+
+  "group/spotify": {
+      "orientation": "horizontal",
+      "modules": [
+        "custom/spotify-prev",
+        "custom/spotify-play",
+        "custom/spotify-next",
+        "custom/spotify-text"
+      ]
+    },
+
+    "custom/spotify-prev": {
+      "format": "{}",
+      "exec": "echo '󰒮'",
+      "exec-if": "pgrep spotify",
+      "interval": 2,
+      "on-click": "playerctl --player=spotify previous",
+      "tooltip": false
+    },
+
+    "custom/spotify-play": {
+      "format": "{}",
+      "exec": "if [ \"$(playerctl --player=spotify status 2>/dev/null)\" = \"Playing\" ]; then echo '󰏤'; else echo '󰐊'; fi",
+      "exec-if": "pgrep spotify",
+      "interval": 1,
+      "on-click": "playerctl --player=spotify play-pause",
+      "tooltip": false
+    },
+
+    "custom/spotify-next": {
+      "format": "{}",
+      "exec": "echo '󰒭'",
+      "exec-if": "pgrep spotify",
+      "interval": 2,
+      "on-click": "playerctl --player=spotify next",
+      "tooltip": false
+    },
+
+    "custom/spotify-text": {
+      "format": " {}",
+      "max-length": 35,
+      "exec": "playerctl --player=spotify metadata --format '{{title}} - {{artist}}' 2>/dev/null",
+      "exec-if": "pgrep spotify",
+      "interval": 2,
+      "on-click": "bash -c 'pkill spotify && hyprctl dispatch exec spotify && for i in {1..30}; do STATUS=$(playerctl --player=spotify status 2>/dev/null); if [ \"$STATUS\" = \"Paused\" ]; then sleep 1.5 && playerctl --player=spotify play; break; fi; sleep 0.5; done'",
+      "tooltip": true,
+      "tooltip-format": "Clicca per ricaricare (Skip Ads)"
+    }
 }
