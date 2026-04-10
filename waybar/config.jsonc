@@ -224,7 +224,6 @@
       "exec-if": "pgrep spotify",
       "interval": 2,
       "on-click": "bash -c 'pkill spotify && hyprctl dispatch exec spotify && for i in {1..30}; do STATUS=$(playerctl --player=spotify status 2>/dev/null); if [ \"$STATUS\" = \"Paused\" ]; then sleep 1.5 && playerctl --player=spotify play; break; fi; sleep 0.5; done'",
-      "tooltip": true,
-      "tooltip-format": "Clicca per ricaricare (Skip Ads)"
+      "tooltip": false,
     }
 }
