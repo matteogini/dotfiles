@@ -221,9 +221,10 @@
       "format": " {}",
       "max-length": 35,
       "exec": "playerctl --player=spotify metadata --format '{{title}} - {{artist}}' 2>/dev/null",
-      "exec-if": "pgrep spotify",
+      "exec-if": "pgrep -f com.spotify.Client",
       "interval": 2,
-      "on-click": "bash -c 'pkill spotify && hyprctl dispatch exec spotify && for i in {1..30}; do STATUS=$(playerctl --player=spotify status 2>/dev/null); if [ \"$STATUS\" = \"Paused\" ]; then sleep 1.5 && playerctl --player=spotify play; break; fi; sleep 0.5; done'",
-      "tooltip": false,
+      "on-click": "bash -c 'pkill -f com.spotify.Client && hyprctl dispatch exec \"flatpak run com.spotify.Client\" && for i in {1..30}; do STATUS=$(playerctl --player=spotify status 2>/dev/null); if [ \"$STATUS\" = \"Paused\" ]; then sleep 1.5 && playerctl --player=spotify play; break; fi; sleep 0.5; done'",
+      "tooltip": false
     }
+
 }
