@@ -25,7 +25,7 @@ TOFI_SEL=$(grep '$tofi_selection' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs
 [[ ! $BG =~ ^# ]] && BG="#000000"
 [[ ! $FG =~ ^# ]] && FG="#ffffff"
 
-if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" ]]; then
+if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" || "$THEME_NAME" == "earth" ]]; then
     ACCENT="#ffffff" ; BG="#000000" ; FG="#ffffff" ; TOFI_SEL="#ff0000"
 fi
 [ -z "$TOFI_SEL" ] && TOFI_SEL=$ACCENT
@@ -83,7 +83,7 @@ r, g, b = [x/255.0 for x in hex_to_rgb(accent)]
 h, s, v = colorsys.rgb_to_hsv(r, g, b)
 
 # Calcolo colori soft per sintassi
-if theme_name in ["nero", "black"]:
+if theme_name in ["nero", "black", "earth"]:
     syntax_accent = accent
     color_param = "888888"
     color_quote = "aaaaaa"
@@ -112,7 +112,7 @@ if os.path.exists(zed_path):
         try: zed_data = json.load(f)
         except: zed_data = {}
 
-    if theme_name in ["nero", "black"]:
+    if theme_name in ["nero", "black", "earth"]:
         zed_data['experimental.theme_overrides'] = {}
     else:
         accent_mute = f"{accent}33"
@@ -197,7 +197,7 @@ EOF
 # --- 7. OBSIDIAN ---
 OBSIDIAN_SNIPPET="/home/matteo/obsidian_vault/.obsidian/snippets/system-theme.css"
 if [ -d "/home/matteo/obsidian_vault/.obsidian" ]; then
-    if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" ]]; then
+    if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" || "$THEME_NAME" == "earth" ]]; then
         echo "/* Reset */" > "$OBSIDIAN_SNIPPET"
     else
         cat > "$OBSIDIAN_SNIPPET" <<EOF
