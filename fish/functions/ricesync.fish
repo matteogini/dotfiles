@@ -1,3 +1,3 @@
-function ricesync --wraps='bash ~/sync_rice.sh' --description 'alias ricesync=bash ~/sync_rice.sh'
-    bash ~/sync_rice.sh $argv
+function ricesync --description 'Sync dotfiles to rice directory'
+    ~/.local/bin/ricesync $argv
 end
