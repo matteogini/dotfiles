@@ -1,3 +1,3 @@
-function notify --description 'Send a notification to ntfy.sh/Agents'
+function notify --description 'Send a notification via ntfy.sh'
     ~/.local/bin/notify $argv
 end
