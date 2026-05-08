@@ -225,3 +225,11 @@ sudo visudo
 # power limit script
 matteo ALL=(ALL) NOPASSWD: /usr/bin/ryzenadj
 ```
+
+### Notifications
+
+To enable notifications for background tasks, create a `.env` file at `~/.config/notify.env` with your custom `ntfy.sh` topic endpoint:
+
+```bash
+echo 'NTFY_ENDPOINT="ntfy.sh/YourSecretTopicHere"' > ~/.config/notify.env
+```
