@@ -4,11 +4,11 @@
 cd "$HOME" || exit 1
 
 # Create directories in rice repo
-mkdir -p rice/hypr rice/kitty rice/tofi rice/waybar rice/fish rice/fastfetch rice/bin
+mkdir -p rice/hypr rice/kitty rice/tofi rice/waybar rice/fish rice/fastfetch rice/foot rice/ghostty rice/wob rice/bin
 
 # Files and directories to watch
 # Note: we explicitly track custom scripts in .local/bin, avoiding large binaries
-find .config/hypr .config/kitty .config/tofi .config/waybar .config/fish .config/fastfetch .nanorc .local/bin/amd_s2idle.py .local/bin/battery_mode.sh .local/bin/notify .local/bin/ricesync -type f | \
+find .config/hypr .config/kitty .config/tofi .config/waybar .config/fish .config/fastfetch .config/foot .config/ghostty .config/wob .nanorc .local/bin/amd_s2idle.py .local/bin/battery_mode.sh .local/bin/notify .local/bin/ricesync -type f | \
 entr -r bash -c '
     echo "Syncing configurations..."
     rsync -aq --delete .config/hypr/ rice/hypr/
@@ -17,6 +17,9 @@ entr -r bash -c '
     rsync -aq --delete .config/waybar/ rice/waybar/
     rsync -aq --delete .config/fish/ rice/fish/
     rsync -aq --delete .config/fastfetch/ rice/fastfetch/
+    rsync -aq --delete .config/foot/ rice/foot/
+    rsync -aq --delete .config/ghostty/ rice/ghostty/
+    rsync -aq --delete .config/wob/ rice/wob/
     cp ~/.nanorc rice/.nanorc
     
     # Sync specific scripts

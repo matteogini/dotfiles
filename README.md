@@ -27,7 +27,7 @@ systemctl start bluetooth.service
 ```
 ### hyprland
 ```
-sudo pacman -S hyprland kitty xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk waybar hyprpaper slurp grim zip unzip filelight brightnessctl nwg-displays
+sudo pacman -S hyprland foot ghostty wob yazi kitty xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk waybar hyprpaper slurp grim zip unzip filelight brightnessctl nwg-displays
 yay -S tofi gnome-network-displays
 ```
 ### software

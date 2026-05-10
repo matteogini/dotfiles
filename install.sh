@@ -20,7 +20,7 @@ mkdir -p "$BIN_DIR"
 
 # 2. Sync Configuration Directories
 echo "[*] Syncing ~/.config directories..."
-for dir in hypr kitty tofi waybar fish fastfetch; do
+for dir in hypr kitty tofi waybar fish fastfetch foot ghostty wob; do
     if [ -d "$REPO_DIR/$dir" ]; then
         echo "    -> Syncing $dir"
         rsync -a "$REPO_DIR/$dir/" "$CONFIG_DIR/$dir/"
