@@ -166,8 +166,9 @@ else:
                 "variable": {"color": fg}
             }
         }
-    with open(zed_path, 'w') as f:
-        json.dump(zed_data, f, indent=4)
+
+with open(zed_path, 'w') as f:
+    json.dump(zed_data, f, indent=4)
 
 # 3. BTOP
 btop_theme_dir = os.path.expanduser('~/.config/btop/themes')
