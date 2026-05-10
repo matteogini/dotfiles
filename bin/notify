@@ -90,9 +90,17 @@ if [ -f "$HOME/.config/notify.env" ]; then
     source "$HOME/.config/notify.env"
 fi
 
-NTFY_ENDPOINT="${NTFY_ENDPOINT:-ntfy.sh/YourSecretTopicHere}"
+if [ -z "$NTFY_ENDPOINT" ]; then
+    notify-send "$TITLE" "$MESSAGE"
+    exit 0
+fi
 
-curl -s \
+# Try sending to ntfy, fallback to local notify-send on failure
+if ! curl -s --fail \
   -H "Title: $TITLE" \
   -d "$MESSAGE" \
-  "$NTFY_ENDPOINT" > /dev/null
+  "$NTFY_ENDPOINT" > /dev/null; then
+    notify-send "$TITLE" "$MESSAGE (ntfy failed)" 2>/dev/null || true
+fi
+
+exit 0

@@ -5,11 +5,14 @@ CONFIG="$HOME/.config/hypr/modules/look_and_feel.conf"
 START="### BEST BATTERY LIFE ###"
 END="### MONITORS ###"
 
-# Dati del monitor
-MONITOR="eDP-1"
-RES="2880x1800"
-POS="0x0"
-SCALE="2.0"
+# Dati del monitor (Dinamici)
+MONITOR_INFO=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true)')
+MONITOR=$(echo "$MONITOR_INFO" | jq -r '.name')
+WIDTH=$(echo "$MONITOR_INFO" | jq -r '.width')
+HEIGHT=$(echo "$MONITOR_INFO" | jq -r '.height')
+RES="${WIDTH}x${HEIGHT}"
+POS="$(echo "$MONITOR_INFO" | jq -r '.x')x$(echo "$MONITOR_INFO" | jq -r '.y')"
+SCALE=$(echo "$MONITOR_INFO" | jq -r '.scale')
 
 # Funzione per attivare il Risparmio (120Hz + VRR + No Eye Candy)
 # Manteniamo 120Hz perché permette al driver di allineare meglio i frame (48Hz floor)

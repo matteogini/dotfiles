@@ -5,8 +5,9 @@ end
 set -gx BROWSER zen-browser
 
 
-# opencode
-fish_add_path /home/matteo/.opencode/bin
+# opencode and local bin
+fish_add_path $HOME/.opencode/bin
+fish_add_path $HOME/.local/bin
 
 set -g fish_greeting ""
 

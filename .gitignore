@@ -1,1 +1,4 @@
 .planning/
+*.env
+.DS_Store
+*.swp

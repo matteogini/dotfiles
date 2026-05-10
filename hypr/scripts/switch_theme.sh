@@ -216,8 +216,8 @@ EOF
 
 
 # --- 7. OBSIDIAN ---
-OBSIDIAN_SNIPPET="/home/matteo/obsidian_vault/.obsidian/snippets/system-theme.css"
-if [ -d "/home/matteo/obsidian_vault/.obsidian" ]; then
+OBSIDIAN_SNIPPET="$HOME/obsidian_vault/.obsidian/snippets/system-theme.css"
+if [ -d "$HOME/obsidian_vault/.obsidian" ]; then
     if [[ "$THEME_NAME" == "nero" || "$THEME_NAME" == "black" || "$THEME_NAME" == "earth" ]]; then
         echo "/* Reset */" > "$OBSIDIAN_SNIPPET"
     else
@@ -235,6 +235,7 @@ EOF
 fi
 
 # --- 8. HYPRPAPER & REFRESH ---
+WALLPAPER="${WALLPAPER/#\~/$HOME}"
 if [ "$WALLPAPER" != "black" ] && [ -f "$WALLPAPER" ]; then
     printf "preload = %s\nwallpaper = ,%s\nsplash = false\nipc = on\n" "$WALLPAPER" "$WALLPAPER" > ~/.config/hypr/hyprpaper.conf
     pgrep -x "hyprpaper" > /dev/null || hyprpaper &
