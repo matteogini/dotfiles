@@ -5,37 +5,42 @@ CONFIG="$HOME/.config/hypr/modules/look_and_feel.conf"
 START="### BEST BATTERY LIFE ###"
 END="### MONITORS ###"
 
-# Dati del monitor estratti dal tuo config
+# Dati del monitor
 MONITOR="eDP-1"
 RES="2880x1800"
-POS="1920x634"
+POS="0x0"
 SCALE="2.0"
 
-# Funzione per attivare il Risparmio (60Hz + No Animazioni)
+# Funzione per attivare il Risparmio (120Hz + VRR + No Eye Candy)
+# Manteniamo 120Hz perché permette al driver di allineare meglio i frame (48Hz floor)
 enable_battery() {
-    echo "Enabling..."
-    # 1. Decommenta il blocco nel file
+    echo "Enabling Battery Savings (120Hz VRR + No Effects)..."
+    
+    # 1. Decommenta il blocco nel file (disabilita animazioni/blur/shadows)
     sed -i "/$START/,/$END/ { /$START/! { /$END/! s/^#[[:space:]]*// } }" "$CONFIG"
     
-    # 2. Cambia il refresh rate a 60Hz via software
-    hyprctl keyword monitor "$MONITOR,$RES@60,$POS,$SCALE"
+    # 2. Assicura 120Hz con VRR attivo
+    hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
 }
 
-# Funzione per tornare a Performance (120Hz + Animazioni)
+# Funzione per tornare a Performance (120Hz + VRR + Eye Candy)
 disable_battery() {
-    echo "Disabling..."
-    # 1. Commenta il blocco nel file
+    echo "Restoring Performance Mode (120Hz VRR + Animations)..."
+    
+    # 1. Commenta il blocco nel file (riabilita animazioni/blur/shadows)
     sed -i "/$START/,/$END/ { /$START/! { /$END/! { /^[[:space:]]*#/! s/^/#/ } } }" "$CONFIG"
     
     # 2. Ripristina i 120Hz
-    hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE"
+    hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
 }
 
 # LOGICA DI TOGGLE
-# Controlla se la riga 'animations {' è commentata
+# Controlla se la riga 'animations {' è commentata per capire lo stato attuale
 if sed -n "/$START/,/$END/p" "$CONFIG" | grep -q "^#animations"; then
     enable_battery
 else
     disable_battery
 fi
+
+# Notifica Waybar per aggiornare eventuali icone/moduli
 pkill -USR2 waybar

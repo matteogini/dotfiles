@@ -55,12 +55,32 @@ selection-background = #00000000
 EOF
 done
 
-# --- 5. KITTY & WAYBAR ---
+# --- 5. KITTY, GHOSTTY & WAYBAR ---
 printf "@define-color accent %s;\n@define-color bg %s;\n@define-color fg %s;\n" "$ACCENT" "$BG" "$FG" > ~/.config/waybar/theme.css
 cat > ~/.config/kitty/theme.conf <<EOF
 foreground $FG
 background $BG
 cursor $ACCENT
+EOF
+
+# Ghostty
+cat > ~/.config/ghostty/theme <<EOF
+foreground = $FG
+background = $BG
+cursor-color = $ACCENT
+EOF
+
+# Foot
+# Foot doesn't want the '#' in its color values
+FOOT_BG=$(echo $BG | sed 's/#//')
+FOOT_FG=$(echo $FG | sed 's/#//')
+FOOT_ACCENT=$(echo $ACCENT | sed 's/#//')
+cat > ~/.config/foot/theme <<EOF
+[colors-dark]
+foreground=$FOOT_FG
+background=$FOOT_BG
+selection-foreground=$FOOT_BG
+selection-background=$FOOT_FG
 EOF
 
 # --- 6. PYTHON: FISH, ZED & BTOP ---
@@ -112,13 +132,13 @@ if os.path.exists(zed_path):
         try: zed_data = json.load(f)
         except: zed_data = {}
 
-    if theme_name in ["nero", "black", "earth"]:
-        zed_data['experimental.theme_overrides'] = {}
-    else:
-        accent_mute = f"{accent}33"
-        accent_very_mute = f"{accent}15"
+accent_mute = f"{accent}33"
+accent_very_mute = f"{accent}15"
 
-        zed_data['experimental.theme_overrides'] = {
+if theme_name in ["nero", "black", "earth"]:
+    zed_data['experimental.theme_overrides'] = {}
+else:
+    zed_data['experimental.theme_overrides'] = {
             "background": bg, "editor.background": bg, "pane.background": bg,
             "pane.inactive_background": bg, "side_bar.background": bg,
             "status_bar.background": bg, "title_bar.background": bg,
