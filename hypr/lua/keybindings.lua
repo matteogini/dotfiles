@@ -25,7 +25,33 @@ hl.bind(mainMod .. " + SHIFT + F12", hl.dsp.exec_cmd("brightnessctl s 0"))
 hl.bind("XF86Launch1", hl.dsp.exec_cmd(p.rog))
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("/home/matteo/.config/hypr/scripts/switch_theme.sh"))
 hl.bind("mouse:277", hl.dsp.window.close())
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("/home/matteo/.local/bin/battery_mode.sh"))
+local battery_mode = false
+hl.bind(mainMod .. " + B", function()
+    battery_mode = not battery_mode
+    if battery_mode then
+        -- Power saving mode
+        hl.config({ 
+            animations = { enabled = false },
+            decoration = {
+                rounding = 0,
+                shadow = { enabled = false },
+                blur = { enabled = false }
+            }
+        })
+    else
+        -- High performance mode (restoring from theme)
+        local theme = require("theme")
+        hl.config({ 
+            animations = { enabled = true },
+            decoration = {
+                rounding = theme.rounding,
+                shadow = { enabled = theme.shadow_enabled },
+                blur = { enabled = theme.blur_enabled }
+            }
+        })
+    end
+    hl.exec_cmd("/home/matteo/.local/bin/battery_mode.sh")
+end)
 
 -- Workspace Packing (SUPER+A)
 hl.bind(mainMod .. " + A", function()
