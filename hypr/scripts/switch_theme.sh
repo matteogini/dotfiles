@@ -13,6 +13,40 @@ THEME_FILE="$HOME/.config/hypr/themes/$THEME_NAME.conf"
 # --- 2. APPLICAZIONE TEMA HYPRLAND ---
 cp "$THEME_FILE" "$HOME/.config/hypr/theme.conf"
 
+# --- 2.5 GENERAZIONE TEMA LUA ---
+while IFS='=' read -r key value; do
+    [[ $key =~ ^\$ ]] || continue
+    var_name=$(echo "${key//\$/}" | xargs)
+    var_value=$(echo "$value" | xargs)
+    declare "$var_name"="$var_value"
+done < "$THEME_FILE"
+
+# Convert $active_border (multiple rgba + angle) to Lua table
+ACTIVE_COLORS=$(echo "$active_border" | grep -o "rgba([^)]*)" | sed 's/^/"/;s/$/"/' | paste -sd, -)
+ACTIVE_ANGLE=$(echo "$active_border" | grep -o "[0-9]\+deg" | sed 's/deg//' || echo 45)
+
+cat > ~/.config/hypr/theme.lua <<EOF
+return {
+    gaps_in = $gaps_in,
+    gaps_out = $gaps_out,
+    border_size = $border_size,
+    active_border = { colors = { $ACTIVE_COLORS }, angle = $ACTIVE_ANGLE },
+    inactive_border = "$inactive_border",
+    rounding = $rounding,
+    rounding_power = $rounding_power,
+    active_opacity = $active_opacity,
+    inactive_opacity = $inactive_opacity,
+    shadow_enabled = $( [[ "$shadow_enabled" == "true" ]] && echo "true" || echo "false" ),
+    shadow_range = $shadow_range,
+    shadow_render_power = $shadow_render_power,
+    shadow_color = "$shadow_color",
+    blur_enabled = $( [[ "$blur_enabled" == "true" ]] && echo "true" || echo "false" ),
+    blur_size = $blur_size,
+    blur_passes = $blur_passes,
+    blur_vibrancy = $blur_vibrancy,
+}
+EOF
+
 # --- 3. ESTRAZIONE VARIABILI ---
 WALLPAPER=$(grep '$wallpaper' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
 ACCENT=$(grep '$accent_color' "$THEME_FILE" | awk -F'=' '{print $2}' | xargs)
