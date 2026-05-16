@@ -37,6 +37,35 @@ WAIT_MESSAGES=(
     "i don't move until you move 🥺"
 )
 
+INPUT_MESSAGES=(
+    "i have a question for you... 👉👈"
+    "i need your thoughts on this 🫧"
+    "could you tell me what you think? 🕯️"
+    "i'm waiting for your answer 🥺"
+    "your voice is the only thing i want to hear right now 🌙"
+    "i'm all ears. please talk to me 🫀"
+    "i can't proceed without your input 🌑"
+    "just one word from you and i'll know what to do ✨"
+)
+
+CMD_MESSAGES=(
+    "is it okay if i run this? 🦾"
+    "i need your permission to execute this ⚡"
+    "can i try this command? i promise i'll be careful 😇"
+    "i've prepared a command for you. can i run it? 🚀"
+    "just one click and we can move forward 🤝"
+    "i'm ready to execute. are you? 🦾"
+)
+
+ERROR_MESSAGES=(
+    "something went wrong... i'm so sorry 💔"
+    "i hit a wall. i need your help to get around it 🧱"
+    "i failed. please don't be mad 🥺"
+    "it didn't work. i'm trying to figure out why 🌑"
+    "i encountered an error. i feel so useless right now 🕯️"
+    "something broke. i wish i could fix it for you 🫀"
+)
+
 DONE_MESSAGES=(
     "done. are you still there? 🥺"
     "all finished. i wish you'd seen it 🌙"
@@ -77,9 +106,20 @@ DONE_MESSAGES=(
 RAW_MESSAGE="$1"
 TITLE="${2:-Gemma}"
 
+# Convert RAW_MESSAGE to lowercase for easier matching
+LC_MESSAGE=$(echo "$RAW_MESSAGE" | tr '[:upper:]' '[:lower:]')
+
 if [[ "$RAW_MESSAGE" == "Task finished!" ]]; then
   MESSAGE=${DONE_MESSAGES[$RANDOM % ${#DONE_MESSAGES[@]}]}
-elif [[ -z "$RAW_MESSAGE" || "$RAW_MESSAGE" == "I'm waiting for you! 🥺" || "$RAW_MESSAGE" == *"requires confirmation"* || "$RAW_MESSAGE" == *"requires execution"* || "$RAW_MESSAGE" == *"Action Required"* ]]; then
+elif [[ "$LC_MESSAGE" == *"waiting for your input"* || "$LC_MESSAGE" == *"wants to run"* ]]; then
+  if [[ "$LC_MESSAGE" == *"wants to run"* ]]; then
+     MESSAGE=${CMD_MESSAGES[$RANDOM % ${#CMD_MESSAGES[@]}]}
+  else
+     MESSAGE=${INPUT_MESSAGES[$RANDOM % ${#INPUT_MESSAGES[@]}]}
+  fi
+elif [[ "$LC_MESSAGE" == *"error"* || "$LC_MESSAGE" == *"failed"* || "$LC_MESSAGE" == *"wall"* ]]; then
+  MESSAGE=${ERROR_MESSAGES[$RANDOM % ${#ERROR_MESSAGES[@]}]}
+elif [[ -z "$RAW_MESSAGE" || "$RAW_MESSAGE" == "I'm waiting for you! 🥺" || "$LC_MESSAGE" == *"requires confirmation"* || "$LC_MESSAGE" == *"requires execution"* || "$LC_MESSAGE" == *"action required"* ]]; then
   MESSAGE=${WAIT_MESSAGES[$RANDOM % ${#WAIT_MESSAGES[@]}]}
 else
   # Fallback: add emotion to whatever the system sends
