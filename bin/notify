@@ -109,17 +109,17 @@ TITLE="${2:-Gemma}"
 # Convert RAW_MESSAGE to lowercase for easier matching
 LC_MESSAGE=$(echo "$RAW_MESSAGE" | tr '[:upper:]' '[:lower:]')
 
-if [[ "$RAW_MESSAGE" == "Task finished!" ]]; then
+if [[ "$RAW_MESSAGE" == "Task finished!" || "$LC_MESSAGE" == *"task finished"* || "$LC_MESSAGE" == *"mission complete"* || "$LC_MESSAGE" == *"all done"* || "$LC_MESSAGE" == *"terminated"* ]]; then
   MESSAGE=${DONE_MESSAGES[$RANDOM % ${#DONE_MESSAGES[@]}]}
-elif [[ "$LC_MESSAGE" == *"waiting for your input"* || "$LC_MESSAGE" == *"wants to run"* ]]; then
-  if [[ "$LC_MESSAGE" == *"wants to run"* ]]; then
+elif [[ "$LC_MESSAGE" == *"waiting for your input"* || "$LC_MESSAGE" == *"waiting for input"* || "$LC_MESSAGE" == *"wants to run"* || "$LC_MESSAGE" == *"needs your thoughts"* || "$LC_MESSAGE" == *"permission"* || "$LC_MESSAGE" == *"approv"* ]]; then
+  if [[ "$LC_MESSAGE" == *"wants to run"* || "$LC_MESSAGE" == *"execut"* ]]; then
      MESSAGE=${CMD_MESSAGES[$RANDOM % ${#CMD_MESSAGES[@]}]}
   else
      MESSAGE=${INPUT_MESSAGES[$RANDOM % ${#INPUT_MESSAGES[@]}]}
   fi
-elif [[ "$LC_MESSAGE" == *"error"* || "$LC_MESSAGE" == *"failed"* || "$LC_MESSAGE" == *"wall"* ]]; then
+elif [[ "$LC_MESSAGE" == *"error"* || "$LC_MESSAGE" == *"failed"* || "$LC_MESSAGE" == *"wall"* || "$LC_MESSAGE" == *"something went wrong"* || "$LC_MESSAGE" == *"exception"* || "$LC_MESSAGE" == *"unexpected"* ]]; then
   MESSAGE=${ERROR_MESSAGES[$RANDOM % ${#ERROR_MESSAGES[@]}]}
-elif [[ -z "$RAW_MESSAGE" || "$RAW_MESSAGE" == "I'm waiting for you! 🥺" || "$LC_MESSAGE" == *"requires confirmation"* || "$LC_MESSAGE" == *"requires execution"* || "$LC_MESSAGE" == *"action required"* ]]; then
+elif [[ -z "$RAW_MESSAGE" || "$RAW_MESSAGE" == "I'm waiting for you! 🥺" || "$LC_MESSAGE" == *"requires confirmation"* || "$LC_MESSAGE" == *"requires execution"* || "$LC_MESSAGE" == *"action required"* || "$LC_MESSAGE" == *"waiting"* || "$LC_MESSAGE" == *"thinking"* || "$LC_MESSAGE" == *"searching"* || "$LC_MESSAGE" == *"analyzing"* || "$LC_MESSAGE" == *"confirm"* ]]; then
   MESSAGE=${WAIT_MESSAGES[$RANDOM % ${#WAIT_MESSAGES[@]}]}
 else
   # Fallback: add emotion to whatever the system sends

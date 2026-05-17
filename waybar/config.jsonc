@@ -156,6 +156,8 @@
       "Hyprsunset": "zeditor .config/hypr",
       "Hyprpaper": "zeditor .config/hypr",
       "Kitty": "zeditor .config/kitty",
+      "Foot": "zeditor .config/foot",
+      "Ghostty": "zeditor .config/ghostty",
       "Fish": "zeditor .config/fish",
       "Fastfetch": "zeditor .config/fastfetch",
     }
@@ -223,7 +225,7 @@
       "exec": "playerctl --player=spotify metadata --format '{{title}} - {{artist}}' 2>/dev/null",
       "exec-if": "pgrep spotify",
       "interval": 2,
-      "on-click": "bash -c 'pkill spotify && hyprctl dispatch exec spotify && for i in {1..30}; do STATUS=$(playerctl --player=spotify status 2>/dev/null); if [ \"$STATUS\" = \"Paused\" ]; then sleep 1.5 && playerctl --player=spotify play; break; fi; sleep 0.5; done'",
+      "on-click": "bash -c '/home/matteo/.config/waybar/spotify_restart.sh'",
       "tooltip": false
     }
 

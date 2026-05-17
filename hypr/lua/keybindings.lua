@@ -30,7 +30,7 @@ hl.bind(mainMod .. " + B", function()
     battery_mode = not battery_mode
     if battery_mode then
         -- Power saving mode
-        hl.config({ 
+        hl.config({
             animations = { enabled = false },
             decoration = {
                 rounding = 0,
@@ -41,7 +41,7 @@ hl.bind(mainMod .. " + B", function()
     else
         -- High performance mode (restoring from theme)
         local theme = require("theme")
-        hl.config({ 
+        hl.config({
             animations = { enabled = true },
             decoration = {
                 rounding = theme.rounding,
@@ -124,6 +124,8 @@ hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl s 5%+ | grep -oP 
 hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl s 5%- | grep -oP '\\(\\K[^%]+' > $XDG_RUNTIME_DIR/wob.fifo"), { locked = true, repeating = true })
 hl.bind(mainMod .. " + XF86AudioRaiseVolume", hl.dsp.exec_cmd("playerctl next"),       { locked = true })
 hl.bind(mainMod .. " + XF86AudioLowerVolume", hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
+hl.bind(mainMod .. " + XF86AudioMicMute", hl.dsp.exec_cmd("/home/matteo/.config/waybar/spotify_restart.sh"),   { locked = true })
+
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })

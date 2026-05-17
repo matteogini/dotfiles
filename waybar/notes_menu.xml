@@ -37,6 +37,16 @@
         </object>
     </child>
     <child>
+        <object class="GtkMenuItem" id="Foot">
+            <property name="label">Foot</property>
+        </object>
+    </child>
+    <child>
+        <object class="GtkMenuItem" id="Ghostty">
+            <property name="label">Ghostty</property>
+        </object>
+    </child>
+    <child>
         <object class="GtkMenuItem" id="Fish">
             <property name="label">Fish</property>
         </object>
