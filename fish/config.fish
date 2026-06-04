@@ -37,3 +37,7 @@ abbr -a gs 'git status'
 abbr -a ga 'git add'
 abbr -a gc 'git commit -m'
 abbr -a gp 'git push'
+
+
+# Added by Antigravity CLI installer
+set -gx PATH "/home/matteo/.local/bin" $PATH

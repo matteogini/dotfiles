@@ -170,8 +170,8 @@
     "menu": "on-click",
     "menu-file": "~/.config/waybar/gpu_menu.xml",
     "menu-actions": {
-      "Integrated": "bash -c 'supergfxctl -m Integrated && hyprctl dispatch exit'",
-      "Hybrid": "bash -c 'supergfxctl -m Hybrid && hyprctl dispatch exit'"
+      "Integrated": "bash -c 'supergfxctl -m Integrated ; hyprctl dispatch \"hl.dsp.exit()\"'",
+      "Hybrid": "bash -c 'supergfxctl -m Hybrid ; hyprctl dispatch \"hl.dsp.exit()\"'"
     }
   },
 
