@@ -980,8 +980,6 @@ ShellRoot {
                             }
                         }
                     }
-                    
-                    } // End mainLayout
 
                     } // End Item wrapper
             }
