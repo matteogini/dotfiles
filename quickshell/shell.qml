@@ -92,11 +92,11 @@ ShellRoot {
 
     // Background Process Loops
     Process {
-        command: ["sh", "-c", "while true; do awk '{line[NR]=$1} END {printf \"%.1f\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null || echo '0.0'; echo; sleep 10; done"]
+        command: ["sh", "-c", "while true; do awk '{line[NR]=$1} END {printf \"%.1f\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null || echo '0.0'; echo; sleep 3; done"]
         running: true; stdout: SplitParser { onRead: data => root.powerDraw = data.trim() }
     }
     Process {
-        command: ["sh", "-c", "while true; do temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0); echo $((temp / 1000)); sleep 10; done"]
+        command: ["sh", "-c", "while true; do temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0); echo $((temp / 1000)); sleep 3; done"]
         running: true; stdout: SplitParser { onRead: data => root.temperature = data.trim() }
     }
     Process {
@@ -104,7 +104,7 @@ ShellRoot {
         running: true; stdout: SplitParser { onRead: data => root.updates = data.trim() }
     }
     Process {
-        command: ["sh", "-c", "while true; do cap=$(cat /sys/class/power_supply/BAT1/capacity 2>/dev/null || echo 0); acad=$(cat /sys/class/power_supply/ACAD/online 2>/dev/null || echo 0); echo \"$cap $acad\"; sleep 60; done"]
+        command: ["sh", "-c", "while true; do cap=$(cat /sys/class/power_supply/BAT1/capacity 2>/dev/null || echo 0); acad=$(cat /sys/class/power_supply/ACAD/online 2>/dev/null || echo 0); echo \"$cap $acad\"; sleep 5; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var parts = data.trim().split(" ");
@@ -114,11 +114,11 @@ ShellRoot {
         }
     }
     Process {
-        command: ["sh", "-c", "while true; do supergfxctl -g 2>/dev/null || echo '?'; sleep 10; done"]
+        command: ["sh", "-c", "while true; do supergfxctl -g 2>/dev/null || echo '?'; sleep 3; done"]
         running: true; stdout: SplitParser { onRead: data => root.gpuMode = data.trim() }
     }
     Process {
-        command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null; sleep 2; done"]
+        command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null; sleep 0.5; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
@@ -129,7 +129,7 @@ ShellRoot {
         }
     }
     Process {
-        command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null; sleep 2; done"]
+        command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null; sleep 0.5; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
@@ -140,11 +140,11 @@ ShellRoot {
         }
     }
     Process {
-        command: ["sh", "-c", "while true; do bluetoothctl show 2>/dev/null | grep -q 'Powered: yes' && echo 'on' || echo 'off'; sleep 10; done"]
+        command: ["sh", "-c", "while true; do bluetoothctl show 2>/dev/null | grep -q 'Powered: yes' && echo 'on' || echo 'off'; sleep 3; done"]
         running: true; stdout: SplitParser { onRead: data => root.bluetoothStatus = data.trim() }
     }
     Process {
-        command: ["sh", "-c", "while true; do sig=$(LC_ALL=C nmcli -t -f active,signal dev wifi | grep '^yes' | cut -d: -f2); if [ -z \"$sig\" ]; then echo 'disc'; else echo \"$sig\"; fi; sleep 10; done"]
+        command: ["sh", "-c", "while true; do sig=$(LC_ALL=C nmcli -t -f active,signal dev wifi | grep '^yes' | cut -d: -f2); if [ -z \"$sig\" ]; then echo 'disc'; else echo \"$sig\"; fi; sleep 3; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
@@ -162,7 +162,7 @@ ShellRoot {
         }
     }
     Process {
-        command: ["sh", "-c", "while true; do status=$(playerctl --player=spotify status 2>/dev/null || echo 'offline'); if [ \"$status\" != 'offline' ]; then text=$(playerctl --player=spotify metadata --format '{{title}} - {{artist}}' 2>/dev/null); echo \"$status|$text\"; else echo 'offline|'; fi; sleep 2; done"]
+        command: ["sh", "-c", "while true; do status=$(playerctl --player=spotify status 2>/dev/null || echo 'offline'); if [ \"$status\" != 'offline' ]; then text=$(playerctl --player=spotify metadata --format '{{title}} - {{artist}}' 2>/dev/null); echo \"$status|$text\"; else echo 'offline|'; fi; sleep 0.5; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var p = data.split("|");
@@ -721,6 +721,7 @@ ShellRoot {
                             ModernSlider {
                                 value: parseInt(root.volumeOut) / 100.0
                                 onMoved: {
+                                    root.volumeOut = Math.round(value * 100) + "%"
                                     pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value.toFixed(2)]
                                     pVolSet.running = true
                                 }
@@ -735,6 +736,7 @@ ShellRoot {
                             ModernSlider {
                                 value: parseInt(root.volumeMic) / 100.0
                                 onMoved: {
+                                    root.volumeMic = Math.round(value * 100) + "%"
                                     pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", value.toFixed(2)]
                                     pVolSet.running = true
                                 }
@@ -748,6 +750,7 @@ ShellRoot {
                             ModernSlider {
                                 value: parseInt(root.brightnessLevel) / 100.0
                                 onMoved: {
+                                    root.brightnessLevel = Math.round(value * 100) + "%"
                                     pBrightSet.target = Math.round(value * 100) + "%"
                                     pBrightSet.running = true
                                 }
@@ -768,7 +771,10 @@ ShellRoot {
                             isActive: root.bluetoothStatus === "on"
                             accent: "#007AFF"
                             onMainClicked: { pBlueberry.running = true; controlCenter.show = false }
-                            onIconClicked: { pBtToggle.running = true }
+                            onIconClicked: { 
+                                root.bluetoothStatus = (root.bluetoothStatus === "on") ? "off" : "on"
+                                pBtToggle.running = true 
+                            }
                         }
                         
                         ModernSplitButton {
@@ -777,7 +783,11 @@ ShellRoot {
                             isActive: root.wifiText !== "Disconnected"
                             accent: "#007AFF"
                             onMainClicked: { pNmtui.running = true; controlCenter.show = false }
-                            onIconClicked: { pWifiToggle.running = true }
+                            onIconClicked: { 
+                                root.wifiText = (root.wifiText === "Disconnected") ? "Connecting..." : "Disconnected"
+                                root.wifiIcon = (root.wifiText === "Connecting...") ? "󰤨" : "󰤮"
+                                pWifiToggle.running = true 
+                            }
                         }
                     }
                     
