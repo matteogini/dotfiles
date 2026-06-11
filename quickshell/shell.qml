@@ -105,7 +105,7 @@ PanelWindow {
         running: true; stdout: SplitParser { onRead: data => bluetoothStatus = data.trim() }
     }
     Process {
-        command: ["sh", "-c", "while true; do sig=$(nmcli -t -f active,signal dev wifi | grep '^yes' | cut -d: -f2); if [ -z \"$sig\" ]; then echo 'disc'; else echo \"$sig\"; fi; sleep 10; done"]
+        command: ["sh", "-c", "while true; do sig=$(LC_ALL=C nmcli -t -f active,signal dev wifi | grep '^yes' | cut -d: -f2); if [ -z \"$sig\" ]; then echo 'disc'; else echo \"$sig\"; fi; sleep 10; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
@@ -132,6 +132,7 @@ PanelWindow {
             }
         }
     }
+
 
     // A helper to make clickable modules easily
     component Mod: MouseArea {
