@@ -44,6 +44,7 @@ ShellRoot {
     property string updates: "0"
     property string batteryCap: "100"
     property string brightnessLevel: "0%"
+    property int cpuWattage: 15
     property bool batteryCharging: false
     property string gpuMode: "Unknown"
     property string volumeOut: "0%"
@@ -55,6 +56,22 @@ ShellRoot {
     property string spotifyText: ""
     property string wifiIcon: "󰤯"
     property string wifiText: "Disconnected"
+
+    // Stopwatch & Timer state
+    property bool stopwatchRunning: false
+    property int stopwatchSeconds: 0
+    property string stopwatchText: "00:00"
+    
+    property bool timerRunning: false
+    property int timerSeconds: 0
+    property int timerTotal: 300 // 5 minutes default
+    property string timerText: "05:00"
+    
+    function formatTime(s) {
+        var m = Math.floor(s / 60);
+        var sec = s % 60;
+        return (m < 10 ? "0" + m : m) + ":" + (sec < 10 ? "0" + sec : sec);
+    }
 
     // Click Actions
     Process { id: pPavu; command: ["pavucontrol"] }
@@ -79,10 +96,38 @@ ShellRoot {
     }
     Timer { interval: 1000; running: true; repeat: true; onTriggered: pBright.running = true }
 
+    Timer {
+        id: stopwatchTimer
+        interval: 1000
+        running: root.stopwatchRunning
+        repeat: true
+        onTriggered: {
+            root.stopwatchSeconds++;
+            root.stopwatchText = root.formatTime(root.stopwatchSeconds);
+        }
+    }
+
+    Timer {
+        id: timerTimer
+        interval: 1000
+        running: root.timerRunning
+        repeat: true
+        onTriggered: {
+            if (root.timerSeconds > 0) {
+                root.timerSeconds--;
+                root.timerText = root.formatTime(root.timerSeconds);
+            } else {
+                root.timerRunning = false;
+            }
+        }
+    }
+
     Process {
         id: pBrightSet
         command: ["brightnessctl", "s", "50%"]
     }
+
+    Process { id: pWattSet }
 
     Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
     Process { id: pSpotNext; command: ["playerctl", "--player=spotify", "next"] }
@@ -306,6 +351,24 @@ ShellRoot {
                 bgColor: "transparent"
                 blink: isCrit
                 show: !controlCenter.show
+                onClicked: controlCenter.show = true
+            }
+
+            Mod {
+                property bool isActive: root.stopwatchRunning || root.stopwatchSeconds > 0
+                text: "󱎫 " + root.stopwatchText
+                textColor: root.stopwatchRunning ? "#FFA500" : root.colFg
+                bgColor: "transparent"
+                show: isActive && !controlCenter.show
+                onClicked: controlCenter.show = true
+            }
+            
+            Mod {
+                property bool isActive: root.timerRunning || (root.timerSeconds > 0 && root.timerSeconds < root.timerTotal)
+                text: "󰔛 " + root.timerText
+                textColor: root.timerRunning ? "#FFA500" : root.colFg
+                bgColor: "transparent"
+                show: isActive && !controlCenter.show
                 onClicked: controlCenter.show = true
             }
         }
@@ -795,6 +858,29 @@ ShellRoot {
                             
                         }
 
+                        // Wattage
+                        RowLayout {
+                            spacing: 8
+                            Text { text: "󱐋"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            ModernSlider {
+                                value: (root.cpuWattage - 3) / 42.0
+                                onMoved: {
+                                    var watts = Math.round(3 + value * 42)
+                                    root.cpuWattage = watts
+                                    pWattSet.command = ["setwatt", watts.toString()]
+                                    pWattSet.running = true
+                                }
+                            }
+                            Text { 
+                                text: root.cpuWattage + "W"
+                                color: root.colFg
+                                font.family: root.fontFamily
+                                font.pixelSize: 12
+                                Layout.minimumWidth: 24
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+
                     }
                     
                     // Toggles Row 1
@@ -844,6 +930,55 @@ ShellRoot {
                             text: "Configs"
                             iconText: ""
                             id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false }
+                        }
+                    }
+
+                    // Toggles Row 3 (Timer and Stopwatch)
+                    RowLayout {
+                        spacing: 8
+                        Layout.fillWidth: true
+                        
+                        ModernSplitButton {
+                            text: root.stopwatchText
+                            iconText: "󱎫"
+                            isActive: root.stopwatchRunning || root.stopwatchSeconds > 0
+                            accent: "#FFA500"
+                            onMainClicked: {
+                                if (root.stopwatchRunning) {
+                                    root.stopwatchRunning = false;
+                                } else {
+                                    root.stopwatchRunning = true;
+                                }
+                            }
+                            onIconClicked: { 
+                                root.stopwatchRunning = false;
+                                root.stopwatchSeconds = 0;
+                                root.stopwatchText = "00:00";
+                            }
+                        }
+                        
+                        ModernSplitButton {
+                            text: root.timerText
+                            iconText: "󰔛"
+                            isActive: root.timerRunning || (root.timerSeconds > 0 && root.timerSeconds < root.timerTotal)
+                            accent: "#FFA500"
+                            onMainClicked: {
+                                if (root.timerRunning) {
+                                    root.timerRunning = false;
+                                } else if (root.timerSeconds > 0) {
+                                    root.timerRunning = true;
+                                } else {
+                                    root.timerSeconds = root.timerTotal;
+                                    root.timerText = root.formatTime(root.timerTotal);
+                                    root.timerRunning = true;
+                                }
+                            }
+                            onIconClicked: { 
+                                root.timerRunning = false;
+                                root.timerSeconds = 0;
+                                root.timerText = root.formatTime(root.timerTotal);
+                            }
+                        }
                     }
                     
                     } // End mainLayout
