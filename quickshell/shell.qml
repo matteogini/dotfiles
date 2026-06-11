@@ -236,7 +236,7 @@ ShellRoot {
         // No behavior needed, it snaps perfectly instantly
         
         anchors.top: parent.top
-        anchors.topMargin: 8
+        anchors.topMargin: 4
         anchors.horizontalCenter: parent.horizontalCenter
         height: 32
         width: notchLayout.implicitWidth + 32
@@ -538,7 +538,7 @@ ShellRoot {
             Rectangle {
                 id: animRect
                 anchors.top: parent.top
-                anchors.topMargin: controlCenter.show ? 16 : 8
+                anchors.topMargin: controlCenter.show ? 16 : 4
                 anchors.horizontalCenter: parent.horizontalCenter
                 
                 width: controlCenter.show ? 380 : notchLayout.implicitWidth + 32
