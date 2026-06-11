@@ -3,18 +3,30 @@
 update() {
     active_ws=$(hyprctl activeworkspace -j | jq -r .id)
     if [ -z "$active_ws" ] || [ "$active_ws" = "null" ]; then echo 0; return; fi
-    hyprctl clients -j | jq -c '[.[] | select(.workspace.id == '"$active_ws"' and .floating == false)] | length'
+    res=$(hyprctl clients -j | jq -c '[.[] | select(.workspace.id == '"$active_ws"' and .floating == false)] | length')
+    echo "$res"
+    echo "$(date '+%H:%M:%S.%N') - WS: $active_ws - Tiled count: $res" >> /tmp/qs_debug.log
 }
 
-# Initial update
-update
+last_val="-1"
+do_update() {
+    local val=$(update)
+    if [ "$val" != "$last_val" ]; then
+        echo "$val"
+        last_val="$val"
+    fi
+}
+
+do_update
 
 socat -U - UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock | while read -r line; do
-    # Consume any rapid-fire events that arrive within 50ms
-    while read -t 0.05 -r junk; do
-        true
-    done
-    # Now that the burst is over, query Hyprland
-    sleep 0.1
-    update
+    echo "event"
+done | while read -r event; do
+    while read -t 0.05 -r junk; do true; done
+    do_update
+done &
+
+while true; do
+    sleep 0.5
+    do_update
 done
