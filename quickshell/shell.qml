@@ -232,6 +232,9 @@ ShellRoot {
 
     Rectangle {
         id: notchRect
+        opacity: (!controlCenter.show && controlCenter.animHeight <= 45) ? 1.0 : 0.0
+        // No behavior needed, it snaps perfectly instantly
+        
         anchors.top: parent.top
         anchors.topMargin: -16
         anchors.horizontalCenter: parent.horizontalCenter
@@ -244,6 +247,8 @@ ShellRoot {
         
         RowLayout {
             id: notchLayout
+            opacity: controlCenter.show ? 0 : 1
+            Behavior on opacity { NumberAnimation { duration: 150 } }
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             height: parent.height - 16
@@ -514,6 +519,7 @@ ShellRoot {
 
 
         property bool show: false
+        property real animHeight: animRect.height
         
 
 
@@ -532,28 +538,53 @@ ShellRoot {
             Rectangle {
                 id: animRect
                 anchors.top: parent.top
+                anchors.topMargin: controlCenter.show ? 16 : -16
                 anchors.horizontalCenter: parent.horizontalCenter
                 
-                width: 380
-                height: mainLayout.implicitHeight + 32
+                width: controlCenter.show ? 380 : notchLayout.implicitWidth + 32
+                height: controlCenter.show ? (mainLayout.implicitHeight + 32) : 40
                 
-                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
                 radius: 16
                 border.color: Qt.rgba(1, 1, 1, 0.1)
                 border.width: 1
                 
-                // FLUID ANIMATION
-                opacity: controlCenter.show ? 1.0 : 0.0
-                scale: controlCenter.show ? 1.0 : 0.95
-                y: controlCenter.show ? 0 : -20
+                // DYNAMIC ISLAND FLUID ANIMATION
+                opacity: (!controlCenter.show && height <= 45) ? 0.0 : 1.0
                 
-                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
-                Behavior on y { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+                Behavior on width { 
+                    NumberAnimation { 
+                        duration: controlCenter.show ? 450 : 300
+                        easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
+                        easing.overshoot: controlCenter.show ? 1.2 : 0 
+                    } 
+                }
+                Behavior on height { 
+                    NumberAnimation { 
+                        duration: controlCenter.show ? 450 : 300
+                        easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
+                        easing.overshoot: controlCenter.show ? 1.2 : 0 
+                    } 
+                }
+                Behavior on anchors.topMargin { 
+                    NumberAnimation { 
+                        duration: controlCenter.show ? 450 : 300
+                        easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
+                        easing.overshoot: controlCenter.show ? 1.2 : 0 
+                    } 
+                }
                 
                 Item {
                     anchors.fill: parent
                     anchors.margins: 16
+                    opacity: controlCenter.show ? 1.0 : 0.0
+                    Behavior on opacity { 
+                        NumberAnimation { 
+                            duration: controlCenter.show ? 300 : 100
+                            easing.type: Easing.InOutQuad 
+                        } 
+                    }
+                    clip: true
 
                     ColumnLayout {
                         id: mainLayout
@@ -809,6 +840,7 @@ ShellRoot {
         }
         
         property bool show: false
+        property real animHeight: animRect.height
         visible: show || animRectGpu.opacity > 0
         
         implicitWidth: 200
@@ -862,6 +894,7 @@ ShellRoot {
         }
         
         property bool show: false
+        property real animHeight: animRect.height
         visible: show || animRectNotes.opacity > 0
         
         implicitWidth: 340
