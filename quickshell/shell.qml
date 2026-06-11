@@ -762,22 +762,22 @@ ShellRoot {
                         spacing: 12
                         Layout.fillWidth: true
                         
-                        ModernButton {
-                            id: btnBt
+                        ModernSplitButton {
                             text: "Bluetooth"
                             iconText: root.bluetoothStatus === "on" ? "" : "󰂲"
                             isActive: root.bluetoothStatus === "on"
                             accent: "#007AFF"
-                            onClicked: { btPopup.show = !btPopup.show; wifiPopup.show = false; gpuPopup.show = false; notesPopup.show = false }
+                            onMainClicked: { pBlueberry.running = true; controlCenter.show = false }
+                            onIconClicked: { pBtToggle.running = true }
                         }
                         
-                        ModernButton {
-                            id: btnWifi
+                        ModernSplitButton {
                             text: root.wifiText === "Disconnected" ? "Wi-Fi" : root.wifiText
                             iconText: root.wifiIcon
                             isActive: root.wifiText !== "Disconnected"
                             accent: "#007AFF"
-                            onClicked: { wifiPopup.show = !wifiPopup.show; btPopup.show = false; gpuPopup.show = false; notesPopup.show = false }
+                            onMainClicked: { pNmtui.running = true; controlCenter.show = false }
+                            onIconClicked: { pWifiToggle.running = true }
                         }
                     }
                     
