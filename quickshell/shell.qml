@@ -461,7 +461,7 @@ ShellRoot {
             Rectangle {
                 id: animRect
                 anchors.fill: parent
-                anchors.topMargin: root.height + 8
+                
                 anchors.rightMargin: 12
                 
                 color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
@@ -540,16 +540,24 @@ ShellRoot {
                                 id: battLayout
                                 anchors.centerIn: parent
                                 spacing: 10
-                                ModernBatteryIcon {
-                                    level: parseInt(root.batteryCap) / 100.0
-                                    charging: root.batteryCharging
-                                    colFg: {
-                                        let c = parseInt(root.batteryCap);
-                                        if (c <= 15 && !root.batteryCharging) return root.colCrit;
-                                        if (c <= 30 && c > 15 && !root.batteryCharging) return "#FFA500";
-                                        if (root.batteryCharging) return "#76B900";
-                                        return root.colFg;
+                                Text { 
+                                    text: {
+                                        let cap = parseInt(root.batteryCap);
+                                        if (root.batteryCharging) return "";
+                                        if (cap > 80) return "";
+                                        if (cap > 60) return "";
+                                        if (cap > 40) return "";
+                                        if (cap > 20) return "";
+                                        return "";
                                     }
+                                    color: {
+                                        let cap = parseInt(root.batteryCap);
+                                        let isCrit = cap <= 15 && !root.batteryCharging;
+                                        let isWarn = cap <= 30 && cap > 15 && !root.batteryCharging;
+                                        return isCrit ? root.colCrit : (isWarn ? "#FFA500" : (root.batteryCharging ? "#76B900" : root.colFg));
+                                    }
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 18 
                                 }
                                 Text { 
                                     text: root.batteryCap + "%"
@@ -719,7 +727,7 @@ ShellRoot {
         visible: show || animRectGpu.opacity > 0
         
         implicitWidth: 200
-        implicitHeight: layoutGpu.implicitHeight + 40
+        implicitHeight: layoutGpu.implicitHeight + 32
         color: "transparent"
         
         Item {
@@ -728,7 +736,7 @@ ShellRoot {
             Rectangle {
                 id: animRectGpu
                 anchors.fill: parent
-                anchors.topMargin: root.height + 8
+                
                 anchors.rightMargin: 12
                 
                 color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
@@ -748,8 +756,7 @@ ShellRoot {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.margins: 20
-                    anchors.topMargin: root.height + 28
+                    anchors.margins: 16
                     spacing: 12
                     
                     
@@ -773,7 +780,7 @@ ShellRoot {
         visible: show || animRectNotes.opacity > 0
         
         implicitWidth: 340
-        implicitHeight: layoutNotes.implicitHeight + 40
+        implicitHeight: layoutNotes.implicitHeight + 32
         color: "transparent"
         
         Item {
@@ -782,7 +789,7 @@ ShellRoot {
             Rectangle {
                 id: animRectNotes
                 anchors.fill: parent
-                anchors.topMargin: root.height + 8
+                
                 anchors.rightMargin: 12
                 
                 color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
@@ -802,26 +809,25 @@ ShellRoot {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.margins: 20
-                    anchors.topMargin: root.height + 28
-                    spacing: 16
+                    anchors.margins: 16
+                    spacing: 12
                     
                     
                     
                     GridLayout {
                         Layout.fillWidth: true
                         columns: 2
-                        rowSpacing: 12
-                        columnSpacing: 12
+                        rowSpacing: 8
+                        columnSpacing: 8
                         
-                        ModernButton { Layout.preferredHeight: 48; text: "Hyprland"; onClicked: { pNoteHyprland.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Waybar"; onClicked: { pNoteWaybar.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Tofi"; onClicked: { pNoteTofi.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Kitty"; onClicked: { pNoteKitty.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Foot"; onClicked: { pNoteFoot.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Ghostty"; onClicked: { pNoteGhostty.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Fish"; onClicked: { pNoteFish.running = true; notesPopup.show = false; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 48; text: "Fastfetch"; onClicked: { pNoteFastfetch.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Hyprland"; onClicked: { pNoteHyprland.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Waybar"; onClicked: { pNoteWaybar.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Tofi"; onClicked: { pNoteTofi.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Kitty"; onClicked: { pNoteKitty.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Foot"; onClicked: { pNoteFoot.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Ghostty"; onClicked: { pNoteGhostty.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Fish"; onClicked: { pNoteFish.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Fastfetch"; onClicked: { pNoteFastfetch.running = true; notesPopup.show = false; controlCenter.show = false } }
                     }
                 }
             }
