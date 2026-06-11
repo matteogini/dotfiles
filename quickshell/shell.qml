@@ -266,160 +266,234 @@ ShellRoot {
     }
 }
 
+    component ModernButton: MouseArea {
+        id: mbtn
+        property string text
+        property string iconText
+        property bool isActive: false
+        property color accent: root.colFg
+        
+        Layout.fillWidth: true
+        Layout.preferredHeight: 48
+        hoverEnabled: true
+        
+        Rectangle {
+            anchors.fill: parent
+            radius: 12
+            color: mbtn.isActive ? Qt.rgba(mbtn.accent.r, mbtn.accent.g, mbtn.accent.b, 0.15) 
+                                 : (mbtn.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+            border.color: mbtn.isActive ? Qt.rgba(mbtn.accent.r, mbtn.accent.g, mbtn.accent.b, 0.3) : "transparent"
+            border.width: 1
+            Behavior on color { ColorAnimation { duration: 150 } }
+        }
+        
+        RowLayout {
+            anchors.centerIn: parent
+            spacing: 8
+            Text { text: mbtn.iconText; color: mbtn.isActive ? mbtn.accent : root.colFg; font.family: root.fontFamily; font.pixelSize: 16 }
+            Text { text: mbtn.text; color: mbtn.isActive ? mbtn.accent : root.colFg; font.family: root.fontFamily; font.pixelSize: 13; font.bold: true }
+        }
+        
+        scale: containsPress ? 0.95 : 1.0
+        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+    }
+
     PopupWindow {
         id: controlCenter
         anchor.window: root
         anchor.edges: Edges.Bottom | Edges.Right
         
         property bool show: false
-        visible: show
         
-        implicitWidth: 320
-        implicitHeight: layout.implicitHeight + 32
+        // Fluid Animation Visibility Logic: Stay mapped until opacity is 0
+        visible: show || animRect.opacity > 0
         
-        color: Qt.rgba(0.05, 0.05, 0.05, 0.95)
+        // Increased size and fixed clipping
+        implicitWidth: 440
+        implicitHeight: layout.implicitHeight + 48
+        color: "transparent"
         
-        Rectangle {
+        Item {
             anchors.fill: parent
-            color: "transparent"
-            border.color: Qt.rgba(1,1,1,0.1)
-            border.width: 1
-            radius: 8
-        }
-        
-        ColumnLayout {
-            id: layout
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: 16
-            spacing: 20
             
-            // Header: Clock & Date
-            RowLayout {
-                Layout.fillWidth: true
-                Text {
-                    id: clockText
-                    color: root.colFg
-                    font { family: root.fontFamily; pixelSize: 24; bold: true }
-                    text: Qt.formatDateTime(new Date(), "HH:mm")
-                    Timer {
-                        interval: 1000; running: true; repeat: true
-                        onTriggered: clockText.text = Qt.formatDateTime(new Date(), "HH:mm")
+            Rectangle {
+                id: animRect
+                anchors.fill: parent
+                anchors.topMargin: 8
+                anchors.rightMargin: 12  // Fixes right-edge cutoff!
+                anchors.leftMargin: 12
+                anchors.bottomMargin: 12
+                
+                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                radius: 16
+                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.width: 1
+                
+                // FLUID ANIMATION
+                opacity: controlCenter.show ? 1.0 : 0.0
+                scale: controlCenter.show ? 1.0 : 0.95
+                y: controlCenter.show ? 0 : -20
+                
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+                Behavior on y { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
+                
+                ColumnLayout {
+                    id: layout
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 20
+                    spacing: 24
+                    
+                    // Header: Clock & Date
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            id: clockText
+                            color: root.colFg
+                            font.family: root.fontFamily
+                            font.pixelSize: 28
+                            font.bold: true
+                            text: Qt.formatDateTime(new Date(), "HH:mm")
+                            Timer {
+                                interval: 1000; running: true; repeat: true
+                                onTriggered: clockText.text = Qt.formatDateTime(new Date(), "HH:mm")
+                            }
+                        }
+                        Item { Layout.fillWidth: true }
+                        Text {
+                            color: root.colMuted
+                            font.family: root.fontFamily
+                            font.pixelSize: 13
+                            text: Qt.formatDateTime(new Date(), "dddd, MMMM d")
+                        }
                     }
-                }
-                Item { Layout.fillWidth: true }
-                Text {
-                    color: root.colMuted
-                    font { family: root.fontFamily; pixelSize: 12 }
-                    text: Qt.formatDateTime(new Date(), "ddd, MMM d")
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1) }
-            
-            // Spotify Media Player
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 8
-                visible: root.spotifyStatus !== "offline"
-                
-                Text {
-                    text: "🎵 " + root.spotifyText
-                    color: root.colAccent
-                    font { family: root.fontFamily; pixelSize: 12; bold: true }
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-                
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 16
-                    Item { Layout.fillWidth: true }
-                    Button { text: "󰒮"; onClicked: { pSpotPrev.running = true } }
-                    Button { text: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; onClicked: { pSpotPlay.running = true } }
-                    Button { text: "󰒭"; onClicked: { pSpotNext.running = true } }
-                    Item { Layout.fillWidth: true }
-                }
-            }
-            
-            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1); visible: root.spotifyStatus !== "offline" }
+                    
+                    Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1) }
+                    
+                    // Spotify Media Player
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        visible: root.spotifyStatus !== "offline"
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Text { text: ""; color: "#1DB954"; font.family: root.fontFamily; font.pixelSize: 18 }
+                            Text {
+                                text: root.spotifyText
+                                color: root.colFg
+                                font.family: root.fontFamily
+                                font.pixelSize: 14
+                                font.bold: true
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                        }
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 16
+                            Item { Layout.fillWidth: true }
+                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; iconText: "󰒮"; onClicked: { pSpotPrev.running = true } }
+                            ModernButton { Layout.preferredWidth: 64; Layout.preferredHeight: 48; iconText: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; isActive: root.spotifyStatus === "Playing"; accent: "#1DB954"; onClicked: { pSpotPlay.running = true } }
+                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; iconText: "󰒭"; onClicked: { pSpotNext.running = true } }
+                            Item { Layout.fillWidth: true }
+                        }
+                    }
+                    
+                    Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1); visible: root.spotifyStatus !== "offline" }
 
-            // Volume
-            RowLayout {
-                spacing: 12
-                Text { text: ""; color: root.colFg; font.family: root.fontFamily }
-                Slider {
-                    Layout.fillWidth: true
-                    from: 0; to: 1.0
-                    value: parseInt(root.volumeOut) / 100.0
-                    onMoved: {
-                        pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value.toFixed(2)]
-                        pVolSet.running = true
+                    // Sliders
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 16
+                        
+                        // Volume
+                        RowLayout {
+                            spacing: 16
+                            Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            Slider {
+                                Layout.fillWidth: true
+                                from: 0; to: 1.0
+                                value: parseInt(root.volumeOut) / 100.0
+                                onMoved: {
+                                    pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value.toFixed(2)]
+                                    pVolSet.running = true
+                                }
+                            }
+                            Text { text: root.volumeOut; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
+                        }
+                        
+                        // Mic
+                        RowLayout {
+                            spacing: 16
+                            Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            Slider {
+                                Layout.fillWidth: true
+                                from: 0; to: 1.0
+                                value: parseInt(root.volumeMic) / 100.0
+                                onMoved: {
+                                    pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", value.toFixed(2)]
+                                    pVolSet.running = true
+                                }
+                            }
+                            Text { text: root.volumeMic; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
+                        }
+                    }
+                    
+                    // Toggles Row 1
+                    RowLayout {
+                        spacing: 12
+                        Layout.fillWidth: true
+                        
+                        ModernButton {
+                            text: "Bluetooth"
+                            iconText: root.bluetoothStatus === "on" ? "" : "󰂲"
+                            isActive: root.bluetoothStatus === "on"
+                            accent: "#007AFF"
+                            onClicked: { pBlueberry.running = true; controlCenter.show = false }
+                        }
+                        
+                        ModernButton {
+                            text: root.wifiText === "Disconnected" ? "Wi-Fi" : root.wifiText
+                            iconText: root.wifiIcon
+                            isActive: root.wifiText !== "Disconnected"
+                            accent: "#007AFF"
+                            onClicked: { pNmtui.running = true; controlCenter.show = false }
+                        }
+                    }
+                    
+                    // Toggles Row 2
+                    RowLayout {
+                        spacing: 12
+                        Layout.fillWidth: true
+                        
+                        ModernButton {
+                            text: root.gpuMode
+                            iconText: "󰢮"
+                            isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
+                            accent: "#76B900"
+                            onClicked: { pGpu.running = true }
+                        }
+                        ModernButton {
+                            text: "Notes"
+                            iconText: ""
+                            onClicked: { pNotes.running = true; controlCenter.show = false }
+                        }
+                    }
+                    
+                    // System Stats
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        
+                        Text { text: "󱐋 " + root.powerDraw + "W"; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                        Text { text: " " + root.temperature + "°"; color: parseInt(root.temperature) >= 80 ? root.colCrit : root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                        Text { text: "󰮯 " + root.updates; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; visible: parseInt(root.updates) > 0 }
                     }
                 }
-                Text { text: root.volumeOut; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 35; horizontalAlignment: Text.AlignRight }
-            }
-            
-            // Mic
-            RowLayout {
-                spacing: 12
-                Text { text: ""; color: root.colFg; font.family: root.fontFamily }
-                Slider {
-                    Layout.fillWidth: true
-                    from: 0; to: 1.0
-                    value: parseInt(root.volumeMic) / 100.0
-                    onMoved: {
-                        pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", value.toFixed(2)]
-                        pVolSet.running = true
-                    }
-                }
-                Text { text: root.volumeMic; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 35; horizontalAlignment: Text.AlignRight }
-            }
-            
-            // Toggles Row 1
-            RowLayout {
-                spacing: 10
-                Layout.fillWidth: true
-                
-                Button {
-                    Layout.fillWidth: true
-                    text: root.bluetoothStatus === "on" ? " BT: On" : "󰂲 BT: Off"
-                    onClicked: { pBlueberry.running = true; controlCenter.show = false }
-                }
-                
-                Button {
-                    Layout.fillWidth: true
-                    text: root.wifiIcon + " Wi-Fi"
-                    onClicked: { pNmtui.running = true; controlCenter.show = false }
-                }
-            }
-            
-            // Toggles Row 2
-            RowLayout {
-                spacing: 10
-                Layout.fillWidth: true
-                
-                Button {
-                    Layout.fillWidth: true
-                    text: "󰢮 " + root.gpuMode
-                    onClicked: { pGpu.running = true }
-                }
-                Button {
-                    Layout.fillWidth: true
-                    text: " Notes"
-                    onClicked: { pNotes.running = true; controlCenter.show = false }
-                }
-            }
-            
-            // System Stats
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-                
-                Text { text: "󱐋 " + root.powerDraw + "W"; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 11; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                Text { text: " " + root.temperature + "°"; color: parseInt(root.temperature) >= 80 ? root.colCrit : root.colMuted; font.family: root.fontFamily; font.pixelSize: 11; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                Text { text: "󰮯 " + root.updates; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 11; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; visible: parseInt(root.updates) > 0 }
             }
         }
     }
