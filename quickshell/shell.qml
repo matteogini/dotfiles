@@ -195,7 +195,7 @@ ShellRoot {
 
         Rectangle {
             anchors.fill: parent
-            color: parent.containsMouse ? root.colHover : parent.bgColor
+            color: parent.bgColor
             Behavior on color { ColorAnimation { duration: 200 } }
             
             SequentialAnimation on opacity {
