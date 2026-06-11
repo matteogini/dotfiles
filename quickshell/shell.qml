@@ -283,7 +283,7 @@ ShellRoot {
                     return "󰁺";
                 }
                 
-                text: getIcon(cap, root.batteryCharging) + " " + root.batteryCap + "%"
+                text: getIcon(cap, root.batteryCharging)
                 
                 textColor: {
                     if (isCrit) return root.colBg;
@@ -578,7 +578,7 @@ ShellRoot {
                                     pVolSet.running = true
                                 }
                             }
-                            Text { text: root.volumeOut; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
+                            
                         }
                         
                         // Mic
@@ -592,7 +592,7 @@ ShellRoot {
                                     pVolSet.running = true
                                 }
                             }
-                            Text { text: root.volumeMic; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
+                            
                         }
                         // Brightness
                         RowLayout {
@@ -605,7 +605,7 @@ ShellRoot {
                                     pBrightSet.running = true
                                 }
                             }
-                            Text { text: root.brightnessLevel; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
+                            
                         }
 
                     }
@@ -662,6 +662,7 @@ ShellRoot {
         id: gpuPopup
         anchor {
             window: controlCenter
+            rect: Qt.rect(btnGpu.mapToItem(null, 0, 0).x, btnGpu.mapToItem(null, 0, 0).y, btnGpu.width, btnGpu.height)
             edges: Edges.Left | Edges.Top
             gravity: Edges.Left | Edges.Bottom
         }
@@ -715,6 +716,7 @@ ShellRoot {
         id: notesPopup
         anchor {
             window: controlCenter
+            rect: Qt.rect(btnNotes.mapToItem(null, 0, 0).x, btnNotes.mapToItem(null, 0, 0).y, btnNotes.width, btnNotes.height)
             edges: Edges.Left | Edges.Top
             gravity: Edges.Left | Edges.Bottom
         }
