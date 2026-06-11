@@ -411,8 +411,10 @@ ShellRoot {
         visible: show
         
         implicitWidth: 320
-        implicitHeight: show ? layout.implicitHeight + 32 : 0
-        Behavior on implicitHeight { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
+        implicitHeight: layout.implicitHeight + 32
+        
+        opacity: show ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 200 } }
         
         color: Qt.rgba(0.05, 0.05, 0.05, 0.95)
         
