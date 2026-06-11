@@ -444,6 +444,7 @@ ShellRoot {
         
         signal mainClicked()
         signal iconClicked()
+        signal rightIconClicked()
         signal scrolled(int angle)
         
         Layout.fillWidth: true
@@ -507,11 +508,25 @@ ShellRoot {
                 Layout.fillWidth: true
             }
             
-            Text {
-                text: ""
-                color: Qt.rgba(root.colFg.r, root.colFg.g, root.colFg.b, 0.3)
-                font.family: root.fontFamily
-                font.pixelSize: 16
+            Item {
+                Layout.preferredWidth: 32
+                Layout.preferredHeight: 32
+                
+                Text {
+                    anchors.centerIn: parent
+                    text: ""
+                    color: rightIconMouse.containsMouse ? root.colFg : Qt.rgba(root.colFg.r, root.colFg.g, root.colFg.b, 0.3)
+                    font.family: root.fontFamily
+                    font.pixelSize: 16
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                }
+                
+                MouseArea {
+                    id: rightIconMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: mbtn.rightIconClicked()
+                }
             }
         }
         
@@ -588,6 +603,8 @@ ShellRoot {
 
     PanelWindow {
         id: controlCenter
+        
+        WlrLayershell.keyboardFocus: timerPopup.show ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         
         anchors {
             top: true
@@ -960,6 +977,7 @@ ShellRoot {
                         }
                         
                         ModernSplitButton {
+                            id: btnTimer
                             text: root.timerText
                             iconText: "󰔛"
                             isActive: root.timerRunning || (root.timerSeconds > 0 && root.timerSeconds < root.timerTotal)
@@ -980,6 +998,11 @@ ShellRoot {
                                 root.timerSeconds = 0;
                                 root.timerText = root.formatTime(root.timerTotal);
                             }
+                            onRightIconClicked: {
+                                timerPopup.show = !timerPopup.show;
+                                gpuPopup.show = false;
+                                notesPopup.show = false;
+                            }
                             onScrolled: angle => {
                                 if (angle > 0) {
                                     root.timerTotal += 60;
@@ -998,6 +1021,88 @@ ShellRoot {
         }
     }
 }
+
+    PopupWindow {
+        id: timerPopup
+        grabFocus: show
+        anchor {
+            window: controlCenter
+            rect: Qt.rect(btnTimer.mapToItem(null, 0, 0).x, btnTimer.mapToItem(null, 0, 0).y, btnTimer.width, btnTimer.height)
+            edges: Edges.Left | Edges.Top
+            gravity: Edges.Left | Edges.Bottom
+        }
+        
+        property bool show: false
+        onShowChanged: {
+            if (show) {
+                timerInput.text = "";
+                timerInput.forceActiveFocus();
+            }
+        }
+        property real animHeight: animRectTimer.height
+        visible: show || animRectTimer.opacity > 0
+        
+        implicitWidth: 200
+        implicitHeight: layoutTimer.implicitHeight + 32
+        color: "transparent"
+        
+        Item {
+            anchors.fill: parent
+            
+            Rectangle {
+                id: animRectTimer
+                anchors.fill: parent
+                
+                anchors.rightMargin: 12
+                
+                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                radius: 16
+                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.width: 1
+                
+                opacity: timerPopup.show ? 1.0 : 0.0
+                scale: timerPopup.show ? 1.0 : 0.95
+                x: timerPopup.show ? 0 : 20
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                
+                ColumnLayout {
+                    id: layoutTimer
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 16
+                    spacing: 8
+                    Text { text: "Timer Minutes"; color: Qt.rgba(root.colFg.r, root.colFg.g, root.colFg.b, 0.5); font.family: root.fontFamily; font.pixelSize: 12 }
+                    
+                    TextField {
+                        id: timerInput
+                        Layout.fillWidth: true
+                        placeholderText: "e.g. 5"
+                        color: root.colFg
+                        background: Rectangle {
+                            color: Qt.rgba(1, 1, 1, 0.05)
+                            radius: 8
+                            border.color: timerInput.activeFocus ? Qt.rgba(1, 1, 1, 0.3) : "transparent"
+                        }
+                        font.family: root.fontFamily
+                        font.pixelSize: 14
+                        onAccepted: {
+                            let val = parseInt(text);
+                            if (!isNaN(val) && val > 0) {
+                                root.timerTotal = val * 60;
+                                root.timerSeconds = 0;
+                                root.timerText = root.formatTime(root.timerTotal);
+                                root.timerRunning = false;
+                            }
+                            timerPopup.show = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     PopupWindow {
         id: gpuPopup
