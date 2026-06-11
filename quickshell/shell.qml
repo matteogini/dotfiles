@@ -1,175 +1,361 @@
-import Quickshell               // core stuff
-import QtQuick                  // basic UI elements
-import Quickshell.Wayland       // for PanelWindow
-import Quickshell.Hyprland      // hyprland IPC access
-import QtQuick.Layouts          // for RowLayout
-import Quickshell.Io            // for process type
-
-/*
-documentation:
-https://quickshell.org/docs/v0.3.0/types/Quickshell.Hyprland/
-
-pattern:
-- process to run a command
-- SplitParser to parse output
-- timer to refresh periodically
-*/
-
-// doesn't dock - doesn't reserve space
-/*
-FloatingWindow {
-    visible: true
-    width: 200
-    height: 100
-
-    Text {
-        anchors.centerIn: parent
-        text: "quickshell element"
-        color: "#0db9d7"
-        font.pixelSize: 18
-    }
-}
-*/
+import Quickshell
+import QtQuick
+import Quickshell.Wayland
+import Quickshell.Hyprland
+import QtQuick.Layouts
+import Quickshell.Io
 
 PanelWindow {
     id: root
 
-    // theme - define one, use everywhere
-    property color colBg: "#1a1b26"
-    property color colFg: "#a9b1d6"
-    property color colMuted: "#444b6a"
-    property color colCyan: "#0db9d7"
-    property color colBlue: "#7aa2f7"
-    property color colYellow: "#e0af68"
+    property color colBg: "#000000"
+    property color colFg: "#ffffff"
+    property color colAccent: "#ffffff"
+    property color colMuted: Qt.rgba(1, 1, 1, 0.4)
+    property color colHover: Qt.rgba(1, 1, 1, 0.1)
+    property color colCrit: "#ff0000"
     property string fontFamily: "JetBrainsMono Nerd Font"
-    property int fontSize: 18
-
-    // system data
-    property int cpuUsage: 0
-    property var lastCpuIdle: 0
-    property var lastCpuTotal: 0
-    property int memUsage: 0
-
-    // run shell commands with process
-    Process {
-        id: cpuProc
-        command: ["sh", "-c", "head -1 /proc/stat"]
-
-        // SplitParser calls onRead for each line of output
-        stdout: SplitParser {
-            onRead: data => {
-                // parse /proc/stats...
-                var p = data.trim().split(/\s+/)
-                var idle = parseInt(p[4]) + parseInt(p[5])
-                var total = p.slice(1, 8).reduce((a, b) => a + parseInt(b), 0)
-                if (lastCpuTotal > 0) {
-                    cpuUsage = Math.round(100 * (1 - (idle - lastCpuIdle) / (total - lastCpuTotal)))
-                }
-                lastCpuTotal = total
-                lastCpuIdle = idle
-            }
-        }
-        Component.onCompleted: running = true
-    }
-
-    Process {
-        id: memProc
-        command: ["sh", "-c", "free | grem Mem"]
-        stdout: SplitParser {
-            onRead: data => {
-                var ports = data.trim().split(/\s+/)
-                var total = parseInt(parts[1]) || 1
-                var used = parseInt(parts[2]) || 0
-                memUsage = Math.round(100 * used / total)
-            }
-        }
-        Component.onCompleted: running = true
-    }
-
-    // timer to refresh every 2s
-    Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        onTriggered: {
-            cpuProc.running = true
-            memProc.running = true
-        }
-    }
+    property int fontSize: 10 // Reduced font size to match waybar 9px
 
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: 30
-    color: root.colBg
+    implicitHeight: 24
+    color: colBg
 
-    /*
-    Text {
-        anchors.centerIn: parent
-        text: "my new bar"
-        color: "#a9b1d6"
-        font.pixelSize: 14
+    // State properties
+    property string powerDraw: "0.0"
+    property string temperature: "0"
+    property string updates: "0"
+    property string batteryCap: "100"
+    property bool batteryCharging: false
+    property string gpuMode: "Unknown"
+    property string volumeOut: "0%"
+    property bool volumeMuted: false
+    property string volumeMic: "0%"
+    property bool micMuted: false
+    property string bluetoothStatus: "off"
+    property string spotifyStatus: "offline"
+    property string spotifyText: ""
+    property string wifiIcon: "󰤯"
+    property string wifiText: "Disconnected"
+
+    // Click Actions
+    Process { id: pPavu; command: ["pavucontrol"] }
+    Process { id: pMicMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] }
+    Process { id: pBlueberry; command: ["blueberry"] }
+    Process { id: pSpotPrev; command: ["playerctl", "--player=spotify", "previous"] }
+    Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
+    Process { id: pSpotNext; command: ["playerctl", "--player=spotify", "next"] }
+    Process { id: pGpu; command: ["sh", "-c", "supergfxctl -m Hybrid; hyprctl dispatch \"hl.dsp.exit()\""] }
+    Process { id: pNotes; command: ["sh", "-c", "zeditor ~/.config/waybar/config.jsonc"] }
+    Process { id: pNmtui; command: ["kitty", "-e", "nmtui"] }
+
+    // Background Process Loops
+    Process {
+        command: ["sh", "-c", "while true; do awk '{line[NR]=$1} END {printf \"%.1f\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null || echo '0.0'; echo; sleep 10; done"]
+        running: true; stdout: SplitParser { onRead: data => powerDraw = data.trim() }
     }
-    */
+    Process {
+        command: ["sh", "-c", "while true; do temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0); echo $((temp / 1000)); sleep 10; done"]
+        running: true; stdout: SplitParser { onRead: data => temperature = data.trim() }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do checkupdates 2>/dev/null | wc -l; sleep 3600; done"]
+        running: true; stdout: SplitParser { onRead: data => updates = data.trim() }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do cap=$(cat /sys/class/power_supply/BAT1/capacity 2>/dev/null || echo 0); acad=$(cat /sys/class/power_supply/ACAD/online 2>/dev/null || echo 0); echo \"$cap $acad\"; sleep 60; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var parts = data.trim().split(" ");
+                batteryCap = parts[0];
+                batteryCharging = (parts[1] === "1");
+            }
+        }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do supergfxctl -g 2>/dev/null || echo '?'; sleep 10; done"]
+        running: true; stdout: SplitParser { onRead: data => gpuMode = data.trim() }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null; sleep 2; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var d = data.trim();
+                volumeMuted = d.includes("[MUTED]");
+                var m = d.match(/[0-9.]+/);
+                if (m) volumeOut = Math.round(parseFloat(m[0]) * 100) + "%";
+            }
+        }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null; sleep 2; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var d = data.trim();
+                micMuted = d.includes("[MUTED]");
+                var m = d.match(/[0-9.]+/);
+                if (m) volumeMic = Math.round(parseFloat(m[0]) * 100) + "%";
+            }
+        }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do bluetoothctl show 2>/dev/null | grep -q 'Powered: yes' && echo 'on' || echo 'off'; sleep 10; done"]
+        running: true; stdout: SplitParser { onRead: data => bluetoothStatus = data.trim() }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do sig=$(nmcli -t -f active,signal dev wifi | grep '^yes' | cut -d: -f2); if [ -z \"$sig\" ]; then echo 'disc'; else echo \"$sig\"; fi; sleep 10; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var d = data.trim();
+                if (d === 'disc') { wifiIcon = "󰤮"; wifiText = "Disconnected"; }
+                else {
+                    var s = parseInt(d);
+                    wifiText = s + "%";
+                    if (s > 80) wifiIcon = "󰤨";
+                    else if (s > 60) wifiIcon = "󰤥";
+                    else if (s > 40) wifiIcon = "󰤢";
+                    else if (s > 20) wifiIcon = "󰤟";
+                    else wifiIcon = "󰤯";
+                }
+            }
+        }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do status=$(playerctl --player=spotify status 2>/dev/null || echo 'offline'); if [ \"$status\" != 'offline' ]; then text=$(playerctl --player=spotify metadata --format '{{title}} - {{artist}}' 2>/dev/null); echo \"$status|$text\"; else echo 'offline|'; fi; sleep 2; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var p = data.split("|");
+                spotifyStatus = p[0].trim();
+                spotifyText = p[1] ? p[1].trim() : "";
+            }
+        }
+    }
 
-    RowLayout {
+    // A helper to make clickable modules easily
+    component Mod: MouseArea {
+        property string text
+        property color textColor: root.colFg
+        property color bgColor: "transparent"
+        property bool blink: false
+        property bool show: true
+        Layout.preferredHeight: root.height
+        Layout.preferredWidth: show ? (modText.implicitWidth + 16) : 0
+        visible: show
+        hoverEnabled: true
+
+        Rectangle {
+            anchors.fill: parent
+            color: parent.containsMouse ? root.colHover : parent.bgColor
+            
+            SequentialAnimation on opacity {
+                running: parent.blink
+                loops: Animation.Infinite
+                NumberAnimation { to: 0.1; duration: 500 }
+                NumberAnimation { to: 1.0; duration: 500 }
+            }
+        }
+
+        Text {
+            id: modText
+            text: parent.text
+            color: parent.textColor
+            font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+            anchors.centerIn: parent
+        }
+    }
+
+    Item {
         anchors.fill: parent
-        anchors.margins: 8
-        spacing: 8
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
 
-        // Repeater creates 9 copies, each gets an index (0-8)
-        Repeater {
-            model: 9
+        // --- LEFT ---
+        RowLayout {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            spacing: 0
 
-            Text {
-                // Live data from hyprland
-                property var ws: Hyprland.workspaces.values.find(w => w.id === index + 1)
-                property bool isActive: Hyprland.focusedWorkspace?.id === (index + 1)
-
-                text: index + 1
-                // cyan = active, blue = has windows, gray = empty
-                color: isActive ? root.colCyan : (ws ? root.colBlue : root.colMuted)
-                font { pixelSize: 14; bold: true }
-
-                // clicl to switch workspace
-                MouseArea {
+            // Stats Group Drawer
+            MouseArea {
+                id: statsDrawer
+                hoverEnabled: true
+                Layout.preferredHeight: root.height
+                Layout.preferredWidth: statsRow.implicitWidth
+                RowLayout {
+                    id: statsRow
                     anchors.fill: parent
-                    onClicked: Hyprland.dispatch("workspace " + (index + 1))
+                    spacing: 0
+                    
+                    // Handle
+                    Item { Layout.preferredWidth: 8; Layout.preferredHeight: root.height }
+                    
+                    // Drawer contents
+                    RowLayout {
+                        spacing: 0
+                        visible: statsDrawer.containsMouse
+                        Mod { text: " 󱐋 " + root.powerDraw + "W"; textColor: root.colAccent }
+                        Mod { text: " " + root.temperature + "°"; textColor: parseInt(root.temperature) >= 80 ? root.colCrit : root.colFg }
+                        Mod { text: "󰮯 " + root.updates; show: parseInt(root.updates) > 0 }
+                        Mod { text: ""; onClicked: { pNotes.running = true } }
+                    }
+                }
+            }
+
+            // Spotify
+            RowLayout {
+                spacing: 0
+                visible: root.spotifyStatus !== "offline"
+                Mod { text: "󰒮"; onClicked: { pSpotPrev.running = true } }
+                Mod { text: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; textColor: root.colAccent; onClicked: { pSpotPlay.running = true } }
+                Mod { text: "󰒭"; onClicked: { pSpotNext.running = true } }
+                Text {
+                    text: root.spotifyText.length > 35 ? root.spotifyText.substring(0, 32) + "..." : root.spotifyText
+                    color: root.colMuted
+                    font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+                    Layout.leftMargin: 8
                 }
             }
         }
 
-        Item { Layout.fillWidth: true }
+        // --- CENTER ---
+        RowLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            spacing: 0
 
-        Text {
-            text: "CPU: " + cpuUsage + "%"
-            color: root.colYellow
-            font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+            // Workspaces - strictly matching waybar behaviour (only existing ones shown)
+            Repeater {
+                model: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                Mod {
+                    property var ws: Hyprland.workspaces.values.find(w => w.id === modelData)
+                    property bool isActive: Hyprland.focusedWorkspace != null && Hyprland.focusedWorkspace.id === modelData
+                    
+                    text: modelData
+                    // Active workspaces are white (colFg), inactive but populated are grey (colMuted)
+                    textColor: isActive ? root.colFg : root.colMuted
+                    // Only show if the workspace actually exists/has windows, or is currently focused
+                    show: ws !== undefined || isActive
+                    
+                    onClicked: Hyprland.dispatch("workspace " + modelData)
+                }
+            }
         }
 
-        // separator
-        Rectangle { width: 2; height: 16; color: root.colMuted }
+        // --- RIGHT ---
+        RowLayout {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            spacing: 0
 
-        Text {
-            text: "MEM: " + memUsage + "%"
-            color: root.colYellow
-            font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
-        }
+            Mod { 
+                property int cap: parseInt(root.batteryCap)
+                property bool isCrit: cap <= 15 && !root.batteryCharging
+                property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
+                
+                text: {
+                    // format-plugged: " " -> hide text if full/not discharging? 
+                    // waybar assumes plugged = AC connected. We'll use status.
+                    if (root.batteryCharging) return "+" + root.batteryCap;
+                    return root.batteryCap;
+                }
+                
+                textColor: {
+                    if (isCrit) return root.colBg;         // color: @bg
+                    if (isWarn) return root.colFg;         // color: @fg
+                    if (root.batteryCharging) return root.colAccent; // color: @accent
+                    return root.colMuted;                  // color: alpha(@fg, 0.4)
+                }
+                
+                bgColor: {
+                    if (isCrit) return root.colAccent;     // background-color: @accent
+                    if (isWarn) return root.colHover;      // background-color: rgba(255, 255, 255, 0.2)
+                    return "transparent";
+                }
+                
+                blink: isCrit
+                show: !root.batteryCharging
+            }
 
-        Rectangle { width: 2; height: 16; color: root.colMuted }
+            // Tools Group Drawer
+            MouseArea {
+                id: toolsDrawer
+                hoverEnabled: true
+                Layout.preferredHeight: root.height
+                Layout.preferredWidth: toolsRow.implicitWidth
+                RowLayout {
+                    id: toolsRow
+                    anchors.fill: parent
+                    spacing: 0
+                    
+                    // Drawer contents (expanding towards left conceptually, but in RowLayout they just appear)
+                    RowLayout {
+                        spacing: 0
+                        visible: toolsDrawer.containsMouse
+                        
+                        Mod { text: "󰢮 " + root.gpuMode; onClicked: { pGpu.running = true } }
+                        
+                        // Wifi
+                        Mod {
+                            text: root.wifiIcon + " " + root.wifiText
+                            textColor: root.wifiText === "Disconnected" ? root.colCrit : root.colFg
+                            onClicked: { pNmtui.running = true }
+                        }
+                        
+                        Mod { 
+                            text: (root.volumeMuted ? " " : " ") + root.volumeOut
+                            textColor: root.volumeMuted ? root.colMuted : root.colFg
+                            onClicked: { pPavu.running = true }
+                        }
+                        
+                        MouseArea {
+                            Layout.preferredHeight: root.height
+                            Layout.preferredWidth: micModText.implicitWidth + 16
+                            hoverEnabled: true
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: (mouse) => {
+                                if (mouse.button === Qt.RightButton) {
+                                    pMicMute.running = true
+                                } else {
+                                    pPavu.running = true
+                                }
+                            }
+                            Rectangle {
+                                anchors.fill: parent
+                                color: parent.containsMouse ? root.colHover : "transparent"
+                            }
+                            Text {
+                                id: micModText
+                                text: root.micMuted ? " " : " "
+                                color: root.micMuted ? root.colMuted : root.colFg
+                                font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+                                anchors.centerIn: parent
+                            }
+                        }
 
-        Text {
-            id: clock
-            // text: Qt.formatDateTime(new Date(), "ddd, MMM dd - HH:mm")
-            text: Qt.formatDateTime(new Date(), "HH:mm")
-            color: root.colBlue
+                        Mod {
+                            text: root.bluetoothStatus === "on" ? " on" : "󰂲"
+                            textColor: root.bluetoothStatus === "on" ? root.colFg : root.colMuted
+                            onClicked: { pBlueberry.running = true }
+                        }
 
-            Timer {
-                interval: 1000
-                running: true
-                repeat: true
-                // onTriggered: clock.text = Qt.formatDateTime(new Date(), "ddd, MM dd - HH:mm")
-                onTriggered: clock.text = Qt.formatDateTime(new Date(), "HH:mm")
+                        Mod {
+                            id: clockMod
+                            text: Qt.formatDateTime(new Date(), "HH:mm")
+                            Timer {
+                                interval: 1000; running: true; repeat: true
+                                onTriggered: clockMod.text = Qt.formatDateTime(new Date(), "HH:mm")
+                            }
+                        }
+                    }
+                    
+                    // Handle
+                    Item { Layout.preferredWidth: 8; Layout.preferredHeight: root.height }
+                }
             }
         }
     }
