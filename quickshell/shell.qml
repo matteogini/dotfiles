@@ -382,7 +382,7 @@ ShellRoot {
         signal iconClicked()
         
         Layout.fillWidth: true
-        Layout.preferredHeight: 48
+        Layout.preferredHeight: 40
         
         Rectangle {
             anchors.fill: parent
@@ -403,13 +403,13 @@ ShellRoot {
             anchors.fill: parent
             anchors.leftMargin: 6
             anchors.rightMargin: 12
-            spacing: 12
+            spacing: 8
             
             // Icon Circle Box
             Rectangle {
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
-                radius: 18
+                Layout.preferredWidth: 32
+                Layout.preferredHeight: 32
+                radius: 16
                 color: mbtn.isActive ? mbtn.accent : Qt.rgba(1, 1, 1, 0.1)
                 
                 Text {
@@ -461,7 +461,7 @@ ShellRoot {
         property color accent: root.colFg
         
         Layout.fillWidth: true
-        Layout.preferredHeight: 48
+        Layout.preferredHeight: 40
         hoverEnabled: true
         
         Rectangle {
@@ -541,7 +541,7 @@ ShellRoot {
         visible: show || animRect.opacity > 0
         
         // Increased size
-        implicitWidth: 440
+        implicitWidth: 380
         implicitHeight: mainLayout.implicitHeight + 48 + root.height + 8
         color: "transparent"
         
@@ -570,7 +570,7 @@ ShellRoot {
                 
                 Item {
                     anchors.fill: parent
-                    anchors.margins: 20
+                    anchors.margins: 16
 
                     ColumnLayout {
                         id: mainLayout
@@ -578,7 +578,7 @@ ShellRoot {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         
-                    spacing: 24
+                    spacing: 8
                     
                     // Header: Clock & Date & Battery
                     RowLayout {
@@ -590,7 +590,7 @@ ShellRoot {
                                 id: clockText
                                 color: root.colFg
                                 font.family: root.fontFamily
-                                font.pixelSize: 28
+                                font.pixelSize: 24
                                 font.bold: true
                                 text: Qt.formatDateTime(new Date(), "HH:mm")
                                 Timer {
@@ -614,7 +614,7 @@ ShellRoot {
                             property bool isCrit: cap <= 15 && !root.batteryCharging
                             property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                             
-                            Layout.preferredHeight: 48
+                            Layout.preferredHeight: 40
                             Layout.preferredWidth: battLayout.implicitWidth + 24
                             hoverEnabled: true
                             onClicked: { controlCenter.show = false }
@@ -666,7 +666,7 @@ ShellRoot {
                     // System Stats (Moved under clock)
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: 8
                         
                         Text { text: "󱐋 " + root.powerDraw + "W"; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
                         Text { text: " " + root.temperature + "°"; color: parseInt(root.temperature) >= 80 ? root.colCrit : root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
@@ -678,7 +678,7 @@ ShellRoot {
                     // Spotify Media Player
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 12
+                        spacing: 8
                         visible: root.spotifyStatus !== "offline"
                         
                         RowLayout {
@@ -697,11 +697,11 @@ ShellRoot {
                         
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 16
+                            spacing: 8
                             Item { Layout.fillWidth: true }
-                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; iconText: "󰒮"; onClicked: { pSpotPrev.running = true } }
-                            ModernButton { Layout.preferredWidth: 64; Layout.preferredHeight: 48; iconText: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; isActive: root.spotifyStatus === "Playing"; accent: "#1DB954"; onClicked: { pSpotPlay.running = true } }
-                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; iconText: "󰒭"; onClicked: { pSpotNext.running = true } }
+                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 40; iconText: "󰒮"; onClicked: { pSpotPrev.running = true } }
+                            ModernButton { Layout.preferredWidth: 64; Layout.preferredHeight: 40; iconText: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; isActive: root.spotifyStatus === "Playing"; accent: "#1DB954"; onClicked: { pSpotPlay.running = true } }
+                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 40; iconText: "󰒭"; onClicked: { pSpotNext.running = true } }
                             Item { Layout.fillWidth: true }
                         }
                     }
@@ -711,11 +711,11 @@ ShellRoot {
                     // Sliders
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 16
+                        spacing: 8
                         
                         // Volume
                         RowLayout {
-                            spacing: 16
+                            spacing: 8
                             Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
                             ModernSlider {
                                 value: parseInt(root.volumeOut) / 100.0
@@ -730,7 +730,7 @@ ShellRoot {
                         
                         // Mic
                         RowLayout {
-                            spacing: 16
+                            spacing: 8
                             Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
                             ModernSlider {
                                 value: parseInt(root.volumeMic) / 100.0
@@ -744,7 +744,7 @@ ShellRoot {
                         }
                         // Brightness
                         RowLayout {
-                            spacing: 16
+                            spacing: 8
                             Text { text: "󰃠"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
                             ModernSlider {
                                 value: parseInt(root.brightnessLevel) / 100.0
@@ -761,7 +761,7 @@ ShellRoot {
                     
                     // Toggles Row 1
                     RowLayout {
-                        spacing: 12
+                        spacing: 8
                         Layout.fillWidth: true
                         
                         ModernSplitButton {
@@ -792,7 +792,7 @@ ShellRoot {
                     
                     // Toggles Row 2
                     RowLayout {
-                        spacing: 12
+                        spacing: 8
                         Layout.fillWidth: true
                         
                         ModernButton {
@@ -859,7 +859,7 @@ ShellRoot {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.margins: 16
-                    spacing: 12
+                    spacing: 8
                     
                     
                     ModernButton { text: "Integrated"; iconText: "󰍛"; onClicked: { pGpuInt.running = true; gpuPopup.show = false; controlCenter.show = false } }
@@ -912,7 +912,7 @@ ShellRoot {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.margins: 16
-                    spacing: 12
+                    spacing: 8
                     
                     
                     
