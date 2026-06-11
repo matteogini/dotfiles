@@ -606,9 +606,11 @@ ShellRoot {
         
         WlrLayershell.keyboardFocus: show ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         
-        onActiveChanged: {
-            if (!active && show) {
-                show = false;
+        HyprlandFocusGrab {
+            active: controlCenter.show
+            windows: [controlCenter]
+            onCleared: {
+                controlCenter.show = false;
                 timerPopup.show = false;
                 gpuPopup.show = false;
                 notesPopup.show = false;
