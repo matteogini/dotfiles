@@ -310,23 +310,59 @@ ShellRoot {
         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
     }
 
-    PopupWindow {
+    component ModernSlider: Slider {
+        id: mSlider
+        Layout.fillWidth: true
+        from: 0; to: 1.0
+        
+        background: Rectangle {
+            x: mSlider.leftPadding
+            y: mSlider.topPadding + mSlider.availableHeight / 2 - height / 2
+            implicitWidth: 200
+            implicitHeight: 8
+            width: mSlider.availableWidth
+            height: implicitHeight
+            radius: 4
+            color: Qt.rgba(1, 1, 1, 0.1)
+            Rectangle {
+                width: mSlider.visualPosition * parent.width
+                height: parent.height
+                color: root.colFg
+                radius: 4
+            }
+        }
+        
+        handle: Rectangle {
+            x: mSlider.leftPadding + mSlider.visualPosition * (mSlider.availableWidth - width)
+            y: mSlider.topPadding + mSlider.availableHeight / 2 - height / 2
+            implicitWidth: 16
+            implicitHeight: 16
+            radius: 8
+            color: mSlider.pressed ? Qt.rgba(0.8, 0.8, 0.8, 1) : "#ffffff"
+            scale: mSlider.pressed || mSlider.hovered ? 1.2 : 1.0
+            Behavior on scale { NumberAnimation { duration: 100 } }
+            
+        }
+    }
+
+    PanelWindow {
         id: controlCenter
         
-        anchor {
-            window: root
-            edges: Edges.Bottom | Edges.Right
-            gravity: Edges.Bottom | Edges.Left
+        anchors {
+            top: true
+            right: true
         }
+        
+        exclusionMode: ExclusionMode.Ignore
         
         property bool show: false
         
         // Fluid Animation Visibility Logic: Stay mapped until opacity is 0
         visible: show || animRect.opacity > 0
         
-        // Increased size and fixed clipping
+        // Increased size
         implicitWidth: 440
-        implicitHeight: layout.implicitHeight + 48
+        implicitHeight: layout.implicitHeight + 48 + root.height + 8
         color: "transparent"
         
         Item {
@@ -335,10 +371,8 @@ ShellRoot {
             Rectangle {
                 id: animRect
                 anchors.fill: parent
-                anchors.topMargin: 8
-                anchors.rightMargin: 12  // Fixes right-edge cutoff!
-                anchors.leftMargin: 12
-                anchors.bottomMargin: 12
+                anchors.topMargin: root.height + 8
+                anchors.rightMargin: 12
                 
                 color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
                 radius: 16
@@ -386,6 +420,16 @@ ShellRoot {
                         }
                     }
                     
+                    // System Stats (Moved under clock)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        
+                        Text { text: "󱐋 " + root.powerDraw + "W"; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                        Text { text: " " + root.temperature + "°"; color: parseInt(root.temperature) >= 80 ? root.colCrit : root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                        Text { text: "󰮯 " + root.updates; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; visible: parseInt(root.updates) > 0 }
+                    }
+                    
                     Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1) }
                     
                     // Spotify Media Player
@@ -430,9 +474,7 @@ ShellRoot {
                         RowLayout {
                             spacing: 16
                             Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
-                            Slider {
-                                Layout.fillWidth: true
-                                from: 0; to: 1.0
+                            ModernSlider {
                                 value: parseInt(root.volumeOut) / 100.0
                                 onMoved: {
                                     pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value.toFixed(2)]
@@ -446,9 +488,7 @@ ShellRoot {
                         RowLayout {
                             spacing: 16
                             Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
-                            Slider {
-                                Layout.fillWidth: true
-                                from: 0; to: 1.0
+                            ModernSlider {
                                 value: parseInt(root.volumeMic) / 100.0
                                 onMoved: {
                                     pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", value.toFixed(2)]
@@ -498,16 +538,6 @@ ShellRoot {
                             iconText: ""
                             onClicked: { pNotes.running = true; controlCenter.show = false }
                         }
-                    }
-                    
-                    // System Stats
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 12
-                        
-                        Text { text: "󱐋 " + root.powerDraw + "W"; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                        Text { text: " " + root.temperature + "°"; color: parseInt(root.temperature) >= 80 ? root.colCrit : root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                        Text { text: "󰮯 " + root.updates; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 12; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; visible: parseInt(root.updates) > 0 }
                     }
                 }
             }
