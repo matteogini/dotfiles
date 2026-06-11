@@ -3,9 +3,11 @@ import QtQuick
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell.Io
 
-PanelWindow {
+ShellRoot {
+    PanelWindow {
     id: root
 
     property color colBg: "#000000"
@@ -43,6 +45,7 @@ PanelWindow {
     // Click Actions
     Process { id: pPavu; command: ["pavucontrol"] }
     Process { id: pMicMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] }
+    Process { id: pVolSet } // Dynamic volume setter
     Process { id: pBlueberry; command: ["blueberry"] }
     Process { id: pSpotPrev; command: ["playerctl", "--player=spotify", "previous"] }
     Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
@@ -333,7 +336,7 @@ PanelWindow {
                         Mod { 
                             text: (root.volumeMuted ? " " : " ") + root.volumeOut
                             textColor: root.volumeMuted ? root.colMuted : root.colFg
-                            onClicked: { pPavu.running = true }
+                            onClicked: { controlCenter.show = !controlCenter.show }
                         }
                         
                         MouseArea {
@@ -393,6 +396,101 @@ PanelWindow {
                     // Handle
                     Item { Layout.preferredWidth: 8; Layout.preferredHeight: root.height }
                 }
+            }
+        }
+    }
+
+    PopupWindow {
+        id: controlCenter
+        anchor.window: root
+        anchor.edges: Edges.Bottom | Edges.Right
+        
+        property bool show: false
+        visible: show
+        
+        implicitWidth: 320
+        implicitHeight: show ? layout.implicitHeight + 32 : 0
+        Behavior on implicitHeight { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
+        clip: true
+        
+        color: Qt.rgba(0.05, 0.05, 0.05, 0.95)
+        
+        Rectangle {
+            anchors.fill: parent
+            color: "transparent"
+            border.color: Qt.rgba(1,1,1,0.1)
+            border.width: 1
+            radius: 8
+        }
+        
+        ColumnLayout {
+            id: layout
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: 16
+            spacing: 20
+            
+            Text {
+                text: "Control Center"
+                color: root.colFg
+                font { family: root.fontFamily; pixelSize: 14; bold: true }
+            }
+            
+            // Volume
+            RowLayout {
+                spacing: 12
+                Text { text: ""; color: root.colFg; font.family: root.fontFamily }
+                Slider {
+                    Layout.fillWidth: true
+                    from: 0; to: 1.0
+                    value: parseInt(root.volumeOut) / 100.0
+                    onMoved: {
+                        pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", value.toFixed(2)]
+                        pVolSet.running = true
+                    }
+                }
+                Text { text: root.volumeOut; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 35; horizontalAlignment: Text.AlignRight }
+            }
+            
+            // Mic
+            RowLayout {
+                spacing: 12
+                Text { text: ""; color: root.colFg; font.family: root.fontFamily }
+                Slider {
+                    Layout.fillWidth: true
+                    from: 0; to: 1.0
+                    value: parseInt(root.volumeMic) / 100.0
+                    onMoved: {
+                        pVolSet.command = ["wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", value.toFixed(2)]
+                        pVolSet.running = true
+                    }
+                }
+                Text { text: root.volumeMic; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 35; horizontalAlignment: Text.AlignRight }
+            }
+            
+            // Toggles Row
+            RowLayout {
+                spacing: 10
+                Layout.fillWidth: true
+                
+                Button {
+                    Layout.fillWidth: true
+                    text: root.bluetoothStatus === "on" ? " Bluetooth: On" : "󰂲 Bluetooth: Off"
+                    onClicked: { pBlueberry.running = true; controlCenter.show = false }
+                }
+                
+                Button {
+                    Layout.fillWidth: true
+                    text: "󰤨 Wi-Fi"
+                    onClicked: { pNmtui.running = true; controlCenter.show = false }
+                }
+            }
+            
+            Button {
+                Layout.fillWidth: true
+                text: "Open Pavucontrol"
+                onClicked: { pPavu.running = true; controlCenter.show = false }
             }
         }
     }
