@@ -768,7 +768,7 @@ ShellRoot {
                             iconText: root.bluetoothStatus === "on" ? "" : "󰂲"
                             isActive: root.bluetoothStatus === "on"
                             accent: "#007AFF"
-                            onClicked: { btPopup.show = !btPopup.show; wifiPopup.show = false; gpuPopup.show = false; notesPopup.show = false; wifiPopup.show = false; btPopup.show = false }
+                            onClicked: { btPopup.show = !btPopup.show; wifiPopup.show = false; gpuPopup.show = false; notesPopup.show = false }
                         }
                         
                         ModernButton {
@@ -777,7 +777,7 @@ ShellRoot {
                             iconText: root.wifiIcon
                             isActive: root.wifiText !== "Disconnected"
                             accent: "#007AFF"
-                            onClicked: { wifiPopup.show = !wifiPopup.show; btPopup.show = false; gpuPopup.show = false; notesPopup.show = false; wifiPopup.show = false; btPopup.show = false }
+                            onClicked: { wifiPopup.show = !wifiPopup.show; btPopup.show = false; gpuPopup.show = false; notesPopup.show = false }
                         }
                     }
                     
@@ -791,12 +791,12 @@ ShellRoot {
                             iconText: "󰢮"
                             isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
                             accent: "#76B900"
-                            id: btnGpu; onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; wifiPopup.show = false; btPopup.show = false }
+                            id: btnGpu; onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false }
                         }
                         ModernButton {
                             text: "Configs"
                             iconText: ""
-                            id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; wifiPopup.show = false; btPopup.show = false }
+                            id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false }
                     }
                     
                     } // End mainLayout
