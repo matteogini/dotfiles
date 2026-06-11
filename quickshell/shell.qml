@@ -444,6 +444,7 @@ ShellRoot {
         
         signal mainClicked()
         signal iconClicked()
+        signal scrolled(int angle)
         
         Layout.fillWidth: true
         Layout.preferredHeight: 40
@@ -461,6 +462,7 @@ ShellRoot {
             anchors.fill: parent
             hoverEnabled: true
             onClicked: mbtn.mainClicked()
+            onWheel: wheel => mbtn.scrolled(wheel.angleDelta.y)
         }
         
         RowLayout {
@@ -974,6 +976,16 @@ ShellRoot {
                                 }
                             }
                             onIconClicked: { 
+                                root.timerRunning = false;
+                                root.timerSeconds = 0;
+                                root.timerText = root.formatTime(root.timerTotal);
+                            }
+                            onScrolled: angle => {
+                                if (angle > 0) {
+                                    root.timerTotal += 60;
+                                } else if (angle < 0 && root.timerTotal >= 120) {
+                                    root.timerTotal -= 60;
+                                }
                                 root.timerRunning = false;
                                 root.timerSeconds = 0;
                                 root.timerText = root.formatTime(root.timerTotal);
