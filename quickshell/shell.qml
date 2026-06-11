@@ -23,7 +23,7 @@ ShellRoot {
     anchors.left: true
     anchors.right: true
     implicitHeight: 24
-    color: colBg
+    color: "transparent"
 
     // State properties
     property string powerDraw: "0.0"
@@ -230,28 +230,25 @@ ShellRoot {
         }
     }
 
-    Item {
-        anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
-
-        // --- LEFT ---
+    Rectangle {
+        id: notchRect
+        anchors.top: parent.top
+        anchors.topMargin: -16
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: parent.height + 16
+        width: notchLayout.implicitWidth + 32
+        color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
+        radius: 16
+        border.color: Qt.rgba(1, 1, 1, 0.1)
+        border.width: 1
+        
         RowLayout {
-            anchors.left: parent.left
-            anchors.top: parent.top
+            id: notchLayout
             anchors.bottom: parent.bottom
-            spacing: 0
-            // Ultra-minimalism: Left side is intentionally empty
-        }
-
-        // --- CENTER ---
-        RowLayout {
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            spacing: 0
-
-            // Workspaces - strictly matching waybar behaviour (only existing ones shown)
+            height: parent.height - 16
+            spacing: 8
+            
             Repeater {
                 model: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
                 Mod {
@@ -259,53 +256,36 @@ ShellRoot {
                     property bool isActive: Hyprland.focusedWorkspace != null && Hyprland.focusedWorkspace.id === modelData
                     
                     text: modelData
-                    // Active workspaces are white (colFg), inactive but populated are grey (colMuted)
                     textColor: isActive ? root.colFg : root.colMuted
-                    // Only show if the workspace actually exists/has windows, or is currently focused
+                    bgColor: "transparent"
                     show: ws !== undefined || isActive
-                    
                     onClicked: Hyprland.dispatch("workspace " + modelData)
                 }
             }
-        }
-
-        // --- RIGHT ---
-        RowLayout {
-            id: rightLayout
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            spacing: 0
-
+            
             Mod { 
                 property int cap: parseInt(root.batteryCap)
                 property bool isCrit: cap <= 15 && !root.batteryCharging
                 property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                 
                 text: {
-                    if (root.batteryCharging) return ""; // plug
-                    if (cap > 80) return ""; // full
-                    if (cap > 60) return ""; // 3/4
-                    if (cap > 40) return ""; // 1/2
-                    if (cap > 20) return ""; // 1/4
-                    return ""; // empty
+                    if (root.batteryCharging) return "";
+                    if (cap > 80) return "";
+                    if (cap > 60) return "";
+                    if (cap > 40) return "";
+                    if (cap > 20) return "";
+                    return "";
                 }
                 textColor: {
-                    if (isCrit) return root.colBg;
-                    if (isWarn) return root.colFg;
-                    if (root.batteryCharging) return root.colAccent;
+                    if (isCrit) return root.colCrit;
+                    if (isWarn) return "#FFA500";
+                    if (root.batteryCharging) return "#76B900";
                     return root.colFg;
                 }
-                
-                bgColor: {
-                    if (isCrit) return root.colAccent;
-                    if (isWarn) return root.colHover;
-                    return "transparent";
-                }
-                
+                bgColor: "transparent"
                 blink: isCrit
                 show: !controlCenter.show
-                onClicked: { controlCenter.show = true }
+                onClicked: controlCenter.show = true
             }
         }
     }
@@ -525,6 +505,7 @@ ShellRoot {
         
         anchors {
             top: true
+            left: true
             right: true
         }
         
@@ -550,9 +531,11 @@ ShellRoot {
             
             Rectangle {
                 id: animRect
-                anchors.fill: parent
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
                 
-                anchors.rightMargin: 12
+                width: 380
+                height: mainLayout.implicitHeight + 32
                 
                 color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
                 radius: 16
