@@ -88,7 +88,7 @@ ShellRoot {
     Process { id: pNoteFish; command: ["zeditor", "/home/matteo/.config/fish"] }
     Process { id: pNoteFastfetch; command: ["zeditor", "/home/matteo/.config/fastfetch"] }
 
-    Process { id: pNmtui; command: ["kitty", "-e", "nmtui"] }
+    Process { id: pNmtui; command: ["/home/matteo/.config/tofi/tofi-wifi.sh"] }
 
     // Background Process Loops
     Process {
