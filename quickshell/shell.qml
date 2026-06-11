@@ -913,6 +913,7 @@ ShellRoot {
                             isActive: root.bluetoothStatus === "on"
                             accent: "#007AFF"
                             onMainClicked: { pBlueberry.running = true; controlCenter.show = false }
+                            onRightIconClicked: { pBlueberry.running = true; controlCenter.show = false }
                             onIconClicked: { 
                                 root.bluetoothStatus = (root.bluetoothStatus === "on") ? "off" : "on"
                                 pBtToggle.running = true 
@@ -925,6 +926,7 @@ ShellRoot {
                             isActive: root.wifiText !== "Disconnected"
                             accent: "#007AFF"
                             onMainClicked: { pNmtui.running = true; controlCenter.show = false }
+                            onRightIconClicked: { pNmtui.running = true; controlCenter.show = false }
                             onIconClicked: { 
                                 root.wifiText = (root.wifiText === "Disconnected") ? "Connecting..." : "Disconnected"
                                 root.wifiIcon = (root.wifiText === "Connecting...") ? "󰤨" : "󰤮"
@@ -938,17 +940,23 @@ ShellRoot {
                         spacing: 8
                         Layout.fillWidth: true
                         
-                        ModernButton {
+                        ModernSplitButton {
+                            id: btnGpu
                             text: root.gpuMode
                             iconText: "󰢮"
                             isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
                             accent: "#76B900"
-                            id: btnGpu; onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false }
+                            onMainClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
+                            onIconClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
+                            onRightIconClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
                         }
-                        ModernButton {
+                        ModernSplitButton {
+                            id: btnNotes
                             text: "Configs"
                             iconText: ""
-                            id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false }
+                            onMainClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
+                            onIconClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
+                            onRightIconClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
                         }
                     }
 
@@ -963,6 +971,13 @@ ShellRoot {
                             isActive: root.stopwatchRunning || root.stopwatchSeconds > 0
                             accent: "#FFA500"
                             onMainClicked: {
+                                if (root.stopwatchRunning) {
+                                    root.stopwatchRunning = false;
+                                } else {
+                                    root.stopwatchRunning = true;
+                                }
+                            }
+                            onRightIconClicked: {
                                 if (root.stopwatchRunning) {
                                     root.stopwatchRunning = false;
                                 } else {
