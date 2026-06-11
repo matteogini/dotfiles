@@ -606,21 +606,11 @@ ShellRoot {
         
         WlrLayershell.keyboardFocus: show ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         
-        HyprlandFocusGrab {
-            active: controlCenter.show
-            windows: [controlCenter]
-            onCleared: {
-                controlCenter.show = false;
-                timerPopup.show = false;
-                gpuPopup.show = false;
-                notesPopup.show = false;
-            }
-        }
-        
         anchors {
             top: true
             left: true
             right: true
+            bottom: true
         }
         
         exclusionMode: ExclusionMode.Ignore
@@ -644,11 +634,27 @@ ShellRoot {
         Item {
             anchors.fill: parent
             
+            MouseArea {
+                anchors.fill: parent
+                enabled: controlCenter.show
+                onClicked: {
+                    controlCenter.show = false;
+                    timerPopup.show = false;
+                    gpuPopup.show = false;
+                    notesPopup.show = false;
+                }
+            }
+            
             Rectangle {
                 id: animRect
                 anchors.top: parent.top
                 anchors.topMargin: controlCenter.show ? 16 : (root.isBarMode ? 0 : 4)
                 anchors.horizontalCenter: parent.horizontalCenter
+                
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                }
                 
                 width: controlCenter.show ? 380 : notchLayout.implicitWidth + 32
                 height: controlCenter.show ? (mainLayout.implicitHeight + 32) : 32
