@@ -18,9 +18,19 @@ ShellRoot {
     property color colCrit: "#ff0000"
     property string fontFamily: "JetBrainsMono Nerd Font"
     property int fontSize: 10 // Reduced font size to match waybar 9px
-    
-    property int windowCount: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.toplevels ? Hyprland.focusedWorkspace.toplevels.values.length : 0
+    property int windowCount: 0
     property bool isBarMode: windowCount === 1
+
+    Process {
+        command: ["/home/matteo/.config/quickshell/count_tiled.sh"]
+        running: true
+        stdout: SplitParser {
+            onRead: data => {
+                var c = parseInt(data.trim())
+                if (!isNaN(c)) root.windowCount = c
+            }
+        }
+    }
 
     anchors.top: true
     anchors.left: true
