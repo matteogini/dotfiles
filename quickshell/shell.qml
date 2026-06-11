@@ -604,7 +604,16 @@ ShellRoot {
     PanelWindow {
         id: controlCenter
         
-        WlrLayershell.keyboardFocus: timerPopup.show ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: show ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        
+        onActiveChanged: {
+            if (!active && show) {
+                show = false;
+                timerPopup.show = false;
+                gpuPopup.show = false;
+                notesPopup.show = false;
+            }
+        }
         
         anchors {
             top: true
