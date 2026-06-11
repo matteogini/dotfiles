@@ -68,8 +68,7 @@ ShellRoot {
 
     Process {
         id: pBrightSet
-        property string target: "50%"
-        command: ["brightnessctl", "s", target]
+        command: ["brightnessctl", "s", "50%"]
     }
 
     Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
@@ -751,7 +750,7 @@ ShellRoot {
                                 value: parseInt(root.brightnessLevel) / 100.0
                                 onMoved: {
                                     root.brightnessLevel = Math.round(value * 100) + "%"
-                                    pBrightSet.target = Math.round(value * 100) + "%"
+                                    pBrightSet.command = ["brightnessctl", "s", Math.round(value * 100) + "%"]
                                     pBrightSet.running = true
                                 }
                             }
