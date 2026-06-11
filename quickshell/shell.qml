@@ -48,6 +48,9 @@ ShellRoot {
     Process { id: pMicMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] }
     Process { id: pVolSet } // Dynamic volume setter
     Process { id: pBlueberry; command: ["blueberry"] }
+
+    Process { id: pWifiToggle; command: ["sh", "-c", "if [ \"$(nmcli radio wifi)\" = \"enabled\" ]; then nmcli radio wifi off; else nmcli radio wifi on; fi"] }
+    Process { id: pBtToggle; command: ["sh", "-c", "if bluetoothctl show | grep -q 'Powered: yes'; then rfkill block bluetooth; else rfkill unblock bluetooth; fi"] }
     Process { id: pWifiOn; command: ["nmcli", "radio", "wifi", "on"] }
     Process { id: pWifiOff; command: ["nmcli", "radio", "wifi", "off"] }
     Process { id: pBtOn; command: ["rfkill", "unblock", "bluetooth"] }
@@ -366,6 +369,89 @@ ShellRoot {
             color: "#ffffff"
             anchors.centerIn: outline
         }
+    }
+
+
+    component ModernSplitButton: Item {
+        id: mbtn
+        property string text
+        property string iconText
+        property bool isActive: false
+        property color accent: root.colFg
+        
+        signal mainClicked()
+        signal iconClicked()
+        
+        Layout.fillWidth: true
+        Layout.preferredHeight: 48
+        
+        Rectangle {
+            anchors.fill: parent
+            radius: 12
+            color: mainMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
+            border.color: "transparent"
+            Behavior on color { ColorAnimation { duration: 150 } }
+        }
+        
+        MouseArea {
+            id: mainMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: mbtn.mainClicked()
+        }
+        
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 6
+            anchors.rightMargin: 12
+            spacing: 12
+            
+            // Icon Circle Box
+            Rectangle {
+                Layout.preferredWidth: 36
+                Layout.preferredHeight: 36
+                radius: 18
+                color: mbtn.isActive ? mbtn.accent : Qt.rgba(1, 1, 1, 0.1)
+                
+                Text {
+                    anchors.centerIn: parent
+                    text: mbtn.iconText
+                    color: mbtn.isActive ? "#ffffff" : root.colFg
+                    font.family: root.fontFamily
+                    font.pixelSize: 16
+                }
+                
+                MouseArea {
+                    id: iconMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: mbtn.iconClicked()
+                }
+                
+                scale: iconMouse.containsPress ? 0.9 : (iconMouse.containsMouse ? 1.05 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
+            
+            Text { 
+                text: mbtn.text
+                color: root.colFg
+                font.family: root.fontFamily
+                font.pixelSize: 14
+                font.bold: true
+                Layout.fillWidth: true
+            }
+            
+            Text {
+                text: ""
+                color: Qt.rgba(root.colFg.r, root.colFg.g, root.colFg.b, 0.3)
+                font.family: root.fontFamily
+                font.pixelSize: 16
+            }
+        }
+        
+        scale: mainMouse.containsPress ? 0.98 : 1.0
+        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
     }
 
     component ModernButton: MouseArea {
@@ -841,108 +927,4 @@ ShellRoot {
         }
     }
 
-    PopupWindow {
-        id: btPopup
-        anchor {
-            window: controlCenter
-            rect: Qt.rect(btnBt.mapToItem(null, 0, 0).x, btnBt.mapToItem(null, 0, 0).y, btnBt.width, btnBt.height)
-            edges: Edges.Left | Edges.Top
-            gravity: Edges.Left | Edges.Bottom
-        }
-        
-        property bool show: false
-        visible: show || animRectBt.opacity > 0
-        
-        implicitWidth: 200
-        implicitHeight: layoutBt.implicitHeight + 32
-        color: "transparent"
-        
-        Item {
-            anchors.fill: parent
-            
-            Rectangle {
-                id: animRectBt
-                anchors.fill: parent
-                anchors.rightMargin: 12
-                
-                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
-                radius: 16
-                border.color: Qt.rgba(1, 1, 1, 0.1)
-                border.width: 1
-                
-                opacity: btPopup.show ? 1.0 : 0.0
-                scale: btPopup.show ? 1.0 : 0.95
-                x: btPopup.show ? 0 : 20
-                Behavior on opacity { NumberAnimation { duration: 200 } }
-                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                
-                ColumnLayout {
-                    id: layoutBt
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: 16
-                    spacing: 12
-                    
-                    ModernButton { text: "Power On"; iconText: ""; onClicked: { pBtOn.running = true; btPopup.show = false } }
-                    ModernButton { text: "Power Off"; iconText: "󰂲"; onClicked: { pBtOff.running = true; btPopup.show = false } }
-                    ModernButton { text: "Settings"; iconText: ""; onClicked: { pBlueberry.running = true; btPopup.show = false; controlCenter.show = false } }
-                }
-            }
-        }
     }
-
-    PopupWindow {
-        id: wifiPopup
-        anchor {
-            window: controlCenter
-            rect: Qt.rect(btnWifi.mapToItem(null, 0, 0).x, btnWifi.mapToItem(null, 0, 0).y, btnWifi.width, btnWifi.height)
-            edges: Edges.Left | Edges.Top
-            gravity: Edges.Left | Edges.Bottom
-        }
-        
-        property bool show: false
-        visible: show || animRectWifi.opacity > 0
-        
-        implicitWidth: 200
-        implicitHeight: layoutWifi.implicitHeight + 32
-        color: "transparent"
-        
-        Item {
-            anchors.fill: parent
-            
-            Rectangle {
-                id: animRectWifi
-                anchors.fill: parent
-                anchors.rightMargin: 12
-                
-                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
-                radius: 16
-                border.color: Qt.rgba(1, 1, 1, 0.1)
-                border.width: 1
-                
-                opacity: wifiPopup.show ? 1.0 : 0.0
-                scale: wifiPopup.show ? 1.0 : 0.95
-                x: wifiPopup.show ? 0 : 20
-                Behavior on opacity { NumberAnimation { duration: 200 } }
-                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                
-                ColumnLayout {
-                    id: layoutWifi
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: 16
-                    spacing: 12
-                    
-                    ModernButton { text: "Enable Wi-Fi"; iconText: "󰤨"; onClicked: { pWifiOn.running = true; wifiPopup.show = false } }
-                    ModernButton { text: "Disable Wi-Fi"; iconText: "󰤮"; onClicked: { pWifiOff.running = true; wifiPopup.show = false } }
-                    ModernButton { text: "Network Manager"; iconText: ""; onClicked: { pNmtui.running = true; wifiPopup.show = false; controlCenter.show = false } }
-                }
-            }
-        }
-    }
-
-}
