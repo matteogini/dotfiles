@@ -51,7 +51,19 @@ ShellRoot {
     Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
     Process { id: pSpotNext; command: ["playerctl", "--player=spotify", "next"] }
     Process { id: pGpu; command: ["sh", "-c", "supergfxctl -m Hybrid; hyprctl dispatch \"hl.dsp.exit()\""] }
-    Process { id: pNotes; command: ["sh", "-c", "zeditor ~/.config/waybar/config.jsonc"] }
+
+    Process { id: pGpuInt; command: ["sh", "-c", "supergfxctl -m Integrated; hyprctl dispatch \"hl.dsp.exit()\""] }
+    Process { id: pGpuHyb; command: ["sh", "-c", "supergfxctl -m Hybrid; hyprctl dispatch \"hl.dsp.exit()\""] }
+    
+    Process { id: pNoteHyprland; command: ["zeditor", "/home/matteo/.config/hypr"] }
+    Process { id: pNoteWaybar; command: ["zeditor", "/home/matteo/.config/waybar/"] }
+    Process { id: pNoteTofi; command: ["zeditor", "/home/matteo/.config/tofi/"] }
+    Process { id: pNoteKitty; command: ["zeditor", "/home/matteo/.config/kitty"] }
+    Process { id: pNoteFoot; command: ["zeditor", "/home/matteo/.config/foot"] }
+    Process { id: pNoteGhostty; command: ["zeditor", "/home/matteo/.config/ghostty"] }
+    Process { id: pNoteFish; command: ["zeditor", "/home/matteo/.config/fish"] }
+    Process { id: pNoteFastfetch; command: ["zeditor", "/home/matteo/.config/fastfetch"] }
+
     Process { id: pNmtui; command: ["kitty", "-e", "nmtui"] }
 
     // Background Process Loops
@@ -355,7 +367,11 @@ ShellRoot {
         
         exclusionMode: ExclusionMode.Ignore
         
+
         property bool show: false
+        property bool gpuExpanded: false
+        property bool notesExpanded: false
+
         
         // Fluid Animation Visibility Logic: Stay mapped until opacity is 0
         visible: show || animRect.opacity > 0
@@ -591,13 +607,53 @@ ShellRoot {
                             iconText: "󰢮"
                             isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
                             accent: "#76B900"
-                            onClicked: { pGpu.running = true }
+                            onClicked: { controlCenter.gpuExpanded = !controlCenter.gpuExpanded; controlCenter.notesExpanded = false }
                         }
                         ModernButton {
-                            text: "Notes"
+                            text: "Configs"
                             iconText: ""
-                            onClicked: { pNotes.running = true; controlCenter.show = false }
+                            isActive: controlCenter.notesExpanded
+                            accent: root.colFg
+                            onClicked: { controlCenter.notesExpanded = !controlCenter.notesExpanded; controlCenter.gpuExpanded = false }
                         }
+                    }
+                    
+                    // GPU Expanded Menu
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        visible: controlCenter.gpuExpanded
+                        
+                        ModernButton {
+                            Layout.preferredHeight: 36
+                            text: "Integrated"
+                            iconText: "󰍛"
+                            onClicked: { pGpuInt.running = true; controlCenter.show = false }
+                        }
+                        ModernButton {
+                            Layout.preferredHeight: 36
+                            text: "Hybrid"
+                            iconText: "󰢮"
+                            onClicked: { pGpuHyb.running = true; controlCenter.show = false }
+                        }
+                    }
+                    
+                    // Notes Expanded Menu
+                    GridLayout {
+                        Layout.fillWidth: true
+                        visible: controlCenter.notesExpanded
+                        columns: 3
+                        rowSpacing: 8
+                        columnSpacing: 8
+                        
+                        ModernButton { Layout.preferredHeight: 36; text: "Hyprland"; iconText: ""; onClicked: { pNoteHyprland.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Waybar"; iconText: ""; onClicked: { pNoteWaybar.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Tofi"; iconText: ""; onClicked: { pNoteTofi.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Kitty"; iconText: ""; onClicked: { pNoteKitty.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Foot"; iconText: ""; onClicked: { pNoteFoot.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Ghostty"; iconText: ""; onClicked: { pNoteGhostty.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Fish"; iconText: ""; onClicked: { pNoteFish.running = true; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 36; text: "Fastfetch"; iconText: ""; onClicked: { pNoteFastfetch.running = true; controlCenter.show = false } }
                     }
                 }
             }
