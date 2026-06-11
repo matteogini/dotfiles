@@ -57,38 +57,38 @@ ShellRoot {
     // Background Process Loops
     Process {
         command: ["sh", "-c", "while true; do awk '{line[NR]=$1} END {printf \"%.1f\", (line[1] * line[2]) / 1000000000000}' /sys/class/power_supply/BAT1/current_now /sys/class/power_supply/BAT1/voltage_now 2>/dev/null || echo '0.0'; echo; sleep 10; done"]
-        running: true; stdout: SplitParser { onRead: data => powerDraw = data.trim() }
+        running: true; stdout: SplitParser { onRead: data => root.powerDraw = data.trim() }
     }
     Process {
         command: ["sh", "-c", "while true; do temp=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0); echo $((temp / 1000)); sleep 10; done"]
-        running: true; stdout: SplitParser { onRead: data => temperature = data.trim() }
+        running: true; stdout: SplitParser { onRead: data => root.temperature = data.trim() }
     }
     Process {
         command: ["sh", "-c", "while true; do checkupdates 2>/dev/null | wc -l; sleep 3600; done"]
-        running: true; stdout: SplitParser { onRead: data => updates = data.trim() }
+        running: true; stdout: SplitParser { onRead: data => root.updates = data.trim() }
     }
     Process {
         command: ["sh", "-c", "while true; do cap=$(cat /sys/class/power_supply/BAT1/capacity 2>/dev/null || echo 0); acad=$(cat /sys/class/power_supply/ACAD/online 2>/dev/null || echo 0); echo \"$cap $acad\"; sleep 60; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var parts = data.trim().split(" ");
-                batteryCap = parts[0];
-                batteryCharging = (parts[1] === "1");
+                root.batteryCap = parts[0];
+                root.batteryCharging = (parts[1] === "1");
             }
         }
     }
     Process {
         command: ["sh", "-c", "while true; do supergfxctl -g 2>/dev/null || echo '?'; sleep 10; done"]
-        running: true; stdout: SplitParser { onRead: data => gpuMode = data.trim() }
+        running: true; stdout: SplitParser { onRead: data => root.gpuMode = data.trim() }
     }
     Process {
         command: ["sh", "-c", "while true; do wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null; sleep 2; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
-                volumeMuted = d.includes("[MUTED]");
+                root.volumeMuted = d.includes("[MUTED]");
                 var m = d.match(/[0-9.]+/);
-                if (m) volumeOut = Math.round(parseFloat(m[0]) * 100) + "%";
+                if (m) root.volumeOut = Math.round(parseFloat(m[0]) * 100) + "%";
             }
         }
     }
@@ -97,30 +97,30 @@ ShellRoot {
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
-                micMuted = d.includes("[MUTED]");
+                root.micMuted = d.includes("[MUTED]");
                 var m = d.match(/[0-9.]+/);
-                if (m) volumeMic = Math.round(parseFloat(m[0]) * 100) + "%";
+                if (m) root.volumeMic = Math.round(parseFloat(m[0]) * 100) + "%";
             }
         }
     }
     Process {
         command: ["sh", "-c", "while true; do bluetoothctl show 2>/dev/null | grep -q 'Powered: yes' && echo 'on' || echo 'off'; sleep 10; done"]
-        running: true; stdout: SplitParser { onRead: data => bluetoothStatus = data.trim() }
+        running: true; stdout: SplitParser { onRead: data => root.bluetoothStatus = data.trim() }
     }
     Process {
         command: ["sh", "-c", "while true; do sig=$(LC_ALL=C nmcli -t -f active,signal dev wifi | grep '^yes' | cut -d: -f2); if [ -z \"$sig\" ]; then echo 'disc'; else echo \"$sig\"; fi; sleep 10; done"]
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var d = data.trim();
-                if (d === 'disc') { wifiIcon = "󰤮"; wifiText = "Disconnected"; }
+                if (d === 'disc') { root.wifiIcon = "󰤮"; root.wifiText = "Disconnected"; }
                 else {
                     var s = parseInt(d);
-                    wifiText = s + "%";
-                    if (s > 80) wifiIcon = "󰤨";
-                    else if (s > 60) wifiIcon = "󰤥";
-                    else if (s > 40) wifiIcon = "󰤢";
-                    else if (s > 20) wifiIcon = "󰤟";
-                    else wifiIcon = "󰤯";
+                    root.wifiText = s + "%";
+                    if (s > 80) root.wifiIcon = "󰤨";
+                    else if (s > 60) root.wifiIcon = "󰤥";
+                    else if (s > 40) root.wifiIcon = "󰤢";
+                    else if (s > 20) root.wifiIcon = "󰤟";
+                    else root.wifiIcon = "󰤯";
                 }
             }
         }
@@ -130,8 +130,8 @@ ShellRoot {
         running: true; stdout: SplitParser { 
             onRead: data => {
                 var p = data.split("|");
-                spotifyStatus = p[0].trim();
-                spotifyText = p[1] ? p[1].trim() : "";
+                root.spotifyStatus = p[0].trim();
+                root.spotifyText = p[1] ? p[1].trim() : "";
             }
         }
     }
@@ -139,6 +139,7 @@ ShellRoot {
 
     // A helper to make clickable modules easily
     component Mod: MouseArea {
+        id: modRoot
         property string text
         property color textColor: root.colFg
         property color bgColor: "transparent"
@@ -161,7 +162,7 @@ ShellRoot {
             Behavior on color { ColorAnimation { duration: 200 } }
             
             SequentialAnimation on opacity {
-                running: parent.blink
+                running: modRoot.blink
                 loops: Animation.Infinite
                 NumberAnimation { to: 0.1; duration: 500 }
                 NumberAnimation { to: 1.0; duration: 500 }
@@ -399,6 +400,7 @@ ShellRoot {
             }
         }
     }
+}
 
     PopupWindow {
         id: controlCenter
@@ -411,7 +413,6 @@ ShellRoot {
         implicitWidth: 320
         implicitHeight: show ? layout.implicitHeight + 32 : 0
         Behavior on implicitHeight { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
-        clip: true
         
         color: Qt.rgba(0.05, 0.05, 0.05, 0.95)
         
