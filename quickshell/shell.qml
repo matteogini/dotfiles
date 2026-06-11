@@ -22,7 +22,7 @@ ShellRoot {
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: 24
+    implicitHeight: 40
     color: "transparent"
 
     // State properties
@@ -232,13 +232,13 @@ ShellRoot {
 
     Rectangle {
         id: notchRect
-        opacity: (!controlCenter.show && controlCenter.animHeight <= 45) ? 1.0 : 0.0
+        opacity: (!controlCenter.show && controlCenter.animHeight <= 36) ? 1.0 : 0.0
         // No behavior needed, it snaps perfectly instantly
         
         anchors.top: parent.top
-        anchors.topMargin: -16
+        anchors.topMargin: 8
         anchors.horizontalCenter: parent.horizontalCenter
-        height: parent.height + 16
+        height: 32
         width: notchLayout.implicitWidth + 32
         color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
         radius: 16
@@ -249,9 +249,9 @@ ShellRoot {
             id: notchLayout
             opacity: controlCenter.show ? 0 : 1
             Behavior on opacity { NumberAnimation { duration: 150 } }
-            anchors.bottom: parent.bottom
+            anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            height: parent.height - 16
+            height: parent.height
             spacing: 8
             
             Repeater {
@@ -538,19 +538,27 @@ ShellRoot {
             Rectangle {
                 id: animRect
                 anchors.top: parent.top
-                anchors.topMargin: controlCenter.show ? 16 : -16
+                anchors.topMargin: controlCenter.show ? 16 : 8
                 anchors.horizontalCenter: parent.horizontalCenter
                 
                 width: controlCenter.show ? 380 : notchLayout.implicitWidth + 32
-                height: controlCenter.show ? (mainLayout.implicitHeight + 32) : 40
+                height: controlCenter.show ? (mainLayout.implicitHeight + 32) : 32
                 
                 color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
-                radius: 16
+                radius: controlCenter.show ? 24 : 16
                 border.color: Qt.rgba(1, 1, 1, 0.1)
                 border.width: 1
                 
                 // DYNAMIC ISLAND FLUID ANIMATION
-                opacity: (!controlCenter.show && height <= 45) ? 0.0 : 1.0
+                opacity: (!controlCenter.show && height <= 36) ? 0.0 : 1.0
+                
+                Behavior on radius { 
+                    NumberAnimation { 
+                        duration: controlCenter.show ? 450 : 300
+                        easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
+                        easing.overshoot: controlCenter.show ? 1.2 : 0 
+                    } 
+                }
                 
                 Behavior on width { 
                     NumberAnimation { 
