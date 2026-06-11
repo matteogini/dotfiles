@@ -173,9 +173,11 @@ ShellRoot {
         property color bgColor: "transparent"
         property bool blink: false
         property bool show: true
+        property real customWidth: 0
+        default property alias customContent: contentBox.data
         
         Layout.preferredHeight: root.height
-        Layout.preferredWidth: show ? (modText.implicitWidth + 16) : 0
+        Layout.preferredWidth: show ? (customWidth > 0 ? customWidth + 16 : modText.implicitWidth + 16) : 0
         Behavior on Layout.preferredWidth { 
             NumberAnimation { duration: 300; easing.type: Easing.OutExpo } 
         }
@@ -213,6 +215,10 @@ ShellRoot {
                 font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
                 anchors.centerIn: parent
                 Behavior on color { ColorAnimation { duration: 200 } }
+            }
+            Item {
+                id: contentBox
+                anchors.centerIn: parent
             }
         }
     }
@@ -269,21 +275,13 @@ ShellRoot {
                 property bool isCrit: cap <= 15 && !root.batteryCharging
                 property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                 
-                function getIcon(cap, charging) {
-                    if (charging) return "󰂄";
-                    if (cap > 90) return "󰁹";
-                    if (cap > 80) return "󰂂";
-                    if (cap > 70) return "󰂁";
-                    if (cap > 60) return "󰂀";
-                    if (cap > 50) return "󰁿";
-                    if (cap > 40) return "󰁾";
-                    if (cap > 30) return "󰁽";
-                    if (cap > 20) return "󰁼";
-                    if (cap > 10) return "󰁻";
-                    return "󰁺";
+                id: barBattMod
+                customWidth: 32
+                ModernBatteryIcon {
+                    level: barBattMod.cap / 100.0
+                    charging: root.batteryCharging
+                    colFg: barBattMod.textColor
                 }
-                
-                text: getIcon(cap, root.batteryCharging)
                 
                 textColor: {
                     if (isCrit) return root.colBg;
@@ -305,6 +303,65 @@ ShellRoot {
         }
     }
 }
+
+
+    component ModernBatteryIcon: Item {
+        id: battIcon
+        property real level: 1.0
+        property bool charging: false
+        property color colFg: root.colFg
+        
+        implicitWidth: 32
+        implicitHeight: 14
+        
+        Rectangle {
+            id: outline
+            width: 26
+            height: 12
+            anchors.verticalCenter: parent.verticalCenter
+            color: "transparent"
+            border.color: battIcon.colFg
+            border.width: 1.5
+            radius: 4
+            opacity: 0.7
+            
+            Rectangle {
+                id: fill
+                x: 2
+                y: 2
+                width: Math.max(0, (parent.width - 4) * battIcon.level)
+                height: parent.height - 4
+                radius: 2
+                color: {
+                    if (battIcon.charging) return "#76B900";
+                    if (battIcon.level <= 0.2) return "#FF3B30";
+                    return battIcon.colFg;
+                }
+                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+            }
+        }
+        
+        // The nub
+        Rectangle {
+            width: 3
+            height: 6
+            anchors.left: outline.right
+            anchors.leftMargin: 1
+            anchors.verticalCenter: parent.verticalCenter
+            color: battIcon.colFg
+            opacity: 0.7
+            radius: 1.5
+        }
+        
+        // Charging bolt
+        Text {
+            visible: battIcon.charging
+            text: ""
+            font.pixelSize: 9
+            color: "#ffffff"
+            anchors.centerIn: outline
+        }
+    }
 
     component ModernButton: MouseArea {
         id: mbtn
@@ -467,20 +524,6 @@ ShellRoot {
                             property bool isCrit: cap <= 15 && !root.batteryCharging
                             property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                             
-                            function getIcon(cap, charging) {
-                                if (charging) return "󰂄";
-                                if (cap > 90) return "󰁹";
-                                if (cap > 80) return "󰂂";
-                                if (cap > 70) return "󰂁";
-                                if (cap > 60) return "󰂀";
-                                if (cap > 50) return "󰁿";
-                                if (cap > 40) return "󰁾";
-                                if (cap > 30) return "󰁽";
-                                if (cap > 20) return "󰁼";
-                                if (cap > 10) return "󰁻";
-                                return "󰁺";
-                            }
-                            
                             Layout.preferredHeight: 48
                             Layout.preferredWidth: battLayout.implicitWidth + 24
                             hoverEnabled: true
@@ -496,12 +539,17 @@ ShellRoot {
                             RowLayout {
                                 id: battLayout
                                 anchors.centerIn: parent
-                                spacing: 8
-                                Text { 
-                                    text: parent.parent.getIcon(parent.parent.cap, root.batteryCharging)
-                                    color: parent.parent.isCrit ? root.colCrit : (parent.parent.isWarn ? "#FFA500" : (root.batteryCharging ? "#76B900" : root.colFg))
-                                    font.family: root.fontFamily
-                                    font.pixelSize: 18 
+                                spacing: 10
+                                ModernBatteryIcon {
+                                    level: parseInt(root.batteryCap) / 100.0
+                                    charging: root.batteryCharging
+                                    colFg: {
+                                        let c = parseInt(root.batteryCap);
+                                        if (c <= 15 && !root.batteryCharging) return root.colCrit;
+                                        if (c <= 30 && c > 15 && !root.batteryCharging) return "#FFA500";
+                                        if (root.batteryCharging) return "#76B900";
+                                        return root.colFg;
+                                    }
                                 }
                                 Text { 
                                     text: root.batteryCap + "%"
@@ -704,7 +752,7 @@ ShellRoot {
                     anchors.topMargin: root.height + 28
                     spacing: 12
                     
-                    Text { text: "GPU Mode"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 16; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                    
                     ModernButton { text: "Integrated"; iconText: "󰍛"; onClicked: { pGpuInt.running = true; gpuPopup.show = false; controlCenter.show = false } }
                     ModernButton { text: "Hybrid"; iconText: "󰢮"; onClicked: { pGpuHyb.running = true; gpuPopup.show = false; controlCenter.show = false } }
                 }
@@ -758,7 +806,7 @@ ShellRoot {
                     anchors.topMargin: root.height + 28
                     spacing: 16
                     
-                    Text { text: "Configurations"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 16; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                    
                     
                     GridLayout {
                         Layout.fillWidth: true
