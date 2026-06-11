@@ -413,9 +413,6 @@ ShellRoot {
         implicitWidth: 320
         implicitHeight: layout.implicitHeight + 32
         
-        opacity: show ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { duration: 200 } }
-        
         color: Qt.rgba(0.05, 0.05, 0.05, 0.95)
         
         Rectangle {
