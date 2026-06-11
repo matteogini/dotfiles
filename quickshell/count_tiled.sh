@@ -3,9 +3,7 @@
 update() {
     active_ws=$(hyprctl activeworkspace -j | jq -r .id)
     if [ -z "$active_ws" ] || [ "$active_ws" = "null" ]; then echo 0; return; fi
-    res=$(hyprctl clients -j | jq -c '[.[] | select(.workspace.id == '"$active_ws"' and .floating == false)] | length')
-    echo "$res"
-    echo "$(date '+%H:%M:%S.%N') - WS: $active_ws - Tiled count: $res" >> /tmp/qs_debug.log
+    hyprctl clients -j | jq -c '[.[] | select(.workspace.id == '"$active_ws"' and .floating == false)] | length'
 }
 
 last_val="-1"
