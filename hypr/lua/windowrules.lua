@@ -78,3 +78,11 @@ hl.window_rule({
     center = true,
     workspace = "special:magic silent",
 })
+
+hl.window_rule({
+    name  = "foot",
+    match = { class = "^(foot|footclient)$" },
+    float = true,
+    size  = "850 650",
+    center = true,
+})

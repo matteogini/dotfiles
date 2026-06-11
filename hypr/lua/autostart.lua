@@ -2,13 +2,13 @@ local programs = require("lua.programs")
 
 hl.on("hyprland.start", function ()
   hl.exec_cmd("foot --server")
-  
+
   local zenBgRule = hl.window_rule({
       name = "zen-background-startup",
       match = { class = "zen" },
       workspace = "special:zenbg silent"
   })
-  
+
   hl.timer(function()
       hl.exec_cmd("zen-browser")
       hl.timer(function()
@@ -24,7 +24,7 @@ hl.on("hyprland.start", function ()
   hl.exec_cmd("nm-applet --indicator")
   hl.exec_cmd("systemctl --user start hyprpolkitagent")
   hl.exec_cmd("hyprsunset -t 5000")
-  hl.exec_cmd("/home/matteo/.config/hypr/scripts/switch_theme.sh nero")
+  hl.exec_cmd("/home/matteo/.config/hypr/scripts/switch_theme.sh minimal")
   hl.exec_cmd("rm -f $XDG_RUNTIME_DIR/wob.fifo && mkfifo $XDG_RUNTIME_DIR/wob.fifo && tail -f $XDG_RUNTIME_DIR/wob.fifo | wob -c ~/.config/wob/wob.ini")
   hl.exec_cmd("cliphist list | tail -n +501 | cliphist delete")
 end)

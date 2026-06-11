@@ -21,7 +21,7 @@ hl.gesture({
     direction = "down",
     action = function()
         hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
-        hl.dispatch(hl.dsp.window.resize({ x = 800, y = 600, relative = false }))
+        hl.dispatch(hl.dsp.window.resize({ x = 850, y = 650, relative = false }))
         hl.dispatch(hl.dsp.window.center())
     end
 })
