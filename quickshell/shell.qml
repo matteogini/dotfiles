@@ -35,7 +35,7 @@ ShellRoot {
     anchors.top: true
     anchors.left: true
     anchors.right: true
-    implicitHeight: 40
+    implicitHeight: root.isBarMode ? 32 : 40
     color: "transparent"
 
     // State properties
