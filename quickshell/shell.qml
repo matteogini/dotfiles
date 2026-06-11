@@ -200,50 +200,7 @@ ShellRoot {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             spacing: 0
-
-            // Stats Group Drawer
-            MouseArea {
-                id: statsDrawer
-                hoverEnabled: true
-                Layout.preferredHeight: root.height
-                Layout.preferredWidth: statsRow.implicitWidth
-                RowLayout {
-                    id: statsRow
-                    anchors.fill: parent
-                    spacing: 0
-                    
-                    // Handle
-                    Item { Layout.preferredWidth: 8; Layout.preferredHeight: root.height }
-                    
-                    // Drawer contents
-                    RowLayout {
-                        spacing: 0
-                        clip: true
-                        Layout.preferredWidth: statsDrawer.containsMouse ? implicitWidth : 0
-                        Behavior on Layout.preferredWidth { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
-                        
-                        Mod { text: " 󱐋 " + root.powerDraw + "W"; textColor: root.colAccent }
-                        Mod { text: " " + root.temperature + "°"; textColor: parseInt(root.temperature) >= 80 ? root.colCrit : root.colFg }
-                        Mod { text: "󰮯 " + root.updates; show: parseInt(root.updates) > 0 }
-                        Mod { text: ""; onClicked: { pNotes.running = true } }
-                    }
-                }
-            }
-
-            // Spotify
-            RowLayout {
-                spacing: 0
-                visible: root.spotifyStatus !== "offline"
-                Mod { text: "󰒮"; onClicked: { pSpotPrev.running = true } }
-                Mod { text: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; textColor: root.colAccent; onClicked: { pSpotPlay.running = true } }
-                Mod { text: "󰒭"; onClicked: { pSpotNext.running = true } }
-                Text {
-                    text: root.spotifyText.length > 35 ? root.spotifyText.substring(0, 32) + "..." : root.spotifyText
-                    color: root.colMuted
-                    font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
-                    Layout.leftMargin: 8
-                }
-            }
+            // Ultra-minimalism: Left side is intentionally empty
         }
 
         // --- CENTER ---
@@ -284,119 +241,26 @@ ShellRoot {
                 property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                 
                 text: {
-                    // format-plugged: " " -> hide text if full/not discharging? 
-                    // waybar assumes plugged = AC connected. We'll use status.
-                    if (root.batteryCharging) return "+" + root.batteryCap;
-                    return root.batteryCap;
+                    if (root.batteryCharging) return "󰂄 " + root.batteryCap + "%";
+                    return "󰁹 " + root.batteryCap + "%";
                 }
                 
                 textColor: {
-                    if (isCrit) return root.colBg;         // color: @bg
-                    if (isWarn) return root.colFg;         // color: @fg
-                    if (root.batteryCharging) return root.colAccent; // color: @accent
-                    return root.colMuted;                  // color: alpha(@fg, 0.4)
+                    if (isCrit) return root.colBg;
+                    if (isWarn) return root.colFg;
+                    if (root.batteryCharging) return root.colAccent;
+                    return root.colFg;
                 }
                 
                 bgColor: {
-                    if (isCrit) return root.colAccent;     // background-color: @accent
-                    if (isWarn) return root.colHover;      // background-color: rgba(255, 255, 255, 0.2)
+                    if (isCrit) return root.colAccent;
+                    if (isWarn) return root.colHover;
                     return "transparent";
                 }
                 
                 blink: isCrit
-                show: !root.batteryCharging
-            }
-
-            // Tools Group Drawer
-            MouseArea {
-                id: toolsDrawer
-                hoverEnabled: true
-                Layout.preferredHeight: root.height
-                Layout.preferredWidth: toolsRow.implicitWidth
-                RowLayout {
-                    id: toolsRow
-                    anchors.fill: parent
-                    spacing: 0
-                    
-                    // Drawer contents (expanding smoothly via width animation)
-                    RowLayout {
-                        spacing: 0
-                        clip: true
-                        Layout.preferredWidth: toolsDrawer.containsMouse ? implicitWidth : 0
-                        Behavior on Layout.preferredWidth { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
-                        
-                        Mod { text: "󰢮 " + root.gpuMode; onClicked: { pGpu.running = true } }
-                        
-                        // Wifi
-                        Mod {
-                            text: root.wifiIcon + " " + root.wifiText
-                            textColor: root.wifiText === "Disconnected" ? root.colCrit : root.colFg
-                            onClicked: { pNmtui.running = true }
-                        }
-                        
-                        Mod { 
-                            text: (root.volumeMuted ? " " : " ") + root.volumeOut
-                            textColor: root.volumeMuted ? root.colMuted : root.colFg
-                            onClicked: { controlCenter.show = !controlCenter.show }
-                        }
-                        
-                        MouseArea {
-                            property bool show: true
-                            Layout.preferredHeight: root.height
-                            Layout.preferredWidth: show ? (micModText.implicitWidth + 16) : 0
-                            Behavior on Layout.preferredWidth { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
-                            clip: true
-                            visible: Layout.preferredWidth > 0
-                            hoverEnabled: true
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
-                            onClicked: (mouse) => {
-                                if (mouse.button === Qt.RightButton) {
-                                    pMicMute.running = true
-                                } else {
-                                    pPavu.running = true
-                                }
-                            }
-                            Rectangle {
-                                anchors.fill: parent
-                                color: parent.containsMouse ? root.colHover : "transparent"
-                            }
-                            Item {
-                                anchors.centerIn: parent
-                                width: micModText.width
-                                height: micModText.height
-                                scale: parent.containsPress ? 0.85 : (parent.containsMouse ? 1.1 : 1.0)
-                                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2.0 } }
-                                
-                                Text {
-                                    id: micModText
-                                    text: root.micMuted ? " " : " "
-                                    color: root.micMuted ? root.colMuted : root.colFg
-                                    font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
-                                    anchors.centerIn: parent
-                                    Behavior on color { ColorAnimation { duration: 200 } }
-                                }
-                            }
-                        }
-
-                        Mod {
-                            text: root.bluetoothStatus === "on" ? " on" : "󰂲"
-                            textColor: root.bluetoothStatus === "on" ? root.colFg : root.colMuted
-                            onClicked: { pBlueberry.running = true }
-                        }
-
-                        Mod {
-                            id: clockMod
-                            text: Qt.formatDateTime(new Date(), "HH:mm")
-                            Timer {
-                                interval: 1000; running: true; repeat: true
-                                onTriggered: clockMod.text = Qt.formatDateTime(new Date(), "HH:mm")
-                            }
-                        }
-                    }
-                    
-                    // Handle
-                    Item { Layout.preferredWidth: 8; Layout.preferredHeight: root.height }
-                }
+                show: true
+                onClicked: { controlCenter.show = !controlCenter.show }
             }
         }
     }
@@ -431,12 +295,56 @@ ShellRoot {
             anchors.margins: 16
             spacing: 20
             
-            Text {
-                text: "Control Center"
-                color: root.colFg
-                font { family: root.fontFamily; pixelSize: 14; bold: true }
+            // Header: Clock & Date
+            RowLayout {
+                Layout.fillWidth: true
+                Text {
+                    id: clockText
+                    color: root.colFg
+                    font { family: root.fontFamily; pixelSize: 24; bold: true }
+                    text: Qt.formatDateTime(new Date(), "HH:mm")
+                    Timer {
+                        interval: 1000; running: true; repeat: true
+                        onTriggered: clockText.text = Qt.formatDateTime(new Date(), "HH:mm")
+                    }
+                }
+                Item { Layout.fillWidth: true }
+                Text {
+                    color: root.colMuted
+                    font { family: root.fontFamily; pixelSize: 12 }
+                    text: Qt.formatDateTime(new Date(), "ddd, MMM d")
+                }
             }
             
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1) }
+            
+            // Spotify Media Player
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                visible: root.spotifyStatus !== "offline"
+                
+                Text {
+                    text: "🎵 " + root.spotifyText
+                    color: root.colAccent
+                    font { family: root.fontFamily; pixelSize: 12; bold: true }
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+                
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
+                    Item { Layout.fillWidth: true }
+                    Button { text: "󰒮"; onClicked: { pSpotPrev.running = true } }
+                    Button { text: root.spotifyStatus === "Playing" ? "󰏤" : "󰐊"; onClicked: { pSpotPlay.running = true } }
+                    Button { text: "󰒭"; onClicked: { pSpotNext.running = true } }
+                    Item { Layout.fillWidth: true }
+                }
+            }
+            
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Qt.rgba(1,1,1,0.1); visible: root.spotifyStatus !== "offline" }
+
             // Volume
             RowLayout {
                 spacing: 12
@@ -469,28 +377,49 @@ ShellRoot {
                 Text { text: root.volumeMic; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 35; horizontalAlignment: Text.AlignRight }
             }
             
-            // Toggles Row
+            // Toggles Row 1
             RowLayout {
                 spacing: 10
                 Layout.fillWidth: true
                 
                 Button {
                     Layout.fillWidth: true
-                    text: root.bluetoothStatus === "on" ? " Bluetooth: On" : "󰂲 Bluetooth: Off"
+                    text: root.bluetoothStatus === "on" ? " BT: On" : "󰂲 BT: Off"
                     onClicked: { pBlueberry.running = true; controlCenter.show = false }
                 }
                 
                 Button {
                     Layout.fillWidth: true
-                    text: "󰤨 Wi-Fi"
+                    text: root.wifiIcon + " Wi-Fi"
                     onClicked: { pNmtui.running = true; controlCenter.show = false }
                 }
             }
             
-            Button {
+            // Toggles Row 2
+            RowLayout {
+                spacing: 10
                 Layout.fillWidth: true
-                text: "Open Pavucontrol"
-                onClicked: { pPavu.running = true; controlCenter.show = false }
+                
+                Button {
+                    Layout.fillWidth: true
+                    text: "󰢮 " + root.gpuMode
+                    onClicked: { pGpu.running = true }
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: " Notes"
+                    onClicked: { pNotes.running = true; controlCenter.show = false }
+                }
+            }
+            
+            // System Stats
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 10
+                
+                Text { text: "󱐋 " + root.powerDraw + "W"; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 11; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                Text { text: " " + root.temperature + "°"; color: parseInt(root.temperature) >= 80 ? root.colCrit : root.colMuted; font.family: root.fontFamily; font.pixelSize: 11; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                Text { text: "󰮯 " + root.updates; color: root.colMuted; font.family: root.fontFamily; font.pixelSize: 11; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; visible: parseInt(root.updates) > 0 }
             }
         }
     }
