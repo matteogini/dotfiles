@@ -259,7 +259,7 @@ ShellRoot {
         Behavior on radius { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
         Behavior on anchors.topMargin { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
         border.color: Qt.rgba(1, 1, 1, 0.1)
-        border.width: 1
+        border.width: root.isBarMode ? 0 : 1
         
         RowLayout {
             id: notchLayout
@@ -563,7 +563,7 @@ ShellRoot {
                 color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
                 radius: controlCenter.show ? 24 : (root.isBarMode ? 0 : 16)
                 border.color: Qt.rgba(1, 1, 1, 0.1)
-                border.width: 1
+                border.width: (controlCenter.show || !root.isBarMode) ? 1 : 0
                 
                 // DYNAMIC ISLAND FLUID ANIMATION
                 opacity: (!controlCenter.show && height <= 36) ? 0.0 : 1.0
