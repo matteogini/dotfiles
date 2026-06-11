@@ -271,8 +271,8 @@ ShellRoot {
                 }
                 
                 blink: isCrit
-                show: true
-                onClicked: { controlCenter.show = !controlCenter.show }
+                show: !controlCenter.show
+                onClicked: { controlCenter.show = true }
             }
         }
     }
@@ -396,27 +396,87 @@ ShellRoot {
                     anchors.margins: 20
                     spacing: 24
                     
-                    // Header: Clock & Date
+                    // Header: Clock & Date & Battery
                     RowLayout {
                         Layout.fillWidth: true
-                        Text {
-                            id: clockText
-                            color: root.colFg
-                            font.family: root.fontFamily
-                            font.pixelSize: 28
-                            font.bold: true
-                            text: Qt.formatDateTime(new Date(), "HH:mm")
-                            Timer {
-                                interval: 1000; running: true; repeat: true
-                                onTriggered: clockText.text = Qt.formatDateTime(new Date(), "HH:mm")
+                        
+                        ColumnLayout {
+                            spacing: 4
+                            Text {
+                                id: clockText
+                                color: root.colFg
+                                font.family: root.fontFamily
+                                font.pixelSize: 28
+                                font.bold: true
+                                text: Qt.formatDateTime(new Date(), "HH:mm")
+                                Timer {
+                                    interval: 1000; running: true; repeat: true
+                                    onTriggered: clockText.text = Qt.formatDateTime(new Date(), "HH:mm")
+                                }
+                            }
+                            Text {
+                                color: root.colMuted
+                                font.family: root.fontFamily
+                                font.pixelSize: 13
+                                text: Qt.formatDateTime(new Date(), "dddd, MMMM d")
                             }
                         }
+                        
                         Item { Layout.fillWidth: true }
-                        Text {
-                            color: root.colMuted
-                            font.family: root.fontFamily
-                            font.pixelSize: 13
-                            text: Qt.formatDateTime(new Date(), "dddd, MMMM d")
+                        
+                        // Battery Close Button
+                        MouseArea {
+                            property int cap: parseInt(root.batteryCap)
+                            property bool isCrit: cap <= 15 && !root.batteryCharging
+                            property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
+                            
+                            function getIcon(cap, charging) {
+                                if (charging) return "󰂄";
+                                if (cap > 90) return "󰁹";
+                                if (cap > 80) return "󰂂";
+                                if (cap > 70) return "󰂁";
+                                if (cap > 60) return "󰂀";
+                                if (cap > 50) return "󰁿";
+                                if (cap > 40) return "󰁾";
+                                if (cap > 30) return "󰁽";
+                                if (cap > 20) return "󰁼";
+                                if (cap > 10) return "󰁻";
+                                return "󰁺";
+                            }
+                            
+                            Layout.preferredHeight: 48
+                            Layout.preferredWidth: battLayout.implicitWidth + 24
+                            hoverEnabled: true
+                            onClicked: { controlCenter.show = false }
+                            
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 12
+                                color: parent.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+                            
+                            RowLayout {
+                                id: battLayout
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text { 
+                                    text: parent.parent.getIcon(parent.parent.cap, root.batteryCharging)
+                                    color: parent.parent.isCrit ? root.colCrit : (parent.parent.isWarn ? "#FFA500" : (root.batteryCharging ? "#76B900" : root.colFg))
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 18 
+                                }
+                                Text { 
+                                    text: root.batteryCap + "%"
+                                    color: root.colFg
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 14
+                                    font.bold: true 
+                                }
+                            }
+                            
+                            scale: containsPress ? 0.95 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
                         }
                     }
                     
