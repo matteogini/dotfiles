@@ -183,7 +183,7 @@ ShellRoot {
         property real customWidth: 0
         default property alias customContent: contentBox.data
         
-        Layout.preferredHeight: root.height
+        Layout.fillHeight: true
         Layout.preferredWidth: show ? (customWidth > 0 ? customWidth + 16 : modText.implicitWidth + 16) : 0
         Behavior on Layout.preferredWidth { 
             NumberAnimation { duration: 300; easing.type: Easing.OutExpo } 
