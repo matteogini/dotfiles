@@ -141,14 +141,21 @@ PanelWindow {
         property color bgColor: "transparent"
         property bool blink: false
         property bool show: true
+        
         Layout.preferredHeight: root.height
         Layout.preferredWidth: show ? (modText.implicitWidth + 16) : 0
-        visible: show
+        Behavior on Layout.preferredWidth { 
+            NumberAnimation { duration: 300; easing.type: Easing.OutExpo } 
+        }
+        
+        visible: Layout.preferredWidth > 0
+        clip: true
         hoverEnabled: true
 
         Rectangle {
             anchors.fill: parent
             color: parent.containsMouse ? root.colHover : parent.bgColor
+            Behavior on color { ColorAnimation { duration: 200 } }
             
             SequentialAnimation on opacity {
                 running: parent.blink
@@ -158,12 +165,23 @@ PanelWindow {
             }
         }
 
-        Text {
-            id: modText
-            text: parent.text
-            color: parent.textColor
-            font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+        Item {
             anchors.centerIn: parent
+            width: modText.width
+            height: modText.height
+            scale: parent.containsPress ? 0.85 : (parent.containsMouse ? 1.1 : 1.0)
+            Behavior on scale { 
+                NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2.0 } 
+            }
+            
+            Text {
+                id: modText
+                text: parent.parent.text
+                color: parent.parent.textColor
+                font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+                anchors.centerIn: parent
+                Behavior on color { ColorAnimation { duration: 200 } }
+            }
         }
     }
 
@@ -196,7 +214,10 @@ PanelWindow {
                     // Drawer contents
                     RowLayout {
                         spacing: 0
-                        visible: statsDrawer.containsMouse
+                        clip: true
+                        Layout.preferredWidth: statsDrawer.containsMouse ? implicitWidth : 0
+                        Behavior on Layout.preferredWidth { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
+                        
                         Mod { text: " 󱐋 " + root.powerDraw + "W"; textColor: root.colAccent }
                         Mod { text: " " + root.temperature + "°"; textColor: parseInt(root.temperature) >= 80 ? root.colCrit : root.colFg }
                         Mod { text: "󰮯 " + root.updates; show: parseInt(root.updates) > 0 }
@@ -293,10 +314,12 @@ PanelWindow {
                     anchors.fill: parent
                     spacing: 0
                     
-                    // Drawer contents (expanding towards left conceptually, but in RowLayout they just appear)
+                    // Drawer contents (expanding smoothly via width animation)
                     RowLayout {
                         spacing: 0
-                        visible: toolsDrawer.containsMouse
+                        clip: true
+                        Layout.preferredWidth: toolsDrawer.containsMouse ? implicitWidth : 0
+                        Behavior on Layout.preferredWidth { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
                         
                         Mod { text: "󰢮 " + root.gpuMode; onClicked: { pGpu.running = true } }
                         
@@ -314,8 +337,12 @@ PanelWindow {
                         }
                         
                         MouseArea {
+                            property bool show: true
                             Layout.preferredHeight: root.height
-                            Layout.preferredWidth: micModText.implicitWidth + 16
+                            Layout.preferredWidth: show ? (micModText.implicitWidth + 16) : 0
+                            Behavior on Layout.preferredWidth { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
+                            clip: true
+                            visible: Layout.preferredWidth > 0
                             hoverEnabled: true
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: (mouse) => {
@@ -329,12 +356,21 @@ PanelWindow {
                                 anchors.fill: parent
                                 color: parent.containsMouse ? root.colHover : "transparent"
                             }
-                            Text {
-                                id: micModText
-                                text: root.micMuted ? " " : " "
-                                color: root.micMuted ? root.colMuted : root.colFg
-                                font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+                            Item {
                                 anchors.centerIn: parent
+                                width: micModText.width
+                                height: micModText.height
+                                scale: parent.containsPress ? 0.85 : (parent.containsMouse ? 1.1 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2.0 } }
+                                
+                                Text {
+                                    id: micModText
+                                    text: root.micMuted ? " " : " "
+                                    color: root.micMuted ? root.colMuted : root.colFg
+                                    font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
+                                    anchors.centerIn: parent
+                                    Behavior on color { ColorAnimation { duration: 200 } }
+                                }
                             }
                         }
 
