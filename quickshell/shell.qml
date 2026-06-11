@@ -18,6 +18,9 @@ ShellRoot {
     property color colCrit: "#ff0000"
     property string fontFamily: "JetBrainsMono Nerd Font"
     property int fontSize: 10 // Reduced font size to match waybar 9px
+    
+    property int windowCount: Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.toplevels ? Hyprland.focusedWorkspace.toplevels.values.length : 0
+    property bool isBarMode: windowCount === 1
 
     anchors.top: true
     anchors.left: true
@@ -232,16 +235,19 @@ ShellRoot {
 
     Rectangle {
         id: notchRect
-        opacity: (!controlCenter.show && controlCenter.animHeight <= 36) ? 1.0 : 0.0
-        // No behavior needed, it snaps perfectly instantly
+        opacity: (!controlCenter.show && controlCenter.animHeight <= 36) || root.isBarMode ? 1.0 : 0.0
         
         anchors.top: parent.top
-        anchors.topMargin: 4
+        anchors.topMargin: root.isBarMode ? 0 : 4
         anchors.horizontalCenter: parent.horizontalCenter
         height: 32
-        width: notchLayout.implicitWidth + 32
+        width: root.isBarMode ? parent.width : notchLayout.implicitWidth + 32
         color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
-        radius: 16
+        radius: root.isBarMode ? 0 : 16
+        
+        Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
+        Behavior on radius { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
+        Behavior on anchors.topMargin { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
         border.color: Qt.rgba(1, 1, 1, 0.1)
         border.width: 1
         
@@ -538,14 +544,14 @@ ShellRoot {
             Rectangle {
                 id: animRect
                 anchors.top: parent.top
-                anchors.topMargin: controlCenter.show ? 16 : 4
+                anchors.topMargin: controlCenter.show ? 16 : (root.isBarMode ? 0 : 4)
                 anchors.horizontalCenter: parent.horizontalCenter
                 
                 width: controlCenter.show ? 380 : notchLayout.implicitWidth + 32
                 height: controlCenter.show ? (mainLayout.implicitHeight + 32) : 32
                 
                 color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
-                radius: controlCenter.show ? 24 : 16
+                radius: controlCenter.show ? 24 : (root.isBarMode ? 0 : 16)
                 border.color: Qt.rgba(1, 1, 1, 0.1)
                 border.width: 1
                 
