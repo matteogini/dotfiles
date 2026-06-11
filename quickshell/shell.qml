@@ -368,9 +368,10 @@ ShellRoot {
         exclusionMode: ExclusionMode.Ignore
         
 
+
         property bool show: false
-        property bool gpuExpanded: false
-        property bool notesExpanded: false
+        property string currentMenu: "main"
+
 
         
         // Fluid Animation Visibility Logic: Stay mapped until opacity is 0
@@ -378,7 +379,14 @@ ShellRoot {
         
         // Increased size
         implicitWidth: 440
-        implicitHeight: layout.implicitHeight + 48 + root.height + 8
+        implicitHeight: {
+            let h = 0;
+            if (currentMenu === "main") h = mainLayout.implicitHeight;
+            else if (currentMenu === "gpu") h = gpuLayout.implicitHeight;
+            else if (currentMenu === "notes") h = notesLayout.implicitHeight;
+            return h + 48 + root.height + 8;
+        }
+        Behavior on implicitHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
         color: "transparent"
         
         Item {
@@ -404,12 +412,18 @@ ShellRoot {
                 Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
                 Behavior on y { NumberAnimation { duration: 350; easing.type: Easing.OutBack; easing.overshoot: 1.5 } }
                 
-                ColumnLayout {
-                    id: layout
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                Item {
+                    anchors.fill: parent
                     anchors.margins: 20
+
+                    ColumnLayout {
+                        id: mainLayout
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        visible: controlCenter.currentMenu === "main"
+                        opacity: visible ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
                     spacing: 24
                     
                     // Header: Clock & Date & Battery
@@ -607,55 +621,78 @@ ShellRoot {
                             iconText: "󰢮"
                             isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
                             accent: "#76B900"
-                            onClicked: { controlCenter.gpuExpanded = !controlCenter.gpuExpanded; controlCenter.notesExpanded = false }
+                            onClicked: { controlCenter.currentMenu = "gpu" }
                         }
                         ModernButton {
                             text: "Configs"
                             iconText: ""
-                            isActive: controlCenter.notesExpanded
-                            accent: root.colFg
-                            onClicked: { controlCenter.notesExpanded = !controlCenter.notesExpanded; controlCenter.gpuExpanded = false }
+                            onClicked: { controlCenter.currentMenu = "notes" }
                         }
                     }
                     
-                    // GPU Expanded Menu
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 12
-                        visible: controlCenter.gpuExpanded
+                    } // End mainLayout
+
+                    // GPU Submenu
+                    ColumnLayout {
+                        id: gpuLayout
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        spacing: 24
+                        visible: controlCenter.currentMenu === "gpu"
+                        opacity: visible ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
                         
-                        ModernButton {
-                            Layout.preferredHeight: 36
-                            text: "Integrated"
-                            iconText: "󰍛"
-                            onClicked: { pGpuInt.running = true; controlCenter.show = false }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; text: ""; onClicked: controlCenter.currentMenu = "main" }
+                            Text { text: "GPU Mode"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                            Item { Layout.preferredWidth: 48 }
                         }
-                        ModernButton {
-                            Layout.preferredHeight: 36
-                            text: "Hybrid"
-                            iconText: "󰢮"
-                            onClicked: { pGpuHyb.running = true; controlCenter.show = false }
+                        
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+                            ModernButton { text: "Integrated"; iconText: "󰍛"; onClicked: { pGpuInt.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { text: "Hybrid"; iconText: "󰢮"; onClicked: { pGpuHyb.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
                         }
                     }
-                    
-                    // Notes Expanded Menu
-                    GridLayout {
-                        Layout.fillWidth: true
-                        visible: controlCenter.notesExpanded
-                        columns: 3
-                        rowSpacing: 8
-                        columnSpacing: 8
+
+                    // Notes Submenu
+                    ColumnLayout {
+                        id: notesLayout
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        spacing: 24
+                        visible: controlCenter.currentMenu === "notes"
+                        opacity: visible ? 1.0 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
                         
-                        ModernButton { Layout.preferredHeight: 36; text: "Hyprland"; iconText: ""; onClicked: { pNoteHyprland.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Waybar"; iconText: ""; onClicked: { pNoteWaybar.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Tofi"; iconText: ""; onClicked: { pNoteTofi.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Kitty"; iconText: ""; onClicked: { pNoteKitty.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Foot"; iconText: ""; onClicked: { pNoteFoot.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Ghostty"; iconText: ""; onClicked: { pNoteGhostty.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Fish"; iconText: ""; onClicked: { pNoteFish.running = true; controlCenter.show = false } }
-                        ModernButton { Layout.preferredHeight: 36; text: "Fastfetch"; iconText: ""; onClicked: { pNoteFastfetch.running = true; controlCenter.show = false } }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; text: ""; onClicked: controlCenter.currentMenu = "main" }
+                            Text { text: "Configurations"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                            Item { Layout.preferredWidth: 48 }
+                        }
+                        
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 3
+                            rowSpacing: 12
+                            columnSpacing: 12
+                            
+                            ModernButton { Layout.preferredHeight: 48; text: "Hyprland"; onClicked: { pNoteHyprland.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Waybar"; onClicked: { pNoteWaybar.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Tofi"; onClicked: { pNoteTofi.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Kitty"; onClicked: { pNoteKitty.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Foot"; onClicked: { pNoteFoot.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Ghostty"; onClicked: { pNoteGhostty.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Fish"; onClicked: { pNoteFish.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                            ModernButton { Layout.preferredHeight: 48; text: "Fastfetch"; onClicked: { pNoteFastfetch.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
+                        }
                     }
-                }
+                } // End Item wrapper
             }
         }
     }
