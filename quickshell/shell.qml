@@ -30,6 +30,7 @@ ShellRoot {
     property string temperature: "0"
     property string updates: "0"
     property string batteryCap: "100"
+    property string brightnessLevel: "0%"
     property bool batteryCharging: false
     property string gpuMode: "Unknown"
     property string volumeOut: "0%"
@@ -48,6 +49,21 @@ ShellRoot {
     Process { id: pVolSet } // Dynamic volume setter
     Process { id: pBlueberry; command: ["blueberry"] }
     Process { id: pSpotPrev; command: ["playerctl", "--player=spotify", "previous"] }
+
+    Process {
+        id: pBright
+        command: ["bash", "-c", "brightnessctl -m | awk -F, '{print $4}'"]
+        running: true
+        stdout: SplitParser { onRead: text => root.brightnessLevel = text.trim() }
+    }
+    Timer { interval: 1000; running: true; repeat: true; onTriggered: pBright.running = true }
+
+    Process {
+        id: pBrightSet
+        property string target: "50%"
+        command: ["brightnessctl", "s", target]
+    }
+
     Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
     Process { id: pSpotNext; command: ["playerctl", "--player=spotify", "next"] }
     Process { id: pGpu; command: ["sh", "-c", "supergfxctl -m Hybrid; hyprctl dispatch \"hl.dsp.exit()\""] }
@@ -370,7 +386,7 @@ ShellRoot {
 
 
         property bool show: false
-        property string currentMenu: "main"
+        
 
 
         
@@ -379,14 +395,7 @@ ShellRoot {
         
         // Increased size
         implicitWidth: 440
-        implicitHeight: {
-            let h = 0;
-            if (currentMenu === "main") h = mainLayout.implicitHeight;
-            else if (currentMenu === "gpu") h = gpuLayout.implicitHeight;
-            else if (currentMenu === "notes") h = notesLayout.implicitHeight;
-            return h + 48 + root.height + 8;
-        }
-        Behavior on implicitHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        implicitHeight: mainLayout.implicitHeight + 48 + root.height + 8
         color: "transparent"
         
         Item {
@@ -421,9 +430,7 @@ ShellRoot {
                         anchors.top: parent.top
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        visible: controlCenter.currentMenu === "main"
-                        opacity: visible ? 1.0 : 0.0
-                        Behavior on opacity { NumberAnimation { duration: 200 } }
+                        
                     spacing: 24
                     
                     // Header: Clock & Date & Battery
@@ -587,6 +594,20 @@ ShellRoot {
                             }
                             Text { text: root.volumeMic; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
                         }
+                        // Brightness
+                        RowLayout {
+                            spacing: 16
+                            Text { text: "󰃠"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            ModernSlider {
+                                value: parseInt(root.brightnessLevel) / 100.0
+                                onMoved: {
+                                    pBrightSet.target = Math.round(value * 100) + "%"
+                                    pBrightSet.running = true
+                                }
+                            }
+                            Text { text: root.brightnessLevel; color: root.colFg; font.family: root.fontFamily; Layout.preferredWidth: 40; horizontalAlignment: Text.AlignRight }
+                        }
+
                     }
                     
                     // Toggles Row 1
@@ -621,78 +642,138 @@ ShellRoot {
                             iconText: "󰢮"
                             isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
                             accent: "#76B900"
-                            onClicked: { controlCenter.currentMenu = "gpu" }
+                            id: btnGpu; onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false }
                         }
                         ModernButton {
                             text: "Configs"
                             iconText: ""
-                            onClicked: { controlCenter.currentMenu = "notes" }
-                        }
+                            id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false }
                     }
                     
                     } // End mainLayout
 
-                    // GPU Submenu
-                    ColumnLayout {
-                        id: gpuLayout
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        spacing: 24
-                        visible: controlCenter.currentMenu === "gpu"
-                        opacity: visible ? 1.0 : 0.0
-                        Behavior on opacity { NumberAnimation { duration: 200 } }
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; text: ""; onClicked: controlCenter.currentMenu = "main" }
-                            Text { text: "GPU Mode"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                            Item { Layout.preferredWidth: 48 }
-                        }
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 12
-                            ModernButton { text: "Integrated"; iconText: "󰍛"; onClicked: { pGpuInt.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { text: "Hybrid"; iconText: "󰢮"; onClicked: { pGpuHyb.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                        }
-                    }
+                    } // End Item wrapper
+            }
+        }
+    }
+}
 
-                    // Notes Submenu
-                    ColumnLayout {
-                        id: notesLayout
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        spacing: 24
-                        visible: controlCenter.currentMenu === "notes"
-                        opacity: visible ? 1.0 : 0.0
-                        Behavior on opacity { NumberAnimation { duration: 200 } }
+    PopupWindow {
+        id: gpuPopup
+        anchor {
+            window: controlCenter
+            edges: Edges.Left | Edges.Top
+            gravity: Edges.Left | Edges.Bottom
+        }
+        
+        property bool show: false
+        visible: show || animRectGpu.opacity > 0
+        
+        implicitWidth: 200
+        implicitHeight: layoutGpu.implicitHeight + 40
+        color: "transparent"
+        
+        Item {
+            anchors.fill: parent
+            
+            Rectangle {
+                id: animRectGpu
+                anchors.fill: parent
+                anchors.topMargin: root.height + 8
+                anchors.rightMargin: 12
+                
+                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                radius: 16
+                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.width: 1
+                
+                opacity: gpuPopup.show ? 1.0 : 0.0
+                scale: gpuPopup.show ? 1.0 : 0.95
+                x: gpuPopup.show ? 0 : 20
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                
+                ColumnLayout {
+                    id: layoutGpu
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 20
+                    anchors.topMargin: root.height + 28
+                    spacing: 12
+                    
+                    Text { text: "GPU Mode"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 16; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                    ModernButton { text: "Integrated"; iconText: "󰍛"; onClicked: { pGpuInt.running = true; gpuPopup.show = false; controlCenter.show = false } }
+                    ModernButton { text: "Hybrid"; iconText: "󰢮"; onClicked: { pGpuHyb.running = true; gpuPopup.show = false; controlCenter.show = false } }
+                }
+            }
+        }
+    }
+
+    PopupWindow {
+        id: notesPopup
+        anchor {
+            window: controlCenter
+            edges: Edges.Left | Edges.Top
+            gravity: Edges.Left | Edges.Bottom
+        }
+        
+        property bool show: false
+        visible: show || animRectNotes.opacity > 0
+        
+        implicitWidth: 340
+        implicitHeight: layoutNotes.implicitHeight + 40
+        color: "transparent"
+        
+        Item {
+            anchors.fill: parent
+            
+            Rectangle {
+                id: animRectNotes
+                anchors.fill: parent
+                anchors.topMargin: root.height + 8
+                anchors.rightMargin: 12
+                
+                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                radius: 16
+                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.width: 1
+                
+                opacity: notesPopup.show ? 1.0 : 0.0
+                scale: notesPopup.show ? 1.0 : 0.95
+                x: notesPopup.show ? 0 : 20
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                
+                ColumnLayout {
+                    id: layoutNotes
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 20
+                    anchors.topMargin: root.height + 28
+                    spacing: 16
+                    
+                    Text { text: "Configurations"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 16; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
+                    
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        rowSpacing: 12
+                        columnSpacing: 12
                         
-                        RowLayout {
-                            Layout.fillWidth: true
-                            ModernButton { Layout.preferredWidth: 48; Layout.preferredHeight: 48; text: ""; onClicked: controlCenter.currentMenu = "main" }
-                            Text { text: "Configurations"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 20; font.bold: true; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter }
-                            Item { Layout.preferredWidth: 48 }
-                        }
-                        
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: 3
-                            rowSpacing: 12
-                            columnSpacing: 12
-                            
-                            ModernButton { Layout.preferredHeight: 48; text: "Hyprland"; onClicked: { pNoteHyprland.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Waybar"; onClicked: { pNoteWaybar.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Tofi"; onClicked: { pNoteTofi.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Kitty"; onClicked: { pNoteKitty.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Foot"; onClicked: { pNoteFoot.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Ghostty"; onClicked: { pNoteGhostty.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Fish"; onClicked: { pNoteFish.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                            ModernButton { Layout.preferredHeight: 48; text: "Fastfetch"; onClicked: { pNoteFastfetch.running = true; controlCenter.show = false; controlCenter.currentMenu = "main" } }
-                        }
+                        ModernButton { Layout.preferredHeight: 48; text: "Hyprland"; onClicked: { pNoteHyprland.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Waybar"; onClicked: { pNoteWaybar.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Tofi"; onClicked: { pNoteTofi.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Kitty"; onClicked: { pNoteKitty.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Foot"; onClicked: { pNoteFoot.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Ghostty"; onClicked: { pNoteGhostty.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Fish"; onClicked: { pNoteFish.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 48; text: "Fastfetch"; onClicked: { pNoteFastfetch.running = true; notesPopup.show = false; controlCenter.show = false } }
                     }
-                } // End Item wrapper
+                }
             }
         }
     }
