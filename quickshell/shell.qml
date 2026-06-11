@@ -230,6 +230,7 @@ ShellRoot {
 
         // --- RIGHT ---
         RowLayout {
+            id: rightLayout
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -240,10 +241,21 @@ ShellRoot {
                 property bool isCrit: cap <= 15 && !root.batteryCharging
                 property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                 
-                text: {
-                    if (root.batteryCharging) return "󰂄 " + root.batteryCap + "%";
-                    return "󰁹 " + root.batteryCap + "%";
+                function getIcon(cap, charging) {
+                    if (charging) return "󰂄";
+                    if (cap > 90) return "󰁹";
+                    if (cap > 80) return "󰂂";
+                    if (cap > 70) return "󰂁";
+                    if (cap > 60) return "󰂀";
+                    if (cap > 50) return "󰁿";
+                    if (cap > 40) return "󰁾";
+                    if (cap > 30) return "󰁽";
+                    if (cap > 20) return "󰁼";
+                    if (cap > 10) return "󰁻";
+                    return "󰁺";
                 }
+                
+                text: getIcon(cap, root.batteryCharging) + " " + root.batteryCap + "%"
                 
                 textColor: {
                     if (isCrit) return root.colBg;
@@ -300,8 +312,12 @@ ShellRoot {
 
     PopupWindow {
         id: controlCenter
-        anchor.window: root
-        anchor.edges: Edges.Bottom | Edges.Right
+        
+        anchor {
+            window: root
+            edges: Edges.Bottom | Edges.Right
+            gravity: Edges.Bottom | Edges.Left
+        }
         
         property bool show: false
         
