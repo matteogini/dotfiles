@@ -48,6 +48,11 @@ ShellRoot {
     Process { id: pMicMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] }
     Process { id: pVolSet } // Dynamic volume setter
     Process { id: pBlueberry; command: ["blueberry"] }
+    Process { id: pWifiOn; command: ["nmcli", "radio", "wifi", "on"] }
+    Process { id: pWifiOff; command: ["nmcli", "radio", "wifi", "off"] }
+    Process { id: pBtOn; command: ["rfkill", "unblock", "bluetooth"] }
+    Process { id: pBtOff; command: ["rfkill", "block", "bluetooth"] }
+
     Process { id: pSpotPrev; command: ["playerctl", "--player=spotify", "previous"] }
 
     Process {
@@ -275,14 +280,14 @@ ShellRoot {
                 property bool isCrit: cap <= 15 && !root.batteryCharging
                 property bool isWarn: cap <= 30 && cap > 15 && !root.batteryCharging
                 
-                id: barBattMod
-                customWidth: 32
-                ModernBatteryIcon {
-                    level: barBattMod.cap / 100.0
-                    charging: root.batteryCharging
-                    colFg: barBattMod.textColor
+                text: {
+                    if (root.batteryCharging) return ""; // plug
+                    if (cap > 80) return ""; // full
+                    if (cap > 60) return ""; // 3/4
+                    if (cap > 40) return ""; // 1/2
+                    if (cap > 20) return ""; // 1/4
+                    return ""; // empty
                 }
-                
                 textColor: {
                     if (isCrit) return root.colBg;
                     if (isWarn) return root.colFg;
@@ -672,19 +677,21 @@ ShellRoot {
                         Layout.fillWidth: true
                         
                         ModernButton {
+                            id: btnBt
                             text: "Bluetooth"
                             iconText: root.bluetoothStatus === "on" ? "" : "󰂲"
                             isActive: root.bluetoothStatus === "on"
                             accent: "#007AFF"
-                            onClicked: { pBlueberry.running = true; controlCenter.show = false }
+                            onClicked: { btPopup.show = !btPopup.show; wifiPopup.show = false; gpuPopup.show = false; notesPopup.show = false; wifiPopup.show = false; btPopup.show = false }
                         }
                         
                         ModernButton {
+                            id: btnWifi
                             text: root.wifiText === "Disconnected" ? "Wi-Fi" : root.wifiText
                             iconText: root.wifiIcon
                             isActive: root.wifiText !== "Disconnected"
                             accent: "#007AFF"
-                            onClicked: { pNmtui.running = true; controlCenter.show = false }
+                            onClicked: { wifiPopup.show = !wifiPopup.show; btPopup.show = false; gpuPopup.show = false; notesPopup.show = false; wifiPopup.show = false; btPopup.show = false }
                         }
                     }
                     
@@ -698,12 +705,12 @@ ShellRoot {
                             iconText: "󰢮"
                             isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
                             accent: "#76B900"
-                            id: btnGpu; onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false }
+                            id: btnGpu; onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; wifiPopup.show = false; btPopup.show = false }
                         }
                         ModernButton {
                             text: "Configs"
                             iconText: ""
-                            id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false }
+                            id: btnNotes; onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; wifiPopup.show = false; btPopup.show = false }
                     }
                     
                     } // End mainLayout
@@ -833,4 +840,109 @@ ShellRoot {
             }
         }
     }
+
+    PopupWindow {
+        id: btPopup
+        anchor {
+            window: controlCenter
+            rect: Qt.rect(btnBt.mapToItem(null, 0, 0).x, btnBt.mapToItem(null, 0, 0).y, btnBt.width, btnBt.height)
+            edges: Edges.Left | Edges.Top
+            gravity: Edges.Left | Edges.Bottom
+        }
+        
+        property bool show: false
+        visible: show || animRectBt.opacity > 0
+        
+        implicitWidth: 200
+        implicitHeight: layoutBt.implicitHeight + 32
+        color: "transparent"
+        
+        Item {
+            anchors.fill: parent
+            
+            Rectangle {
+                id: animRectBt
+                anchors.fill: parent
+                anchors.rightMargin: 12
+                
+                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                radius: 16
+                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.width: 1
+                
+                opacity: btPopup.show ? 1.0 : 0.0
+                scale: btPopup.show ? 1.0 : 0.95
+                x: btPopup.show ? 0 : 20
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                
+                ColumnLayout {
+                    id: layoutBt
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 16
+                    spacing: 12
+                    
+                    ModernButton { text: "Power On"; iconText: ""; onClicked: { pBtOn.running = true; btPopup.show = false } }
+                    ModernButton { text: "Power Off"; iconText: "󰂲"; onClicked: { pBtOff.running = true; btPopup.show = false } }
+                    ModernButton { text: "Settings"; iconText: ""; onClicked: { pBlueberry.running = true; btPopup.show = false; controlCenter.show = false } }
+                }
+            }
+        }
+    }
+
+    PopupWindow {
+        id: wifiPopup
+        anchor {
+            window: controlCenter
+            rect: Qt.rect(btnWifi.mapToItem(null, 0, 0).x, btnWifi.mapToItem(null, 0, 0).y, btnWifi.width, btnWifi.height)
+            edges: Edges.Left | Edges.Top
+            gravity: Edges.Left | Edges.Bottom
+        }
+        
+        property bool show: false
+        visible: show || animRectWifi.opacity > 0
+        
+        implicitWidth: 200
+        implicitHeight: layoutWifi.implicitHeight + 32
+        color: "transparent"
+        
+        Item {
+            anchors.fill: parent
+            
+            Rectangle {
+                id: animRectWifi
+                anchors.fill: parent
+                anchors.rightMargin: 12
+                
+                color: Qt.rgba(0.08, 0.08, 0.08, 0.95)
+                radius: 16
+                border.color: Qt.rgba(1, 1, 1, 0.1)
+                border.width: 1
+                
+                opacity: wifiPopup.show ? 1.0 : 0.0
+                scale: wifiPopup.show ? 1.0 : 0.95
+                x: wifiPopup.show ? 0 : 20
+                Behavior on opacity { NumberAnimation { duration: 200 } }
+                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                
+                ColumnLayout {
+                    id: layoutWifi
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 16
+                    spacing: 12
+                    
+                    ModernButton { text: "Enable Wi-Fi"; iconText: "󰤨"; onClicked: { pWifiOn.running = true; wifiPopup.show = false } }
+                    ModernButton { text: "Disable Wi-Fi"; iconText: "󰤮"; onClicked: { pWifiOff.running = true; wifiPopup.show = false } }
+                    ModernButton { text: "Network Manager"; iconText: ""; onClicked: { pNmtui.running = true; wifiPopup.show = false; controlCenter.show = false } }
+                }
+            }
+        }
+    }
+
 }
