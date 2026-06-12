@@ -57,6 +57,12 @@ ShellRoot {
     property string wifiIcon: "󰤯"
     property string wifiText: "Disconnected"
 
+    // OSD state
+    property bool showOsd: false
+    property string osdText: "0%"
+    property string osdIcon: "󰕾"
+    property real osdValue: 0
+
     // Stopwatch & Timer state
     property bool stopwatchRunning: false
     property int stopwatchSeconds: 0
@@ -95,6 +101,38 @@ ShellRoot {
         stdout: SplitParser { onRead: text => root.brightnessLevel = text.trim() }
     }
     Timer { interval: 1000; running: true; repeat: true; onTriggered: pBright.running = true }
+
+    Process {
+        command: ["sh", "-c", "tail -F $XDG_RUNTIME_DIR/wob.fifo"]
+        running: true
+        stdout: SplitParser {
+            onRead: data => {
+                var d = data.trim();
+                if (d.length === 0) return;
+                var parts = d.split(" ");
+                if (parts.length < 2) return;
+                var type = parts[0];
+                var val = parseFloat(parts[1]);
+                
+                if (type === "V") {
+                    root.osdIcon = val === 0 ? "󰝟" : (val > 50 ? "󰕾" : "󰖀");
+                    root.osdText = Math.round(val) + "%";
+                } else if (type === "B") {
+                    root.osdIcon = "󰃠";
+                    root.osdText = Math.round(val) + "%";
+                }
+                root.osdValue = val;
+                root.showOsd = true;
+                osdTimer.restart();
+            }
+        }
+    }
+    Timer {
+        id: osdTimer
+        interval: 2000
+        repeat: false
+        onTriggered: root.showOsd = false
+    }
 
     Timer {
         id: stopwatchTimer
@@ -324,7 +362,7 @@ ShellRoot {
                     text: modelData
                     textColor: isActive ? root.colFg : root.colMuted
                     bgColor: "transparent"
-                    show: ws !== undefined || isActive
+                    show: (ws !== undefined || isActive) && !root.showOsd
                     onClicked: Hyprland.dispatch("workspace " + modelData)
                 }
             }
@@ -350,7 +388,7 @@ ShellRoot {
                 }
                 bgColor: "transparent"
                 blink: isCrit
-                show: !controlCenter.show
+                show: !controlCenter.show && !root.showOsd
                 onClicked: controlCenter.show = true
             }
 
@@ -359,7 +397,7 @@ ShellRoot {
                 text: "󱎫 " + root.stopwatchText
                 textColor: root.stopwatchRunning ? "#FFA500" : root.colFg
                 bgColor: "transparent"
-                show: isActive && !controlCenter.show
+                show: isActive && !controlCenter.show && !root.showOsd
                 onClicked: controlCenter.show = true
             }
             
@@ -368,8 +406,48 @@ ShellRoot {
                 text: "󰔛 " + root.timerText
                 textColor: root.timerRunning ? "#FFA500" : root.colFg
                 bgColor: "transparent"
-                show: isActive && !controlCenter.show
+                show: isActive && !controlCenter.show && !root.showOsd
                 onClicked: controlCenter.show = true
+            }
+
+            Mod {
+                text: ""
+                textColor: root.colFg
+                bgColor: "transparent"
+                show: root.showOsd
+                customWidth: 140
+                
+                Item {
+                    anchors.centerIn: parent
+                    width: 140
+                    height: 16
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: 8
+                        Text {
+                            text: root.osdIcon
+                            color: root.colFg
+                            font { family: root.fontFamily; pixelSize: root.fontSize + 2 }
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Rectangle {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width
+                                height: 4
+                                radius: 2
+                                color: root.colMuted
+                                Rectangle {
+                                    height: parent.height
+                                    width: parent.width * (root.osdValue / 100)
+                                    radius: 2
+                                    color: root.colFg
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
