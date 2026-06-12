@@ -47,6 +47,7 @@ ShellRoot {
     property int cpuWattage: 15
     property bool batteryCharging: false
     property string gpuMode: "Unknown"
+    property int batLimit: 80
     property string volumeOut: "0%"
     property bool volumeMuted: false
     property string volumeMic: "0%"
@@ -83,6 +84,7 @@ ShellRoot {
     Process { id: pPavu; command: ["pavucontrol"] }
     Process { id: pMicMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] }
     Process { id: pVolSet } // Dynamic volume setter
+    Process { id: pBatLimitSet }
     Process { id: pBlueberry; command: ["blueberry"] }
 
     Process { id: pWifiToggle; command: ["sh", "-c", "if [ \"$(nmcli radio wifi)\" = \"enabled\" ]; then nmcli radio wifi off; else nmcli radio wifi on; fi"] }
@@ -205,6 +207,27 @@ ShellRoot {
                 var parts = data.trim().split(" ");
                 root.batteryCap = parts[0];
                 root.batteryCharging = (parts[1] === "1");
+            }
+        }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do asusctl battery info 2>/dev/null; sleep 10; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var d = data.trim();
+                if (d.includes("Current battery charge limit:")) {
+                    var m = d.match(/(\d+)%/);
+                    if (m) root.batLimit = parseInt(m[1]);
+                }
+            }
+        }
+    }
+    Process {
+        command: ["sh", "-c", "while true; do sudo ryzenadj -i 2>/dev/null | awk -F'|' '/STAPM LIMIT/ {print int($3)}'; sleep 10; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var d = parseInt(data.trim());
+                if (!isNaN(d) && d > 0) root.cpuWattage = d;
             }
         }
     }
@@ -987,6 +1010,29 @@ ShellRoot {
                             }
                             Text { 
                                 text: root.cpuWattage + "W"
+                                color: root.colFg
+                                font.family: root.fontFamily
+                                font.pixelSize: 12
+                                Layout.minimumWidth: 24
+                                horizontalAlignment: Text.AlignRight
+                            }
+                        }
+
+                        // Battery Limit
+                        RowLayout {
+                            spacing: 8
+                            Text { text: "󰁹"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            ModernSlider {
+                                value: (root.batLimit - 20) / 80.0
+                                onMoved: {
+                                    var limit = Math.round(20 + value * 80)
+                                    root.batLimit = limit
+                                    pBatLimitSet.command = ["asusctl", "battery", "limit", limit.toString()]
+                                    pBatLimitSet.running = true
+                                }
+                            }
+                            Text { 
+                                text: root.batLimit + "%"
                                 color: root.colFg
                                 font.family: root.fontFamily
                                 font.pixelSize: 12
