@@ -209,7 +209,8 @@ btop_theme_dir = os.path.expanduser('~/.config/btop/themes')
 if not os.path.exists(btop_theme_dir): os.makedirs(btop_theme_dir)
 btop_theme_path = os.path.join(btop_theme_dir, 'dynamic.theme')
 with open(btop_theme_path, 'w') as f:
-    f.write(f'theme[main_bg]="{bg}"\ntheme[main_fg]="{fg}"\ntheme[title]="{fg}"\n')
+    btop_bg = "" if theme_name in ["nero", "black", "earth", "minimal"] else bg
+    f.write(f'theme[main_bg]="{btop_bg}"\ntheme[main_fg]="{fg}"\ntheme[title]="{fg}"\n')
     f.write(f'theme[hi_fg]="{accent}"\ntheme[selected_bg]="#{accent_mute.lstrip("#")}"\n')
     f.write(f'theme[selected_fg]="{accent}"\ntheme[inactive_fg]="#555555"\n')
     f.write(f'theme[proc_misc]="{accent}"\ntheme[cpu_box]="{accent}"\n')
