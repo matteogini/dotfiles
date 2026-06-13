@@ -1202,9 +1202,39 @@ ShellRoot {
                             }
                         }
 
+
+                    }
+
+                    // Toggles Row 2 (GPU, Configs, Power Saver)
+                    RowLayout {
+                        spacing: 8
+                        Layout.fillWidth: true
+                        
+                        ModernButton {
+                            id: btnGpu
+                            text: root.gpuMode.charAt(0)
+                            iconText: "󰢮"
+                            isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
+                            accent: "#76B900"
+                            onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
+                        }
+                        ModernButton {
+                            id: btnNotes
+                            text: ""
+                            iconText: ""
+                            onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
+                        }
+                        ModernButton {
+                            id: btnBatteryMode
+                            text: ""
+                            iconText: root.batteryMode ? "" : ""
+                            isActive: root.batteryMode
+                            accent: "#FFCC00"
+                            onClicked: pToggleBatteryMode.running = true
+                        }
                         ModernButton {
                             id: btnPomodoro
-                            text: root.pomodoroState === 0 ? "Pomodoro" : (root.pomodoroState === 1 ? "Work" : "Break")
+                            text: ""
                             iconText: "󰄉"
                             isActive: root.pomodoroState > 0
                             accent: root.pomodoroState === 1 ? "#FF4500" : "#00FA9A"
@@ -1223,35 +1253,6 @@ ShellRoot {
                                     root.timerText = root.formatTime(root.timerTotal);
                                 }
                             }
-                        }
-                    }
-
-                    // Toggles Row 2 (GPU, Configs, Power Saver)
-                    RowLayout {
-                        spacing: 8
-                        Layout.fillWidth: true
-                        
-                        ModernButton {
-                            id: btnGpu
-                            text: root.gpuMode
-                            iconText: "󰢮"
-                            isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
-                            accent: "#76B900"
-                            onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
-                        }
-                        ModernButton {
-                            id: btnNotes
-                            text: "Configs"
-                            iconText: ""
-                            onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
-                        }
-                        ModernButton {
-                            id: btnBatteryMode
-                            text: root.batteryMode ? "Power Saver" : "Performance"
-                            iconText: root.batteryMode ? "" : ""
-                            isActive: root.batteryMode
-                            accent: "#FFCC00"
-                            onClicked: pToggleBatteryMode.running = true
                         }
                     }
 
