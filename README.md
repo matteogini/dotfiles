@@ -14,6 +14,8 @@ A feature-rich, beautiful, and highly functional Linux setup (Rice) centered aro
 
 ## 📸 Overview
 
+<video src="preview/overview.mp4" controls="controls" muted="muted" width="800"></video>
+
 <details>
 <summary><b>Click to expand screenshots</b></summary>
 
