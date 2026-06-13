@@ -4,7 +4,7 @@
 cd "$HOME" || exit 1
 
 # Create directories in rice repo
-mkdir -p rice/hypr rice/kitty rice/tofi rice/waybar rice/fish rice/fastfetch rice/foot rice/ghostty rice/wob rice/quickshell rice/bin
+mkdir -p rice/hypr rice/kitty rice/tofi rice/waybar rice/fish rice/fastfetch rice/foot rice/ghostty rice/wob rice/quickshell rice/bin rice/nano
 
 # Files and directories to watch
 # Note: we explicitly track custom scripts in .local/bin, avoiding large binaries
@@ -21,7 +21,7 @@ entr -r bash -c '
     rsync -aq --delete .config/ghostty/ rice/ghostty/
     rsync -aq --delete .config/wob/ rice/wob/
     rsync -aq --delete .config/quickshell/ rice/quickshell/
-    cp ~/.nanorc rice/.nanorc
+    cp ~/.nanorc rice/nano/nanorc
     
     # Sync specific scripts
     cp ~/.local/bin/amd_s2idle.py rice/bin/
