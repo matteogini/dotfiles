@@ -134,31 +134,7 @@ ShellRoot {
     }
     Timer { interval: 1000; running: true; repeat: true; onTriggered: pBright.running = true }
 
-    Process {
-        command: ["sh", "-c", "tail -F $XDG_RUNTIME_DIR/wob.fifo"]
-        running: true
-        stdout: SplitParser {
-            onRead: data => {
-                var d = data.trim();
-                if (d.length === 0) return;
-                var parts = d.split(" ");
-                if (parts.length < 2) return;
-                var type = parts[0];
-                var val = parseFloat(parts[1]);
-                
-                if (type === "V") {
-                    root.osdIcon = val === 0 ? "󰝟" : (val > 50 ? "󰕾" : "󰖀");
-                    root.osdText = Math.round(val) + "%";
-                } else if (type === "B") {
-                    root.osdIcon = "󰃠";
-                    root.osdText = Math.round(val) + "%";
-                }
-                root.osdValue = val;
-                root.showOsd = true;
-                osdTimer.restart();
-            }
-        }
-    }
+
     Timer {
         id: osdTimer
         interval: 2000
@@ -1474,6 +1450,19 @@ ShellRoot {
     IpcHandler {
         id: qsIpc
         target: "qsIpc"
+        function showOsd(type: string, val: string) {
+            val = parseFloat(val);
+            if (type === "V") {
+                root.osdIcon = val === 0 ? "󰝟" : (val > 50 ? "󰕾" : "󰖀");
+                root.osdText = Math.round(val) + "%";
+            } else if (type === "B") {
+                root.osdIcon = "󰃠";
+                root.osdText = Math.round(val) + "%";
+            }
+            root.osdValue = val;
+            root.showOsd = true;
+            osdTimer.restart();
+        }
         function toggleAppLauncher() {
             appLauncherPopup.show = !appLauncherPopup.show;
         }
