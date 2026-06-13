@@ -4,7 +4,7 @@
 
 A feature-rich, beautiful, and highly functional Linux setup centered around **Hyprland** and **Quickshell**.
 
-<video src="https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4" controls="controls" muted="muted" width="800"></video>
+https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4
 
 ![Arch Linux](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
 ![Hyprland](https://img.shields.io/badge/Hyprland-00A98F?logo=hyprland&logoColor=fff&style=for-the-badge)
