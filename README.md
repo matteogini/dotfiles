@@ -14,6 +14,39 @@ A feature-rich, beautiful, and highly functional Linux setup (Rice) centered aro
 
 ## 📸 Overview
 
+<details>
+<summary><b>Click to expand screenshots</b></summary>
+
+| Clean Desktop | Tiled Windows |
+| :---: | :---: |
+| <img src="preview/desktop.png" width="400"/> | <img src="preview/windows.png" width="400"/> |
+
+| Terminal & Fetch | Fullscreen Window |
+| :---: | :---: |
+| <img src="preview/terminal.png" width="400"/> | <img src="preview/window_fullscreen.png" width="400"/> |
+
+| Control Center | App Launcher |
+| :---: | :---: |
+| <img src="preview/control_center.png" width="400"/> | <img src="preview/launcher.png" width="400"/> |
+
+| Theme: Soft Color | Theme: Mountains |
+| :---: | :---: |
+| <img src="preview/soft_color.png" width="400"/> | <img src="preview/mountains.png" width="400"/> |
+
+| Theme Switcher | Clipboard Manager |
+| :---: | :---: |
+| <img src="preview/themes.png" width="400"/> | <img src="preview/clipboard.png" width="400"/> |
+
+| OSD Volume | OSD Brightness |
+| :---: | :---: |
+| <img src="preview/volume.png" width="400"/> | <img src="preview/brightness.png" width="400"/> |
+
+| Power Menu | Performance Mode |
+| :---: | :---: |
+| <img src="preview/powermenu.png" width="400"/> | <img src="preview/performance_mode.png" width="400"/> |
+
+</details>
+
 The setup relies heavily on **Quickshell** written in QML, which acts as the main shell and control center. It includes:
 - Live indicators for Battery, Brightness, Audio, Mic, and Bluetooth
 - Quick toggles for Pomodoro, Stopwatch, and integrated Notes/Config Editor
