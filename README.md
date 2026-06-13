@@ -11,7 +11,10 @@
 
 </div>
 
-https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4
+<!-- TO GET THE NATIVE VIDEO PLAYER: 
+1. Edit this README on GitHub.com 
+2. Drag and drop the 'preview/overview.mp4' file directly into the editor right here. 
+3. It will generate a 'https://github.com/user-attachments/assets/...' link which will perfectly render the video! -->
 
 ## ✨ Features
 
