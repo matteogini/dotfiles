@@ -94,6 +94,10 @@ ShellRoot {
     property int timerTotal: 300 // 5 minutes default
     property string timerText: "05:00"
     
+    property int pomodoroState: 0 // 0 = off, 1 = work, 2 = break
+    property int pomodoroWorkTotal: 1500 // 25 minutes
+    property int pomodoroBreakTotal: 300 // 5 minutes
+    
     function formatTime(s) {
         var m = Math.floor(s / 60);
         var sec = s % 60;
@@ -163,10 +167,28 @@ ShellRoot {
                 root.timerSeconds--;
                 root.timerText = root.formatTime(root.timerSeconds);
             } else {
-                root.timerRunning = false;
+                if (root.pomodoroState === 1) {
+                    root.pomodoroState = 2;
+                    root.timerTotal = root.pomodoroBreakTotal;
+                    root.timerSeconds = root.timerTotal;
+                    root.timerText = root.formatTime(root.timerTotal);
+                    pNotify.command = ["notify-send", "-u", "critical", "-i", "timer", "Pomodoro", "Work session finished! Time for a break."];
+                    pNotify.running = true;
+                } else if (root.pomodoroState === 2) {
+                    root.pomodoroState = 1;
+                    root.timerTotal = root.pomodoroWorkTotal;
+                    root.timerSeconds = root.timerTotal;
+                    root.timerText = root.formatTime(root.timerTotal);
+                    pNotify.command = ["notify-send", "-u", "normal", "-i", "timer", "Pomodoro", "Break finished! Back to work."];
+                    pNotify.running = true;
+                } else {
+                    root.timerRunning = false;
+                }
             }
         }
     }
+    
+    Process { id: pNotify }
 
     Process {
         id: pBrightSet
@@ -1145,6 +1167,7 @@ ShellRoot {
                             isActive: root.timerRunning || (root.timerSeconds > 0 && root.timerSeconds < root.timerTotal)
                             accent: "#FFA500"
                             onMainClicked: {
+                                root.pomodoroState = 0;
                                 if (root.timerRunning) {
                                     root.timerRunning = false;
                                 } else if (root.timerSeconds > 0) {
@@ -1156,6 +1179,7 @@ ShellRoot {
                                 }
                             }
                             onIconClicked: { 
+                                root.pomodoroState = 0;
                                 root.timerRunning = false;
                                 root.timerSeconds = 0;
                                 root.timerText = root.formatTime(root.timerTotal);
@@ -1166,6 +1190,7 @@ ShellRoot {
                                 notesPopup.show = false;
                             }
                             onScrolled: angle => {
+                                root.pomodoroState = 0;
                                 if (angle > 0) {
                                     root.timerTotal += 60;
                                 } else if (angle < 0 && root.timerTotal >= 120) {
@@ -1174,6 +1199,29 @@ ShellRoot {
                                 root.timerRunning = false;
                                 root.timerSeconds = 0;
                                 root.timerText = root.formatTime(root.timerTotal);
+                            }
+                        }
+
+                        ModernButton {
+                            id: btnPomodoro
+                            text: root.pomodoroState === 0 ? "Pomodoro" : (root.pomodoroState === 1 ? "Work" : "Break")
+                            iconText: "󰄉"
+                            isActive: root.pomodoroState > 0
+                            accent: root.pomodoroState === 1 ? "#FF4500" : "#00FA9A"
+                            onClicked: {
+                                if (root.pomodoroState === 0) {
+                                    root.pomodoroState = 1; // Start work
+                                    root.timerTotal = root.pomodoroWorkTotal;
+                                    root.timerSeconds = root.timerTotal;
+                                    root.timerText = root.formatTime(root.timerTotal);
+                                    root.timerRunning = true;
+                                } else {
+                                    root.pomodoroState = 0; // Turn off
+                                    root.timerRunning = false;
+                                    root.timerSeconds = 0;
+                                    root.timerTotal = 300; // Reset to 5m
+                                    root.timerText = root.formatTime(root.timerTotal);
+                                }
                             }
                         }
                     }
@@ -1282,6 +1330,7 @@ ShellRoot {
                         onAccepted: {
                             let val = parseInt(text);
                             if (!isNaN(val) && val > 0) {
+                                root.pomodoroState = 0;
                                 root.timerTotal = val * 60;
                                 root.timerSeconds = 0;
                                 root.timerText = root.formatTime(root.timerTotal);
