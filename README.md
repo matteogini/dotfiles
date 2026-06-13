@@ -1,4 +1,4 @@
-# Matteo's Dotfiles
+# Hyprland Dotfiles
 
 A feature-rich, beautiful, and highly functional Linux setup (Rice) centered around **Hyprland** and **Quickshell**.
 
