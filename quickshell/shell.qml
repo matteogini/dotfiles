@@ -20,6 +20,10 @@ ShellRoot {
     property int fontSize: 10 // Reduced font size to match waybar 9px
     property int windowCount: 0
     property bool isBarMode: windowCount === 1
+    property real notchWidth: notchLayout.implicitWidth
+    
+    property bool isAnyPopupOpen: controlCenter.show || appLauncherPopup.show || clipboardManagerPopup.show || themeSwitcherPopup.show || wifiMenuPopup.show || powerMenuPopup.show || bluetoothMenuPopup.show
+    property bool isAnyPopupAnimActive: isAnyPopupOpen || controlCenter.animHeight > 36 || appLauncherPopup.animHeight > 36 || clipboardManagerPopup.animHeight > 36 || themeSwitcherPopup.animHeight > 36 || wifiMenuPopup.animHeight > 36 || powerMenuPopup.animHeight > 36 || bluetoothMenuPopup.animHeight > 36
 
     Process {
         command: ["/home/matteo/.config/quickshell/count_tiled.sh"]
@@ -53,16 +57,32 @@ ShellRoot {
     property string volumeMic: "0%"
     property bool micMuted: false
     property string bluetoothStatus: "off"
+    property bool batteryMode: false
+    property bool showBatteryModeIndicator: false
+    
+    onBatteryModeChanged: {
+        showBatteryModeIndicator = true;
+        batteryModeTimer.restart();
+    }
+    
+    Timer {
+        id: batteryModeTimer
+        interval: 1000
+        repeat: false
+        onTriggered: root.showBatteryModeIndicator = false
+    }
     property string spotifyStatus: "offline"
     property string spotifyText: ""
     property string wifiIcon: "󰤯"
     property string wifiText: "Disconnected"
 
-    // OSD state
     property bool showOsd: false
     property string osdText: "0%"
     property string osdIcon: "󰕾"
     property real osdValue: 0
+    property bool showPowerMenu: false
+    property bool showAppLauncher: false
+    property bool showClipboard: false
 
     // Stopwatch & Timer state
     property bool stopwatchRunning: false
@@ -93,6 +113,16 @@ ShellRoot {
     Process { id: pWifiOff; command: ["nmcli", "radio", "wifi", "off"] }
     Process { id: pBtOn; command: ["rfkill", "unblock", "bluetooth"] }
     Process { id: pBtOff; command: ["rfkill", "block", "bluetooth"] }
+    Process {
+        id: pCheckBatteryMode
+        command: ["sh", "-c", "grep -q '^#animations' /home/matteo/.config/hypr/modules/look_and_feel.conf && echo 'false' || echo 'true'"]
+        running: true
+        stdout: SplitParser { onRead: data => { root.batteryMode = (data.trim() === 'true'); } }
+    }
+    Process {
+        id: pToggleBatteryMode
+        command: ["/home/matteo/.local/bin/battery_mode.sh"]
+    }
 
     Process { id: pSpotPrev; command: ["playerctl", "--player=spotify", "previous"] }
 
@@ -185,7 +215,7 @@ ShellRoot {
     Process { id: pNoteFish; command: ["zeditor", "/home/matteo/.config/fish"] }
     Process { id: pNoteFastfetch; command: ["zeditor", "/home/matteo/.config/fastfetch"] }
 
-    Process { id: pNmtui; command: ["/home/matteo/.config/tofi/tofi-wifi.sh"] }
+    
 
     // Background Process Loops
     Process {
@@ -305,7 +335,7 @@ ShellRoot {
         Layout.fillHeight: true
         Layout.preferredWidth: show ? (customWidth > 0 ? customWidth + 16 : modText.implicitWidth + 16) : 0
         Behavior on Layout.preferredWidth { 
-            NumberAnimation { duration: 300; easing.type: Easing.OutExpo } 
+            NumberAnimation { duration: root.batteryMode ? 0 : 300; easing.type: Easing.OutExpo } 
         }
         
         visible: Layout.preferredWidth > 0
@@ -315,13 +345,13 @@ ShellRoot {
         Rectangle {
             anchors.fill: parent
             color: parent.bgColor
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 200 } }
             
             SequentialAnimation on opacity {
                 running: modRoot.blink
                 loops: Animation.Infinite
-                NumberAnimation { to: 0.1; duration: 500 }
-                NumberAnimation { to: 1.0; duration: 500 }
+                NumberAnimation { to: 0.1; duration: root.batteryMode ? 0 : 500 }
+                NumberAnimation { to: 1.0; duration: root.batteryMode ? 0 : 500 }
             }
         }
 
@@ -331,7 +361,7 @@ ShellRoot {
             height: modText.height
             scale: parent.containsPress ? 0.85 : (parent.containsMouse ? 1.1 : 1.0)
             Behavior on scale { 
-                NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 2.0 } 
+                NumberAnimation { duration: root.batteryMode ? 0 : 200; easing.type: Easing.OutBack; easing.overshoot: 2.0 } 
             }
             
             Text {
@@ -340,7 +370,7 @@ ShellRoot {
                 color: parent.parent.textColor
                 font { family: root.fontFamily; pixelSize: root.fontSize; bold: true }
                 anchors.centerIn: parent
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 200 } }
             }
             Item {
                 id: contentBox
@@ -351,7 +381,7 @@ ShellRoot {
 
     Rectangle {
         id: notchRect
-        opacity: (!controlCenter.show && controlCenter.animHeight <= 36) || root.isBarMode ? 1.0 : 0.0
+        opacity: (!root.isAnyPopupAnimActive) || root.isBarMode ? 1.0 : 0.0
         
         anchors.top: parent.top
         anchors.topMargin: root.isBarMode ? 0 : 4
@@ -361,16 +391,16 @@ ShellRoot {
         color: Qt.rgba(0.02, 0.02, 0.02, 0.95)
         radius: root.isBarMode ? 0 : 16
         
-        Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
-        Behavior on radius { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
-        Behavior on anchors.topMargin { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
+        Behavior on width { NumberAnimation { duration: root.batteryMode ? 0 : 400; easing.type: Easing.OutExpo } }
+        Behavior on radius { NumberAnimation { duration: root.batteryMode ? 0 : 400; easing.type: Easing.OutExpo } }
+        Behavior on anchors.topMargin { NumberAnimation { duration: root.batteryMode ? 0 : 400; easing.type: Easing.OutExpo } }
         border.color: Qt.rgba(1, 1, 1, 0.1)
         border.width: root.isBarMode ? 0 : 1
         
         RowLayout {
             id: notchLayout
-            opacity: controlCenter.show ? 0 : 1
-            Behavior on opacity { NumberAnimation { duration: 150 } }
+            opacity: root.isAnyPopupOpen ? 0 : 1
+            Behavior on opacity { NumberAnimation { duration: root.batteryMode ? 0 : 150 } }
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             height: parent.height
@@ -431,6 +461,13 @@ ShellRoot {
                 bgColor: "transparent"
                 show: isActive && !controlCenter.show && !root.showOsd
                 onClicked: controlCenter.show = true
+            }
+            
+            Mod {
+                text: root.batteryMode ? "  Power Saver" : "  Performance"
+                textColor: root.batteryMode ? "#FFCC00" : "#76B900"
+                bgColor: "transparent"
+                show: root.showBatteryModeIndicator && !controlCenter.show && !root.showOsd
             }
 
             Mod {
@@ -509,7 +546,7 @@ ShellRoot {
                     if (battIcon.level <= 0.2) return "#FF3B30";
                     return battIcon.colFg;
                 }
-                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on width { NumberAnimation { duration: root.batteryMode ? 0 : 300; easing.type: Easing.OutCubic } }
             }
         }
         
@@ -554,9 +591,9 @@ ShellRoot {
         Rectangle {
             anchors.fill: parent
             radius: 12
-            color: mainMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
+            color: mainMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.1)
             border.color: "transparent"
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 150 } }
         }
         
         MouseArea {
@@ -578,7 +615,7 @@ ShellRoot {
                 Layout.preferredWidth: 32
                 Layout.preferredHeight: 32
                 radius: 16
-                color: mbtn.isActive ? mbtn.accent : Qt.rgba(1, 1, 1, 0.1)
+                color: mbtn.isActive ? mbtn.accent : Qt.rgba(1, 1, 1, 0.15)
                 
                 Text {
                     anchors.centerIn: parent
@@ -596,8 +633,8 @@ ShellRoot {
                 }
                 
                 scale: iconMouse.containsPress ? 0.9 : (iconMouse.containsMouse ? 1.05 : 1.0)
-                Behavior on scale { NumberAnimation { duration: 150 } }
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 150 } }
+                Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 150 } }
             }
             
             Text { 
@@ -619,7 +656,7 @@ ShellRoot {
                     color: rightIconMouse.containsMouse ? root.colFg : Qt.rgba(root.colFg.r, root.colFg.g, root.colFg.b, 0.3)
                     font.family: root.fontFamily
                     font.pixelSize: 16
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 150 } }
                 }
                 
                 MouseArea {
@@ -632,7 +669,7 @@ ShellRoot {
         }
         
         scale: mainMouse.containsPress ? 0.98 : 1.0
-        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+        Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 150; easing.type: Easing.OutBack } }
     }
 
     component ModernButton: MouseArea {
@@ -650,21 +687,21 @@ ShellRoot {
             anchors.fill: parent
             radius: 12
             color: mbtn.isActive ? Qt.rgba(mbtn.accent.r, mbtn.accent.g, mbtn.accent.b, 0.15) 
-                                 : (mbtn.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+                                 : (mbtn.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.1))
             border.color: mbtn.isActive ? Qt.rgba(mbtn.accent.r, mbtn.accent.g, mbtn.accent.b, 0.3) : "transparent"
             border.width: 1
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 150 } }
         }
         
         RowLayout {
             anchors.centerIn: parent
-            spacing: 8
-            Text { text: mbtn.iconText; color: mbtn.isActive ? mbtn.accent : root.colFg; font.family: root.fontFamily; font.pixelSize: 16 }
-            Text { text: mbtn.text; color: mbtn.isActive ? mbtn.accent : root.colFg; font.family: root.fontFamily; font.pixelSize: 13; font.bold: true }
+            spacing: 4
+            Text { text: mbtn.iconText; color: mbtn.isActive ? mbtn.accent : root.colFg; font.family: root.fontFamily; font.pixelSize: 14 }
+            Text { text: mbtn.text; color: mbtn.isActive ? mbtn.accent : root.colFg; font.family: root.fontFamily; font.pixelSize: 11; font.bold: true }
         }
         
         scale: containsPress ? 0.95 : 1.0
-        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+        Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 150; easing.type: Easing.OutBack } }
     }
 
     component ModernSlider: Slider {
@@ -697,7 +734,7 @@ ShellRoot {
             radius: 8
             color: mSlider.pressed ? Qt.rgba(0.8, 0.8, 0.8, 1) : "#ffffff"
             scale: mSlider.pressed || mSlider.hovered ? 1.2 : 1.0
-            Behavior on scale { NumberAnimation { duration: 100 } }
+            Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 100 } }
             
         }
     }
@@ -732,8 +769,26 @@ ShellRoot {
         implicitHeight: mainLayout.implicitHeight + 48 + root.height + 8
         color: "transparent"
         
+        onShowChanged: {
+            if (show) focusTimerCc.start();
+        }
+        
+        Timer {
+            id: focusTimerCc
+            interval: 50
+            onTriggered: controlCenterContent.forceActiveFocus()
+        }
+
         Item {
+            id: controlCenterContent
             anchors.fill: parent
+            focus: true
+            Keys.onEscapePressed: {
+                controlCenter.show = false;
+                timerPopup.show = false;
+                gpuPopup.show = false;
+                notesPopup.show = false;
+            }
             
             MouseArea {
                 anchors.fill: parent
@@ -770,7 +825,7 @@ ShellRoot {
                 
                 Behavior on radius { 
                     NumberAnimation { 
-                        duration: controlCenter.show ? 450 : 300
+                        duration: root.batteryMode ? 0 : controlCenter.show ? 450 : 300
                         easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
                         easing.overshoot: controlCenter.show ? 1.2 : 0 
                     } 
@@ -778,21 +833,21 @@ ShellRoot {
                 
                 Behavior on width { 
                     NumberAnimation { 
-                        duration: controlCenter.show ? 450 : 300
+                        duration: root.batteryMode ? 0 : controlCenter.show ? 450 : 300
                         easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
                         easing.overshoot: controlCenter.show ? 1.2 : 0 
                     } 
                 }
                 Behavior on height { 
                     NumberAnimation { 
-                        duration: controlCenter.show ? 450 : 300
+                        duration: root.batteryMode ? 0 : controlCenter.show ? 450 : 300
                         easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
                         easing.overshoot: controlCenter.show ? 1.2 : 0 
                     } 
                 }
                 Behavior on anchors.topMargin { 
                     NumberAnimation { 
-                        duration: controlCenter.show ? 450 : 300
+                        duration: root.batteryMode ? 0 : controlCenter.show ? 450 : 300
                         easing.type: controlCenter.show ? Easing.OutBack : Easing.OutExpo
                         easing.overshoot: controlCenter.show ? 1.2 : 0 
                     } 
@@ -804,7 +859,7 @@ ShellRoot {
                     opacity: controlCenter.show ? 1.0 : 0.0
                     Behavior on opacity { 
                         NumberAnimation { 
-                            duration: controlCenter.show ? 300 : 100
+                            duration: root.batteryMode ? 0 : controlCenter.show ? 300 : 100
                             easing.type: Easing.InOutQuad 
                         } 
                     }
@@ -860,8 +915,8 @@ ShellRoot {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 12
-                                color: parent.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                color: parent.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.1)
+                                Behavior on color { ColorAnimation { duration: root.batteryMode ? 0 : 150 } }
                             }
                             
                             RowLayout {
@@ -897,7 +952,7 @@ ShellRoot {
                             }
                             
                             scale: containsPress ? 0.95 : 1.0
-                            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+                            Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 150; easing.type: Easing.OutBack } }
                         }
                     }
                     
@@ -1053,8 +1108,8 @@ ShellRoot {
                             iconText: root.bluetoothStatus === "on" ? "" : "󰂲"
                             isActive: root.bluetoothStatus === "on"
                             accent: "#007AFF"
-                            onMainClicked: { pBlueberry.running = true; controlCenter.show = false }
-                            onRightIconClicked: { pBlueberry.running = true; controlCenter.show = false }
+                            onMainClicked: { bluetoothMenuPopup.show = true; controlCenter.show = false }
+                            onRightIconClicked: { bluetoothMenuPopup.show = true; controlCenter.show = false }
                             onIconClicked: { 
                                 root.bluetoothStatus = (root.bluetoothStatus === "on") ? "off" : "on"
                                 pBtToggle.running = true 
@@ -1066,8 +1121,8 @@ ShellRoot {
                             iconText: root.wifiIcon
                             isActive: root.wifiText !== "Disconnected"
                             accent: "#007AFF"
-                            onMainClicked: { pNmtui.running = true; controlCenter.show = false }
-                            onRightIconClicked: { pNmtui.running = true; controlCenter.show = false }
+                            onMainClicked: { wifiMenuPopup.show = true; controlCenter.show = false }
+                            onRightIconClicked: { wifiMenuPopup.show = true; controlCenter.show = false }
                             onIconClicked: { 
                                 root.wifiText = (root.wifiText === "Disconnected") ? "Connecting..." : "Disconnected"
                                 root.wifiIcon = (root.wifiText === "Connecting...") ? "󰤨" : "󰤮"
@@ -1076,31 +1131,6 @@ ShellRoot {
                         }
                     }
                     
-                    // Toggles Row 2
-                    RowLayout {
-                        spacing: 8
-                        Layout.fillWidth: true
-                        
-                        ModernSplitButton {
-                            id: btnGpu
-                            text: root.gpuMode
-                            iconText: "󰢮"
-                            isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
-                            accent: "#76B900"
-                            onMainClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
-                            onIconClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
-                            onRightIconClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
-                        }
-                        ModernSplitButton {
-                            id: btnNotes
-                            text: "Configs"
-                            iconText: ""
-                            onMainClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
-                            onIconClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
-                            onRightIconClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
-                        }
-                    }
-
                     // Toggles Row 3 (Timer and Stopwatch)
                     RowLayout {
                         spacing: 8
@@ -1172,6 +1202,35 @@ ShellRoot {
                         }
                     }
 
+                    // Toggles Row 2 (GPU, Configs, Power Saver)
+                    RowLayout {
+                        spacing: 8
+                        Layout.fillWidth: true
+                        
+                        ModernButton {
+                            id: btnGpu
+                            text: root.gpuMode
+                            iconText: "󰢮"
+                            isActive: root.gpuMode === "Hybrid" || root.gpuMode === "Nvidia"
+                            accent: "#76B900"
+                            onClicked: { gpuPopup.show = !gpuPopup.show; notesPopup.show = false; timerPopup.show = false }
+                        }
+                        ModernButton {
+                            id: btnNotes
+                            text: "Configs"
+                            iconText: ""
+                            onClicked: { notesPopup.show = !notesPopup.show; gpuPopup.show = false; timerPopup.show = false }
+                        }
+                        ModernButton {
+                            id: btnBatteryMode
+                            text: root.batteryMode ? "Power Saver" : "Performance"
+                            iconText: root.batteryMode ? "" : ""
+                            isActive: root.batteryMode
+                            accent: "#FFCC00"
+                            onClicked: pToggleBatteryMode.running = true
+                        }
+                    }
+
                     } // End Item wrapper
             }
         }
@@ -1219,9 +1278,9 @@ ShellRoot {
                 opacity: timerPopup.show ? 1.0 : 0.0
                 scale: timerPopup.show ? 1.0 : 0.95
                 x: timerPopup.show ? 0 : 20
-                Behavior on opacity { NumberAnimation { duration: 200 } }
-                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on opacity { NumberAnimation { duration: root.batteryMode ? 0 : 200 } }
+                Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: root.batteryMode ? 0 : 350; easing.type: Easing.OutBack } }
                 
                 ColumnLayout {
                     id: layoutTimer
@@ -1238,7 +1297,7 @@ ShellRoot {
                         placeholderText: "e.g. 5"
                         color: root.colFg
                         background: Rectangle {
-                            color: Qt.rgba(1, 1, 1, 0.05)
+                            color: Qt.rgba(1, 1, 1, 0.1)
                             radius: 8
                             border.color: timerInput.activeFocus ? Qt.rgba(1, 1, 1, 0.3) : "transparent"
                         }
@@ -1294,9 +1353,9 @@ ShellRoot {
                 opacity: gpuPopup.show ? 1.0 : 0.0
                 scale: gpuPopup.show ? 1.0 : 0.95
                 x: gpuPopup.show ? 0 : 20
-                Behavior on opacity { NumberAnimation { duration: 200 } }
-                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on opacity { NumberAnimation { duration: root.batteryMode ? 0 : 200 } }
+                Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: root.batteryMode ? 0 : 350; easing.type: Easing.OutBack } }
                 
                 ColumnLayout {
                     id: layoutGpu
@@ -1348,9 +1407,9 @@ ShellRoot {
                 opacity: notesPopup.show ? 1.0 : 0.0
                 scale: notesPopup.show ? 1.0 : 0.95
                 x: notesPopup.show ? 0 : 20
-                Behavior on opacity { NumberAnimation { duration: 200 } }
-                Behavior on scale { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
-                Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutBack } }
+                Behavior on opacity { NumberAnimation { duration: root.batteryMode ? 0 : 200 } }
+                Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 350; easing.type: Easing.OutBack } }
+                Behavior on x { NumberAnimation { duration: root.batteryMode ? 0 : 350; easing.type: Easing.OutBack } }
                 
                 ColumnLayout {
                     id: layoutNotes
@@ -1379,6 +1438,65 @@ ShellRoot {
                     }
                 }
             }
+        }
+    }
+
+    PowerMenu {
+        id: powerMenuPopup
+        shellRoot: root
+    }
+
+    AppLauncher {
+        id: appLauncherPopup
+        shellRoot: root
+    }
+
+    ClipboardManager {
+        id: clipboardManagerPopup
+        shellRoot: root
+    }
+
+    ThemeSwitcher {
+        id: themeSwitcherPopup
+        shellRoot: root
+    }
+
+    WifiMenu {
+        id: wifiMenuPopup
+        shellRoot: root
+    }
+
+    BluetoothMenu {
+        id: bluetoothMenuPopup
+        shellRoot: root
+    }
+    
+    IpcHandler {
+        id: qsIpc
+        target: "qsIpc"
+        function toggleAppLauncher() {
+            appLauncherPopup.show = !appLauncherPopup.show;
+        }
+        function togglePowerMenu() {
+            powerMenuPopup.show = !powerMenuPopup.show;
+        }
+        function toggleClipboard() {
+            clipboardManagerPopup.show = !clipboardManagerPopup.show;
+        }
+        function toggleThemeSwitcher() {
+            themeSwitcherPopup.show = !themeSwitcherPopup.show;
+        }
+        function toggleWifiMenu() {
+            wifiMenuPopup.show = !wifiMenuPopup.show;
+        }
+        function toggleBluetoothMenu() {
+            bluetoothMenuPopup.show = !bluetoothMenuPopup.show;
+        }
+        function toggleControlCenter() {
+            controlCenter.show = !controlCenter.show;
+        }
+        function refreshBatteryMode() {
+            pCheckBatteryMode.running = true;
         }
     }
 

@@ -18,32 +18,39 @@ SCALE=$(echo "$MONITOR_INFO" | jq -r '.scale')
 # Manteniamo 120Hz perché permette al driver di allineare meglio i frame (48Hz floor)
 enable_battery() {
     echo "Enabling Battery Savings (120Hz VRR + No Effects)..."
-    
-    # 1. Decommenta il blocco nel file (disabilita animazioni/blur/shadows)
     sed -i "/$START/,/$END/ { /$START/! { /$END/! s/^#[[:space:]]*// } }" "$CONFIG"
-    
-    # 2. Assicura 120Hz con VRR attivo
     hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
+    
+    hyprctl eval 'hl.config({ animations = { enabled = false }, decoration = { rounding = 0, shadow = { enabled = false }, blur = { enabled = false } } })'
 }
 
-# Funzione per tornare a Performance (120Hz + VRR + Eye Candy)
 disable_battery() {
     echo "Restoring Performance Mode (120Hz VRR + Animations)..."
-    
-    # 1. Commenta il blocco nel file (riabilita animazioni/blur/shadows)
     sed -i "/$START/,/$END/ { /$START/! { /$END/! { /^[[:space:]]*#/! s/^/#/ } } }" "$CONFIG"
-    
-    # 2. Ripristina i 120Hz
     hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
+    
+    hyprctl eval '
+    local theme = require("theme")
+    hl.config({
+        animations = { enabled = true },
+        decoration = {
+            rounding = theme.rounding,
+            shadow = { enabled = theme.shadow_enabled },
+            blur = { enabled = theme.blur_enabled }
+        }
+    })
+    ' >> /tmp/battery_mode.log 2>&1
 }
 
 # LOGICA DI TOGGLE
-# Controlla se la riga 'animations {' è commentata per capire lo stato attuale
+echo "Running toggle check..." >> /tmp/battery_mode.log
 if sed -n "/$START/,/$END/p" "$CONFIG" | grep -q "^#animations"; then
-    enable_battery
+    echo "Enabling battery" >> /tmp/battery_mode.log
+    enable_battery >> /tmp/battery_mode.log 2>&1
 else
-    disable_battery
+    echo "Disabling battery" >> /tmp/battery_mode.log
+    disable_battery >> /tmp/battery_mode.log 2>&1
 fi
 
-# Notifica Waybar per aggiornare eventuali icone/moduli
-pkill -USR2 waybar
+# Notifica Quickshell per aggiornare l'interfaccia
+quickshell ipc call qsIpc refreshBatteryMode
