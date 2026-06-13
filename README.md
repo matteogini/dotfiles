@@ -1,20 +1,30 @@
-# Hyprland Dotfiles
+<div align="center">
 
-A feature-rich, beautiful, and highly functional Linux setup (Rice) centered around **Hyprland** and **Quickshell**.
+# ☁️ Hyprland Dotfiles
+
+A feature-rich, beautiful, and highly functional Linux setup centered around **Hyprland** and **Quickshell**.
+
+<video src="https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4" controls="controls" muted="muted" width="800"></video>
+
+![Arch Linux](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
+![Hyprland](https://img.shields.io/badge/Hyprland-00A98F?logo=hyprland&logoColor=fff&style=for-the-badge)
+![Fish](https://img.shields.io/badge/Fish-000?logo=fish&logoColor=fff&style=for-the-badge)
+![Quickshell](https://img.shields.io/badge/Quickshell-5E5C64?style=for-the-badge)
+
+</div>
 
 ## ✨ Features
 
 - **Window Manager**: [Hyprland](https://hyprland.org/) - A dynamic tiling Wayland compositor that doesn't sacrifice on its looks.
-- **Shell Interface**: [Quickshell](https://quickshell.com/) - A robust custom top bar with IPC, an integrated control center, Pomodoro timer, battery power mode switching, and an On-Screen Display (OSD). Completely replaces Waybar/WOB.
+- **Shell Interface**: [Quickshell](https://quickshell.com/) - A robust custom top bar with IPC, an integrated control center, Pomodoro timer, battery power mode switching, and an On-Screen Display (OSD).
 - **Terminal Emulators**: Configured for [Kitty](https://sw.kovidgoyal.net/kitty/), [Foot](https://codeberg.org/dnkl/foot), and [Ghostty](https://github.com/mitchellh/ghostty).
 - **Application Launcher**: [Tofi](https://github.com/philj56/tofi) - Minimalist and fast launcher for apps, power menu, and Wi-Fi networks.
 - **Shell**: [Fish](https://fishshell.com/) - With custom prompts, frozen key bindings, and useful aliases.
-- **Theming System**: Easily switch between 15+ built-in themes (e.g. Minimal, Dark Mountains, Soft Color, Purple) via custom scripts and `supergfxctl` GPU management tools.
+- **Theming System**: Easily switch between 15+ built-in themes via custom scripts and `supergfxctl` GPU management tools.
 - **System Fetch**: [Fastfetch](https://github.com/fastfetch-cli/fastfetch)
 
 ## 📸 Overview
 
-<video src="preview/overview.mp4" controls="controls" muted="muted" width="800"></video>
 
 <details>
 <summary><b>Click to expand screenshots</b></summary>
