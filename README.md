@@ -91,6 +91,7 @@ You can change the theme on the fly using the built-in script:
 ├── ghostty/      # Ghostty terminal config
 ├── hypr/         # Hyprland configs, modules, themes, and scripts
 ├── kitty/        # Kitty terminal config
+├── nano/         # Nano editor config
 ├── preview/      # UI screenshots and previews
 ├── quickshell/   # QML scripts for the main bar and control center
 ├── tofi/         # Tofi menus (app launcher, wifi, power)
