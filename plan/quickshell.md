@@ -63,3 +63,9 @@ We entirely eliminated `tofi` and dedicated launchers in favor of beautifully an
 - **Glassmorphism**: Uses layered transparent grays (e.g., 10% base opacity, 15% hover opacity) over a dark background for buttons and fields.
 - **Animations**: `NumberAnimation` and `ColorAnimation` properties give every hover, click, and transition a premium feel.
 - **Battery Optimization**: All Quickshell QML animation durations are conditionally tied to `root.batteryMode`. When the Power Saver toggle is active, all durations drop to `0`, perfectly matching Hyprland's disabled effects for maximum battery life.
+
+## 6. Full System Integration Updates
+
+Quickshell has successfully absorbed all bar, widget, and menu responsibilities, resulting in the complete removal of several legacy packages:
+- **Waybar**: Completely removed. Quickshell is now the only panel running (launched via Hyprland's `autostart.conf`).
+- **WOB (Wayland Overlay Bar)**: Completely removed. Volume and Brightness hotkeys now trigger an instant, native On-Screen Display (OSD) in Quickshell's Dynamic Island via direct IPC (`quickshell ipc call qsIpc showOsd <Type> <Value>`), eliminating the need for `wob.fifo` pipes.
