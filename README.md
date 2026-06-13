@@ -1,10 +1,8 @@
+<h1 align="center">☁️ Hyprland Dotfiles</h1>
+
+<p align="center">A feature-rich, beautiful, and highly functional Linux setup centered around <b>Hyprland</b> and <b>Quickshell</b>.</p>
+
 <div align="center">
-
-# ☁️ Hyprland Dotfiles
-
-A feature-rich, beautiful, and highly functional Linux setup centered around **Hyprland** and **Quickshell**.
-
-https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4
 
 ![Arch Linux](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
 ![Hyprland](https://img.shields.io/badge/Hyprland-00A98F?logo=hyprland&logoColor=fff&style=for-the-badge)
@@ -12,6 +10,8 @@ https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4
 ![Quickshell](https://img.shields.io/badge/Quickshell-5E5C64?style=for-the-badge)
 
 </div>
+
+https://github.com/matteogini/dotfiles/raw/main/preview/overview.mp4
 
 ## ✨ Features
 
