@@ -1,227 +1,61 @@
-### connection
-```
-iwctl
-device list
-station wlan0 get-networks
-station wlan0 connect rete
-exit
-```
-### install yay
-[yay installation](https://cloudcone.com/docs/article/how-to-install-yay-helper-on-archlinux/)
-### sway
-to install only if you want to use sway
-```
-sudo pacman -S firefox foot grim pavucontrol slurp swayidle swaylock xorg-xwayland dmenu brightnessctl sway swaybg polkit thunar 
-```
-### linux for rog
-[guide](https://asus-linux.org/guides/arch-guide/)
-### nvidia
-```
-sudo pacman -S nvidia-open-dkms nvtop
-```
-### bluetooth
-```
-sudo pacman -S blueman bluez bluez-utils blueberry
-systemctl enable bluetooth.service
-systemctl start bluetooth.service
-```
-### hyprland
-```
-sudo pacman -S hyprland foot ghostty wob yazi kitty xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk waybar hyprpaper slurp grim zip unzip filelight brightnessctl nwg-displays
-yay -S tofi gnome-network-displays
-```
-### software
-```
-sudo pacman -S telegram-desktop whatsapp-for-linux htop spotify-launcher gnome-disk-utility gnome-calculator cheese loupe discord nemo cmatrix cava easyeffects mysql-workbench gimp libreoffice-fresh
+# Matteo's Dotfiles
+
+A feature-rich, beautiful, and highly functional Linux setup (Rice) centered around **Hyprland** and **Quickshell**.
+
+## ✨ Features
+
+- **Window Manager**: [Hyprland](https://hyprland.org/) - A dynamic tiling Wayland compositor that doesn't sacrifice on its looks.
+- **Shell Interface**: [Quickshell](https://quickshell.com/) - A robust custom top bar with IPC, an integrated control center, Pomodoro timer, battery power mode switching, and an On-Screen Display (OSD). Completely replaces Waybar/WOB.
+- **Terminal Emulators**: Configured for [Kitty](https://sw.kovidgoyal.net/kitty/), [Foot](https://codeberg.org/dnkl/foot), and [Ghostty](https://github.com/mitchellh/ghostty).
+- **Application Launcher**: [Tofi](https://github.com/philj56/tofi) - Minimalist and fast launcher for apps, power menu, and Wi-Fi networks.
+- **Shell**: [Fish](https://fishshell.com/) - With custom prompts, frozen key bindings, and useful aliases.
+- **Theming System**: Easily switch between 15+ built-in themes (e.g. Minimal, Dark Mountains, Soft Color, Purple) via custom scripts and `supergfxctl` GPU management tools.
+- **System Fetch**: [Fastfetch](https://github.com/fastfetch-cli/fastfetch)
+
+## 📸 Overview
+
+The setup relies heavily on **Quickshell** written in QML, which acts as the main shell and control center. It includes:
+- Live indicators for Battery, Brightness, Audio, Mic, and Bluetooth
+- Quick toggles for Pomodoro, Stopwatch, and integrated Notes/Config Editor
+- Workspaces tracking and integrated OSDs
+- GPU mode switcher (Integrated / Hybrid) via `supergfxctl`
+
+## 🛠️ Usage
+
+### Theme Switcher
+You can change the theme on the fly using the built-in script:
+```bash
+./hypr/scripts/switch_theme.sh <theme_name>
 ```
 
-```
-yay -S google-chrome powerstat brave-bin whatsapp-for-linux zen-browser-bin
-```
-### jetbrains
+### Scripts & Utilities
+- `battery_mode.sh`: Toggles power-saving mode (disables animations to save battery).
+- `tofi-wifi.sh`: Tofi-based GUI to easily connect to open and secured Wi-Fi networks.
+- `amd_s2idle.py`: Advanced AMD debugging script for suspend issues.
+- `gacp`: Fish alias to quickly add, commit, and push updates.
 
-[download](https://www.jetbrains.com/)
-### git
-```
-sudo pacman -S git openssh rsync
-systemctl --user enable ssh-agent.service
-systemctl --user start ssh-agent.service
-mkdir -p ~/.ssh
-rsync -avh /Scaricati/.ssh/ ~/.ssh/
-cp /Scaricati/.gitconfig ~/.gitconfig
-chmod 700 ~/.ssh
-chmod 600 ~/.ssh/id_rsa
-chmod 644 ~/.ssh/id_rsa.pub
-chmod 644 ~/.ssh/known_hosts
-chmod 644 ~/.ssh/known_hosts.old
-ssh -T git@github.com
-ssh -T git@gitlab.com
-git --version
-```
-### dev
-```
-sudo pacman -S python-poetry pycharm-community-edition docker dbeaver netbeans gparted mysql-workbench
-yay -S visual-studio-code-bin cursor-bin flutter zed-git docker-desktop lmstudio cursor-bin
-```
-### lamp
-```
-sudo pacman -S apache
-sudo nano /etc/httpd/conf/httpd.conf
-```
-decomment:
-```
-#LoadModule unique_id_module modules/mod_unique_id.so
+## ⚙️ Structure
+
+```text
+.
+├── bin/          # Custom scripts and binaries
+├── fastfetch/    # Fastfetch config
+├── fish/         # Fish shell config and functions
+├── foot/         # Foot terminal config
+├── ghostty/      # Ghostty terminal config
+├── hypr/         # Hyprland configs, modules, themes, and scripts
+├── kitty/        # Kitty terminal config
+├── preview/      # UI screenshots and previews
+├── quickshell/   # QML scripts for the main bar and control center
+├── tofi/         # Tofi menus (app launcher, wifi, power)
+└── waybar/       # (Legacy) Waybar configs
 ```
 
-```
-systemctl enable httpd
-systemctl restart httpd
-```
+## 🚀 Installation
+*(Assuming Arch Linux / Pacman-based distribution)*
 
-```
-sudo nano /srv/http/index.html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-</head>
-<body>
-    <p>test page</p>
-</body>
-</html>
-```
+1. Ensure the core packages are installed (Hyprland, Quickshell, Fish, Tofi, Kitty, Fastfetch).
+2. Clone this repository into your `~/.config` or use the included `ricesync` script to sync the dotfiles.
+3. Reload Hyprland or log out and log back in.
 
-```
-sudo pacman -S mysql
-sudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
-systemctl enable mysqld
-systemctl start mysqld
-sudo mysql_secure_installation
-```
-
-```
-sudo pacman -S php php-apache
-sudo nano /etc/httpd/conf/httpd.conf
-```
-comment:
-```
-LoadModule mpm_event_module modules/mod_mpm_event.so
-```
-aggiungere alla fine:
-```
-LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
-LoadModule php_module modules/libphp.so
-AddHandler php-script php
-Include conf/extra/php_module.conf
-```
-
-```
-sudo nano /srv/http/test.php
-<?php
-phpinfo();
-?>
-systemctl restart httpd
-```
-### shell
-
-To install fish, run:
-```
-sudo pacman -S fish
-```
-To list all installed shells, run: 
-```
-chsh -l
-```
-And to set one as default for your user do:
-```
-chsh -s /bin/fish
-```
-Abbreviation:
-```
-abbr --add gco git checkout 
-git checkout
-```
-Update completions:
-```
-fish_update_completions
-```
-Fish config:
-```
-fish_config
-```
-Remove greeting message:
-```
-set -U fish_greeting
-```
-### snapshot
-[timeshift](https://wiki.archlinux.org/title/Timeshift)
-```
-sudo pacman -S timeshift grub-btrfs
-systemctl enable --now grub-btrfsd.service
-sudo grub-mkconfig -o /boot/grub/grub.cfg
-```
-### clipboard
-```
-sudo pacman -S wl-clipboard wl-clip-persist cliphist
-```
-### Logitech
-```
-yay -S logi-mx-bin
-```
-### Pacman cache
-```
-sudo systemctl enable --now paccache.timer
-```
-### Hyprland plugins
-```
-hyprpm add https://github.com/hyprwm/hyprland-plugins
-hyprpm update
-hyprmp list
-hyprpm enable hyprexpo
-```
-### hyprsunset
-```
-pacman -S hyprsunset
-systemctl --user enable --now hyprsunset.service
-```
-### Authentication
-```
-sudo pacman -S hyprpolkitagent
-```
-### Watt limit
-```
-yay -S ryzendj
-yay -S ryzen_smu-dkms-git
-sudo ryzenadj --stapm-limit=10000 --fast-limit=10000 --slow-limit=10000
-sudo ryzenadj --set-coall=1048556 # undervolting
-```
-
-```
-nano /usr/local/bin/setwatt
-
-#!/bin/bash
-
-# Controlla se è stato passato un argomento
-if [ -z "$1" ]; then
-    echo "Utilizzo: setwatt <numero>"
-    echo "Esempio: setwatt 15"
-    exit 1
-fi
-
-# Converte i Watt in milliwatt (mW) per ryzenadj
-WATT=$1
-MW=$((WATT * 1000))
-
-# Applica i limiti
-sudo ryzenadj --stapm-limit=$MW --fast-limit=$MW --slow-limit=$MW
-```
-
-```
-sudo chmod +x /usr/local/bin/setwatt
-sudo visudo
-
-# power limit script
-matteo ALL=(ALL) NOPASSWD: /usr/bin/ryzenadj
-```
+> **Note**: This config relies on certain system tools like `brightnessctl`, `playerctl`, `nmcli` (NetworkManager), `bluetoothctl`, `wpctl` (WirePlumber), and `supergfxctl`. Make sure you have them installed for the Control Center to function fully.
