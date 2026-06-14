@@ -58,6 +58,10 @@ https://github.com/user-attachments/assets/0529881d-1ff8-4aa2-973a-c108f8b27c02
 | :---: | :---: |
 | <img src="preview/powermenu.png" width="400"/> | <img src="preview/performance_mode.png" width="400"/> |
 
+| Battery Mode |  |
+| :---: | :---: |
+| <img src="preview/battery_mode.png" width="400"/> |  |
+
 </details>
 
 The setup relies heavily on **Quickshell** written in QML, which acts as the main shell and control center. It includes:
