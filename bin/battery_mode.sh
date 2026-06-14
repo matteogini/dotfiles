@@ -23,6 +23,8 @@ enable_battery() {
     
     hyprctl eval 'hl.config({ animations = { enabled = false }, decoration = { rounding = 0, shadow = { enabled = false }, blur = { enabled = false } } })'
     
+    /home/matteo/.config/hypr/scripts/switch_theme.sh black
+    
     pkill quickshell
     waybar &
 }
@@ -43,6 +45,8 @@ disable_battery() {
         }
     })
     ' >> /tmp/battery_mode.log 2>&1
+    
+    /home/matteo/.config/hypr/scripts/switch_theme.sh minimal
     
     pkill waybar
     quickshell --path ~/.config/quickshell/shell.qml &
