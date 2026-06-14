@@ -15,7 +15,7 @@ sleep 3
 
 # 3. Launch Spotify
 echo "Launching Spotify via systemd-run..."
-systemd-run --user --unit=spotify-restart-$(date +%s) --description="Spotify from Waybar" spotify --enable-features=UseOzonePlatform --ozone-platform=wayland --force-device-scale-factor=2 > /dev/null 2>&1
+systemd-run --user --unit=spotify-restart-$(date +%s) --description="Spotify from Waybar" spotify --enable-features=UseOzonePlatform --ozone-platform=wayland > /dev/null 2>&1
 
 # 4. Wait for player and resume playback
 echo "Waiting for player..."

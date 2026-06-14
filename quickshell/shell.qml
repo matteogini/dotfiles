@@ -231,6 +231,7 @@ ShellRoot {
     Process { id: pNoteGhostty; command: ["zeditor", "/home/matteo/.config/ghostty"] }
     Process { id: pNoteFish; command: ["zeditor", "/home/matteo/.config/fish"] }
     Process { id: pNoteFastfetch; command: ["zeditor", "/home/matteo/.config/fastfetch"] }
+    Process { id: pNoteQuickshell; command: ["zeditor", "/home/matteo/.config/quickshell"] }
 
     
 
@@ -1546,6 +1547,7 @@ ShellRoot {
                         ModernButton { Layout.preferredHeight: 40; text: "Ghostty"; onClicked: { pNoteGhostty.running = true; notesPopup.show = false; controlCenter.show = false } }
                         ModernButton { Layout.preferredHeight: 40; text: "Fish"; onClicked: { pNoteFish.running = true; notesPopup.show = false; controlCenter.show = false } }
                         ModernButton { Layout.preferredHeight: 40; text: "Fastfetch"; onClicked: { pNoteFastfetch.running = true; notesPopup.show = false; controlCenter.show = false } }
+                        ModernButton { Layout.preferredHeight: 40; text: "Quickshell"; onClicked: { pNoteQuickshell.running = true; notesPopup.show = false; controlCenter.show = false } }
                     }
                 }
             }

@@ -72,7 +72,7 @@ hl.window_rule({
 
 hl.window_rule({
     name  = "spotify",
-    match = { class = "Spotify" },
+    match = { class = "^(Spotify|spotify)$" },
     float = true,
     size  = "800 600",
     center = true,

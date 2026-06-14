@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Bluetooth Menu
+Comment=Quickshell Bluetooth Menu
+Exec=quickshell ipc call qsIpc toggleBluetoothMenu
+Icon=bluetooth
+Terminal=false
+Type=Application
+Categories=Network;Settings;

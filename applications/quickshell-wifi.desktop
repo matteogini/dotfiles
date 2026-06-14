@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Wifi Menu
+Comment=Quickshell Wifi Menu
+Exec=quickshell ipc call qsIpc toggleWifiMenu
+Icon=network-wireless
+Terminal=false
+Type=Application
+Categories=Network;Settings;
