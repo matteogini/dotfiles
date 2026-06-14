@@ -72,6 +72,21 @@ ShellRoot {
         repeat: false
         onTriggered: root.showBatteryModeIndicator = false
     }
+
+    property bool showMicIndicator: false
+    
+    onMicMutedChanged: {
+        showMicIndicator = true;
+        micIndicatorTimer.restart();
+    }
+    
+    Timer {
+        id: micIndicatorTimer
+        interval: 1000
+        repeat: false
+        onTriggered: root.showMicIndicator = false
+    }
+
     property string spotifyStatus: "offline"
     property string spotifyText: ""
     property string wifiIcon: "󰤯"
@@ -483,6 +498,13 @@ ShellRoot {
                 textColor: root.batteryMode ? "#FFCC00" : "#76B900"
                 bgColor: "transparent"
                 show: root.showBatteryModeIndicator && !controlCenter.show && !root.showOsd
+            }
+
+            Mod {
+                text: ""
+                textColor: root.micMuted ? root.colMuted : "#FFA500"
+                bgColor: "transparent"
+                show: root.showMicIndicator && !controlCenter.show && !root.showOsd
             }
 
             Mod {
