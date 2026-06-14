@@ -20,10 +20,10 @@ enable_battery() {
     echo "Enabling Battery Savings (120Hz VRR + No Effects)..."
     sed -i "/$START/,/$END/ { /$START/! { /$END/! s/^#[[:space:]]*// } }" "$CONFIG"
     hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
+    /home/matteo/.config/hypr/scripts/switch_theme.sh black
+    sleep 0.5
     
     hyprctl eval 'hl.config({ animations = { enabled = false }, decoration = { rounding = 0, shadow = { enabled = false }, blur = { enabled = false } } })'
-    
-    /home/matteo/.config/hypr/scripts/switch_theme.sh black
     
     pkill quickshell
     waybar &
@@ -33,6 +33,9 @@ disable_battery() {
     echo "Restoring Performance Mode (120Hz VRR + Animations)..."
     sed -i "/$START/,/$END/ { /$START/! { /$END/! { /^[[:space:]]*#/! s/^/#/ } } }" "$CONFIG"
     hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
+    
+    /home/matteo/.config/hypr/scripts/switch_theme.sh minimal
+    sleep 0.5
     
     hyprctl eval '
     local theme = require("theme")
@@ -45,8 +48,6 @@ disable_battery() {
         }
     })
     ' >> /tmp/battery_mode.log 2>&1
-    
-    /home/matteo/.config/hypr/scripts/switch_theme.sh minimal
     
     pkill waybar
     quickshell --path ~/.config/quickshell/shell.qml &
