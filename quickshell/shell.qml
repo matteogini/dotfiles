@@ -48,6 +48,7 @@ ShellRoot {
     property string updates: "0"
     property string batteryCap: "100"
     property string brightnessLevel: "0%"
+    property string kbdBrightnessLevel: "0"
     property int cpuWattage: 15
     property bool batteryCharging: false
     property string gpuMode: "Unknown"
@@ -195,6 +196,8 @@ ShellRoot {
         command: ["brightnessctl", "s", "50%"]
     }
 
+    Process { id: pKbdBrightSet }
+
     Process { id: pWattSet }
 
     Process { id: pSpotPlay; command: ["playerctl", "--player=spotify", "play-pause"] }
@@ -314,6 +317,19 @@ ShellRoot {
                 var p = data.split("|");
                 root.spotifyStatus = p[0].trim();
                 root.spotifyText = p[1] ? p[1].trim() : "";
+            }
+        }
+    }
+
+    Process {
+        command: ["sh", "-c", "while true; do asusctl leds get 2>/dev/null | awk '{print $NF}'; sleep 3; done"]
+        running: true; stdout: SplitParser { 
+            onRead: data => {
+                var d = data.trim().toLowerCase();
+                if (d === 'off') root.kbdBrightnessLevel = "0";
+                else if (d === 'low') root.kbdBrightnessLevel = "1";
+                else if (d === 'med') root.kbdBrightnessLevel = "2";
+                else if (d === 'high') root.kbdBrightnessLevel = "3";
             }
         }
     }
@@ -1046,6 +1062,24 @@ ShellRoot {
                                 }
                             }
                             
+                        }
+
+                        // Keyboard Brightness
+                        RowLayout {
+                            spacing: 8
+                            Text { text: "󰌌"; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            ModernSlider {
+                                value: parseInt(root.kbdBrightnessLevel) / 3.0
+                                stepSize: 1.0 / 3.0
+                                snapMode: Slider.SnapAlways
+                                onMoved: {
+                                    var levels = ["off", "low", "med", "high"];
+                                    var idx = Math.round(value * 3);
+                                    root.kbdBrightnessLevel = idx.toString();
+                                    pKbdBrightSet.command = ["asusctl", "leds", "set", levels[idx]];
+                                    pKbdBrightSet.running = true;
+                                }
+                            }
                         }
 
                         // Wattage
