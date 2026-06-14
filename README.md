@@ -58,9 +58,9 @@ https://github.com/user-attachments/assets/0529881d-1ff8-4aa2-973a-c108f8b27c02
 | :---: | :---: |
 | <img src="preview/powermenu.png" width="400"/> | <img src="preview/performance_mode.png" width="400"/> |
 
-| Battery Mode |  |
+| Battery Mode | Battery Mode Window |
 | :---: | :---: |
-| <img src="preview/battery_mode.png" width="400"/> |  |
+| <img src="preview/battery_mode.png" width="400"/> | <img src="preview/battery_mode_window.png" width="400"/> |
 
 </details>
 
