@@ -19,6 +19,7 @@ The top bar functions as a "Dynamic Island" that seamlessly expands and contract
 - **Battery Status**: Shows a dynamically colored battery icon that blinks critically when below 15% and displays charging states.
 - **Timer & Stopwatch**: When active, the countdown/countup seamlessly embeds into the island.
 - **Power Saver Indicator**: Temporarily spawns a 1-second "Power Saver" or "Performance" pill right inside the island to confirm power state transitions before smoothly collapsing.
+- **Mic Indicator**: A dynamic orange dot temporarily slides in for 1 second when the microphone is unmuted, mimicking the power mode transitions.
 
 ## 3. The Control Center (`PopupWindow`)
 
@@ -26,9 +27,10 @@ Triggered from the island, the Control Center is a comprehensive hub providing q
 
 **Key Components:**
 - **Sliders**: Fluid `ModernSlider` components mapped to shell commands to control:
-  - System Volume (`wpctl`)
-  - Microphone Volume (`wpctl`)
+  - System Volume (`wpctl`) — The speaker icon acts as an interactive click-to-mute button.
+  - Microphone Volume (`wpctl`) — The mic icon serves as a dynamic click-to-mute toggle.
   - Screen Brightness (`brightnessctl`)
+  - Keyboard Backlight (`asusctl` polling)
   - CPU Wattage (`supergfxctl` / `rog-control-center`)
   - Battery Charge Limit
 - **Media Controls**: Displays the current Spotify track and playback controls (`playerctl`).
@@ -63,6 +65,7 @@ We entirely eliminated `tofi` and dedicated launchers in favor of beautifully an
 - **Glassmorphism**: Uses layered transparent grays (e.g., 10% base opacity, 15% hover opacity) over a dark background for buttons and fields.
 - **Animations**: `NumberAnimation` and `ColorAnimation` properties give every hover, click, and transition a premium feel.
 - **Battery Optimization**: All Quickshell QML animation durations are conditionally tied to `root.batteryMode`. When the Power Saver toggle is active, all durations drop to `0`, perfectly matching Hyprland's disabled effects for maximum battery life.
+- **Battery Mode Fallbacks**: Pressing `SUPER+B` intelligently kills Quickshell and revives the legacy `Waybar`/`Tofi` suite to save maximum resources, forcing a `black` theme and aggressively disabling `hyprland` blur/shadows. When toggled back, it restores Quickshell and the `minimal` theme. Keybindings adapt automatically thanks to `smart_*.sh` wrappers that ping Quickshell IPC if active, or fall back to legacy scripts if not.
 
 ## 6. Full System Integration Updates
 

@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/0529881d-1ff8-4aa2-973a-c108f8b27c02
 - **Window Manager**: [Hyprland](https://hyprland.org/) - A dynamic tiling Wayland compositor that doesn't sacrifice on its looks.
 - **Shell Interface**: [Quickshell](https://quickshell.com/) - A robust custom top bar with IPC, an integrated control center, Pomodoro timer, battery power mode switching, and an On-Screen Display (OSD).
 - **Terminal Emulators**: Configured for [Kitty](https://sw.kovidgoyal.net/kitty/), [Foot](https://codeberg.org/dnkl/foot), and [Ghostty](https://github.com/mitchellh/ghostty).
-- **Application Launcher**: [Tofi](https://github.com/philj56/tofi) - Minimalist and fast launcher for apps, power menu, and Wi-Fi networks.
+- **Application Launcher**: Primarily Native Quickshell Components (with smart fallbacks to [Tofi](https://github.com/philj56/tofi) on battery mode to preserve resources).
 - **Shell**: [Fish](https://fishshell.com/) - With custom prompts, frozen key bindings, and useful aliases.
 - **Theming System**: Easily switch between 15+ built-in themes via custom scripts and `supergfxctl` GPU management tools.
 - **System Fetch**: [Fastfetch](https://github.com/fastfetch-cli/fastfetch)
@@ -75,7 +75,8 @@ You can change the theme on the fly using the built-in script:
 ```
 
 ### Scripts & Utilities
-- `battery_mode.sh`: Toggles power-saving mode (disables animations to save battery).
+- `battery_mode.sh`: Toggles extreme power-saving mode (kills Quickshell, launches legacy Waybar, enforces a black theme, and strips all Hyprland effects).
+- `smart_*.sh`: Intelligent bash wrappers for keybindings that automatically ping Quickshell's IPC if active, or fall back to legacy tools (like Tofi) when in battery mode.
 - `tofi-wifi.sh`: Tofi-based GUI to easily connect to open and secured Wi-Fi networks.
 - `amd_s2idle.py`: Advanced AMD debugging script for suspend issues.
 - `gacp`: Fish alias to quickly add, commit, and push updates.
