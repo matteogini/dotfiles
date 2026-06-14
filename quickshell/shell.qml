@@ -108,6 +108,7 @@ ShellRoot {
     // Click Actions
     Process { id: pPavu; command: ["pavucontrol"] }
     Process { id: pMicMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] }
+    Process { id: pVolMute; command: ["wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle"] }
     Process { id: pVolSet } // Dynamic volume setter
     Process { id: pBatLimitSet }
     Process { id: pBlueberry; command: ["blueberry"] }
@@ -1023,7 +1024,21 @@ ShellRoot {
                         // Volume
                         RowLayout {
                             spacing: 8
-                            Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            MouseArea {
+                                Layout.preferredWidth: 24
+                                Layout.preferredHeight: 24
+                                hoverEnabled: true
+                                onClicked: pVolMute.running = true
+                                scale: containsPress ? 0.9 : (containsMouse ? 1.1 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 150 } }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: root.volumeMuted ? "󰝟" : ""
+                                    color: root.volumeMuted ? root.colMuted : root.colFg
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 18 
+                                }
+                            }
                             ModernSlider {
                                 value: parseInt(root.volumeOut) / 100.0
                                 onMoved: {
@@ -1038,7 +1053,21 @@ ShellRoot {
                         // Mic
                         RowLayout {
                             spacing: 8
-                            Text { text: ""; color: root.colFg; font.family: root.fontFamily; font.pixelSize: 18 }
+                            MouseArea {
+                                Layout.preferredWidth: 24
+                                Layout.preferredHeight: 24
+                                hoverEnabled: true
+                                onClicked: pMicMute.running = true
+                                scale: containsPress ? 0.9 : (containsMouse ? 1.1 : 1.0)
+                                Behavior on scale { NumberAnimation { duration: root.batteryMode ? 0 : 150 } }
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: root.micMuted ? "" : ""
+                                    color: root.micMuted ? root.colMuted : root.colFg
+                                    font.family: root.fontFamily
+                                    font.pixelSize: 18 
+                                }
+                            }
                             ModernSlider {
                                 value: parseInt(root.volumeMic) / 100.0
                                 onMoved: {
