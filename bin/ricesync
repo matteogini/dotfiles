@@ -8,7 +8,7 @@ mkdir -p rice/hypr rice/kitty rice/tofi rice/waybar rice/fish rice/fastfetch ric
 
 # Files and directories to watch
 # Note: we explicitly track custom scripts in .local/bin, avoiding large binaries
-find .config/hypr .config/kitty .config/tofi .config/waybar .config/fish .config/fastfetch .config/foot .config/ghostty .config/wob .config/quickshell .nanorc .local/bin/amd_s2idle.py .local/bin/battery_mode.sh .local/bin/notify .local/bin/ricesync .local/bin/smart_menu.sh .local/bin/smart_powermenu.sh .local/bin/smart_clipboard.sh .local/bin/smart_theme.sh .local/bin/smart_controlcenter.sh .local/bin/spotify_restart.sh .local/share/applications/quickshell-wifi.desktop .local/share/applications/quickshell-bluetooth.desktop -type f | \
+find .config/hypr .config/kitty .config/tofi .config/waybar .config/fish .config/fastfetch .config/foot .config/ghostty .config/wob .config/quickshell .nanorc .local/bin/amd_s2idle.py .local/bin/battery_mode.sh .local/bin/notify .local/bin/ricesync .local/bin/smart_menu.sh .local/bin/smart_powermenu.sh .local/bin/smart_clipboard.sh .local/bin/smart_theme.sh .local/bin/smart_controlcenter.sh .local/bin/smart_volume.sh .local/bin/smart_brightness.sh .local/bin/spotify_restart.sh .local/share/applications/quickshell-wifi.desktop .local/share/applications/quickshell-bluetooth.desktop -type f | \
 entr -r bash -c '
     echo "Syncing configurations..."
     rsync -aq --delete .config/hypr/ rice/hypr/
@@ -33,6 +33,8 @@ entr -r bash -c '
     cp ~/.local/bin/smart_clipboard.sh rice/bin/
     cp ~/.local/bin/smart_theme.sh rice/bin/
     cp ~/.local/bin/smart_controlcenter.sh rice/bin/
+    cp ~/.local/bin/smart_volume.sh rice/bin/
+    cp ~/.local/bin/smart_brightness.sh rice/bin/
     cp ~/.local/bin/spotify_restart.sh rice/bin/
     
     # Sync applications

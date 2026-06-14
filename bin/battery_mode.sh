@@ -27,6 +27,10 @@ enable_battery() {
     
     pkill quickshell
     waybar &
+    
+    # Start wob for OSD
+    rm -f $XDG_RUNTIME_DIR/wob.fifo && mkfifo $XDG_RUNTIME_DIR/wob.fifo
+    tail -f $XDG_RUNTIME_DIR/wob.fifo | wob -c ~/.config/wob/wob.ini &
 }
 
 disable_battery() {
@@ -50,6 +54,7 @@ disable_battery() {
     ' >> /tmp/battery_mode.log 2>&1
     
     pkill waybar
+    pkill wob
     quickshell --path ~/.config/quickshell/shell.qml &
 }
 
