@@ -22,6 +22,9 @@ enable_battery() {
     hyprctl keyword monitor "$MONITOR,$RES@120,$POS,$SCALE,vrr,1"
     
     hyprctl eval 'hl.config({ animations = { enabled = false }, decoration = { rounding = 0, shadow = { enabled = false }, blur = { enabled = false } } })'
+    
+    pkill quickshell
+    waybar &
 }
 
 disable_battery() {
@@ -40,6 +43,9 @@ disable_battery() {
         }
     })
     ' >> /tmp/battery_mode.log 2>&1
+    
+    pkill waybar
+    quickshell --path ~/.config/quickshell/shell.qml &
 }
 
 # LOGICA DI TOGGLE
