@@ -17,7 +17,7 @@ https://github.com/user-attachments/assets/0529881d-1ff8-4aa2-973a-c108f8b27c02
 ## ✨ Features
 
 - **Window Manager**: [Hyprland](https://hyprland.org/) - A dynamic tiling Wayland compositor that doesn't sacrifice on its looks.
-- **Shell Interface**: [Quickshell](https://quickshell.com/) - A robust custom top bar with IPC, an integrated control center, Pomodoro timer, battery power mode switching, and an On-Screen Display (OSD).
+- **Shell Interface**: [Quickshell](https://quickshell.org/) - A robust custom top bar with IPC, an integrated control center, Pomodoro timer, battery power mode switching, and an On-Screen Display (OSD).
 - **Terminal Emulators**: Configured for [Kitty](https://sw.kovidgoyal.net/kitty/), [Foot](https://codeberg.org/dnkl/foot), and [Ghostty](https://github.com/mitchellh/ghostty).
 - **Application Launcher**: Primarily Native Quickshell Components (with smart fallbacks to [Tofi](https://github.com/philj56/tofi) on battery mode to preserve resources).
 - **Shell**: [Fish](https://fishshell.com/) - With custom prompts, frozen key bindings, and useful aliases.
