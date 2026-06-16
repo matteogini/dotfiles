@@ -52,6 +52,12 @@ PanelWindow {
                 for (var i = 0; i < btItems.length; i++) {
                     btModel.append(btItems[i]);
                 }
+                if (btModel.count > 0) {
+                    listView.currentIndex = 0;
+                }
+                if (rootWindow.show) {
+                    focusTimer.start();
+                }
             }
         }
     }
@@ -73,22 +79,39 @@ PanelWindow {
             btItems = [];
             btModel.clear();
             pListBt.running = true;
-            focusTimer.start();
         }
     }
     
     Timer {
         id: focusTimer
         interval: 50
-        onTriggered: btMenuContent.forceActiveFocus()
+        onTriggered: listView.forceActiveFocus()
     }
     
     Item {
         id: btMenuContent
         anchors.fill: parent
-        focus: true
+        focus: show
+
         Keys.onEscapePressed: {
             show = false;
+        }
+        
+        Keys.onReturnPressed: connectCurrent()
+        Keys.onEnterPressed: connectCurrent()
+        
+        function connectCurrent() {
+            if (listView.currentIndex >= 0 && listView.currentIndex < btModel.count) {
+                var item = btModel.get(listView.currentIndex);
+                if (item.connected) {
+                    pDisconnect.targetMac = item.mac;
+                    pDisconnect.running = true;
+                } else {
+                    pConnect.targetMac = item.mac;
+                    pConnect.running = true;
+                }
+                show = false;
+            }
         }
 
         MouseArea {
