@@ -133,7 +133,7 @@ PanelWindow {
                     Keys.onReturnPressed: {
                         if (listView.currentIndex >= 0 && listView.currentIndex < appModel.count) {
                             var app = appModel.get(listView.currentIndex);
-                            pExec.command = ["sh", "-c", app.exec + " &"];
+                            pExec.command = ["hyprctl", "dispatch", "exec", "--", "sh", "-c", app.exec];
                             pExec.running = true;
                             show = false;
                         }
@@ -174,7 +174,7 @@ PanelWindow {
                             hoverEnabled: true
                             onClicked: {
                                 listView.currentIndex = index;
-                                pExec.command = ["sh", "-c", model.exec + " &"];
+                                pExec.command = ["hyprctl", "dispatch", "exec", "--", "sh", "-c", model.exec];
                                 pExec.running = true;
                                 rootWindow.show = false;
                             }
