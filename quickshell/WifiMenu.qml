@@ -52,22 +52,22 @@ PanelWindow {
     
     Process {
         id: pGetWifi
-        command: ["sh", "-c", "nmcli --get-values IN-USE,SSID,SECURITY dev wifi list | sort -r"]
+        command: ["sh", "-c", "nmcli --get-values IN-USE,SSID,SECURITY,SIGNAL dev wifi list"]
         stdout: SplitParser {
             onRead: data => {
                 var d = data.trim();
                 if (d.length > 0) {
-                    var idx1 = d.indexOf(":");
-                    var idx2 = d.lastIndexOf(":");
-                    if (idx1 > -1 && idx2 > idx1) {
-                        var inUse = d.substring(0, idx1).trim();
-                        var ssid = d.substring(idx1 + 1, idx2).trim();
-                        var sec = d.substring(idx2 + 1);
+                    var parts = d.split(":");
+                    if (parts.length >= 4) {
+                        var inUse = parts[0];
+                        var signal = parseInt(parts.pop(), 10);
+                        var sec = parts.pop();
+                        var ssid = parts.slice(1).join(":");
                         var secure = (sec !== "" && sec !== "--");
                         var connected = (inUse === "*");
                         if (ssid !== "" && !seenSsids[ssid]) {
                             seenSsids[ssid] = true;
-                            wifiItems.push({"ssid": ssid, "secure": secure, "connected": connected});
+                            wifiItems.push({"ssid": ssid, "secure": secure, "connected": connected, "signal": isNaN(signal) ? 0 : signal});
                         }
                     }
                 }
@@ -75,6 +75,12 @@ PanelWindow {
         }
         onRunningChanged: {
             if (!running && rootWindow.show) {
+                wifiItems.sort(function(a, b) {
+                    if (a.connected !== b.connected) {
+                        return a.connected ? -1 : 1;
+                    }
+                    return b.signal - a.signal;
+                });
                 for (var i = 0; i < wifiItems.length; i++) {
                     wifiModel.append(wifiItems[i]);
                 }

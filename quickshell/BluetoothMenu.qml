@@ -34,14 +34,11 @@ PanelWindow {
                 var parts = line.split('|');
                 if (parts.length >= 3) {
                     var mac = parts[0];
-                    var name = parts[1];
-                    var connected = (parts[2] === "yes");
+                    var connectedStr = parts.pop().trim();
+                    var connected = (connectedStr === "yes");
+                    var name = parts.slice(1).join("|");
                     if (name !== "") {
-                        if (connected) {
-                            btItems.unshift({mac: mac, name: name, connected: connected});
-                        } else {
-                            btItems.push({mac: mac, name: name, connected: connected});
-                        }
+                        btItems.push({mac: mac, name: name, connected: connected});
                     }
                 }
             }
@@ -49,6 +46,12 @@ PanelWindow {
         onRunningChanged: {
             if (!running) {
                 btModel.clear();
+                btItems.sort(function(a, b) {
+                    if (a.connected !== b.connected) {
+                        return a.connected ? -1 : 1;
+                    }
+                    return a.name.localeCompare(b.name);
+                });
                 for (var i = 0; i < btItems.length; i++) {
                     btModel.append(btItems[i]);
                 }
