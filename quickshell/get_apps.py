@@ -52,7 +52,7 @@ def get_apps():
                 if name and exec_cmd:
                     # Clean up exec command (remove %f, %u, etc.)
                     exec_cmd = " ".join([p for p in exec_cmd.split() if not p.startswith("%")])
-                    apps.append({"name": name, "exec": exec_cmd, "icon": icon})
+                    apps.append({"name": name, "cmd": exec_cmd, "icon": icon})
             except Exception:
                 pass
                 

@@ -133,7 +133,8 @@ PanelWindow {
                     Keys.onReturnPressed: {
                         if (listView.currentIndex >= 0 && listView.currentIndex < appModel.count) {
                             var app = appModel.get(listView.currentIndex);
-                            pExec.command = ["hyprctl", "dispatch", "exec", "--", "sh", "-c", app.exec];
+                            pExec.running = false;
+                            pExec.command = ["/home/matteo/.config/quickshell/launch_app.sh", app.cmd];
                             pExec.running = true;
                             show = false;
                         }
@@ -174,7 +175,8 @@ PanelWindow {
                             hoverEnabled: true
                             onClicked: {
                                 listView.currentIndex = index;
-                                pExec.command = ["hyprctl", "dispatch", "exec", "--", "sh", "-c", model.exec];
+                                pExec.running = false;
+                                pExec.command = ["/home/matteo/.config/quickshell/launch_app.sh", model.cmd];
                                 pExec.running = true;
                                 rootWindow.show = false;
                             }
