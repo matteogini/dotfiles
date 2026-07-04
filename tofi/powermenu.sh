@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 options="Shutdown\nLock\nReboot\nSuspend\nLogout"
 
-# DEVE usare solo il config, senza aggiungere colori a mano qui!
 choice=$(echo -e "$options" | tofi --config ~/.config/tofi/configpowermenu)
 
 case "$choice" in
     "Shutdown") systemctl poweroff ;;
-    "Lock") hyprlock ;;
+    "Lock") swaylock -f -c 000000 ;;
     "Reboot") systemctl reboot ;;
-    "Suspend") hyprlock & sleep 1 && systemctl suspend ;;
-    "Logout") hyprctl dispatch "hl.dsp.exit()" ;;
+    "Suspend") swaylock -f -c 000000 & sleep 1 && systemctl suspend ;;
+    "Logout") swaymsg exit ;;
 esac
