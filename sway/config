@@ -294,7 +294,8 @@ bar {
 exec blueman-applet
 
 # Start Clipboard Manager (cliphist)
-exec wl-paste --watch cliphist store
+exec wl-paste --type text --watch cliphist store
+exec wl-paste --type image --watch cliphist store
 exec cliphist list | tail -n +501 | cliphist delete
 
 # Blue Light Filter / Night Mode
