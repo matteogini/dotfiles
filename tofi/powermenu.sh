@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 options="Shutdown\nLock\nReboot\nSuspend\nLogout"
 
-choice=$(echo -e "$options" | tofi --config ~/.config/tofi/configpowermenu)
+choice=$(echo -e "$options" | tofi --prompt-text " Action: ")
 
 case "$choice" in
     "Shutdown") systemctl poweroff ;;

@@ -15,5 +15,5 @@ padding-left = 10
 padding-right = 10
 background-color = #000000
 text-color = #ffffff
-selection-color = #ff0000
+selection-color = #888888
 selection-background = #00000000
