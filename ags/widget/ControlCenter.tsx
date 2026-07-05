@@ -1,10 +1,33 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk } from "ags/gtk4"
 import { execAsync } from "ags/process"
-import { createPoll } from "ags/time"
 import { createState } from "gnim"
 
-// Polling bindings using ags/time
+// Smart Poll: Only runs commands when the Control Center is visible!
+function createPoll<T>(defaultVal: T, intervalMs: number, cmd: string[], parser: (out: string, prev?: T) => T) {
+    const state = createState(defaultVal);
+    let prev = defaultVal;
+    
+    const update = () => {
+        execAsync(cmd).then(out => {
+            prev = parser(out, prev);
+            state.set(prev);
+        }).catch(() => {});
+    };
+
+    setInterval(() => {
+        const win = app.windows.find(w => w.name === "control-center");
+        if (win && win.visible) {
+            update();
+        }
+    }, intervalMs);
+
+    // Initial fetch to populate data once
+    update();
+    return state;
+}
+
+// Polling bindings
 const vol = createPoll(0, 2000, ["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"], (out) => {
     const match = out.match(/Volume:\s+([\d.]+)/)
     return match ? parseFloat(match[1]) : 0
@@ -28,29 +51,27 @@ const kbd = createPoll(0, 2000, ["asusctl", "leds", "get"], (out) => {
     return 0;
 })
 
-const mediaTitle = createPoll("", 1000, ["bash", "-c", "playerctl metadata title || echo ''"], out => out.trim().substring(0, 35))
-const mediaArtist = createPoll("", 1000, ["bash", "-c", "playerctl metadata artist || echo ''"], out => out.trim().substring(0, 35))
-const mediaStatus = createPoll("", 1000, ["bash", "-c", "playerctl status || echo ''"], out => out.trim())
+const mediaData = createPoll("||", 2500, ["bash", "-c", "playerctl metadata --format '{{status}}|{{title}}|{{artist}}' 2>/dev/null || echo ''"], out => out.trim())
 
-const batLimit = createPoll(0.8, 5000, ["bash", "-c", "awk -F'[:,]' '/charge_control_end_threshold/ {print int($2); exit}' /etc/asusd/asusd.ron || echo 80"], (out, prev) => {
+const batLimit = createPoll(0.8, 60000, ["bash", "-c", "awk -F'[:,]' '/charge_control_end_threshold/ {print int($2); exit}' /etc/asusd/asusd.ron || echo 80"], (out, prev) => {
     const val = parseInt(out)
     return isNaN(val) ? (prev ?? 0.8) : val / 100
 })
 
-const cpuWatt = createPoll(0.5, 5000, ["bash", "-c", "sudo ryzenadj -i 2>/dev/null | awk -F'|' '/STAPM LIMIT/ {print int($3)}'"], (out, prev) => {
+const cpuWatt = createPoll(0.5, 120000, ["bash", "-c", "sudo ryzenadj -i 2>/dev/null | awk -F'|' '/STAPM LIMIT/ {print int($3)}'"], (out, prev) => {
     if (!out || out.trim() === "") return prev ?? 0.5;
     const val = parseInt(out)
     if (isNaN(val)) return prev ?? 0.5;
     return Math.max(0, Math.min(1, (val - 5) / 45)) // Map 5W-50W back to 0.0-1.0
 })
 
-const gpuMode = createPoll("Integrated", 5000, ["supergfxctl", "-g"], out => out.trim())
+const gpuMode = createPoll("Integrated", 10000, ["supergfxctl", "-g"], out => out.trim())
 
-const wifiMode = createPoll("disabled", 3000, ["bash", "-c", "if [ \"$(nmcli radio wifi)\" = \"disabled\" ]; then echo 'disabled'; else ssid=$(nmcli -t -f type,name connection show --active | awk -F: '$1==\"802-11-wireless\"{print $2}' | head -n1); echo \"${ssid:-disconnected}\"; fi"], out => out.trim())
+const wifiMode = createPoll("disabled", 6000, ["bash", "-c", "if [ \"$(nmcli radio wifi)\" = \"disabled\" ]; then echo 'disabled'; else ssid=$(nmcli -t -f type,name connection show --active | awk -F: '$1==\"802-11-wireless\"{print $2}' | head -n1); echo \"${ssid:-disconnected}\"; fi"], out => out.trim())
 
-const btMode = createPoll("disabled", 3000, ["bash", "-c", "if rfkill list bluetooth | grep -q \"Soft blocked: yes\"; then echo \"disabled\"; else bt=$(bluetoothctl devices Connected | head -n1 | awk '{for(i=3;i<=NF;++i) printf \"%s \", $i; print \"\"}'); echo \"${bt:-disconnected}\"; fi"], out => out.trim())
+const btMode = createPoll("disabled", 6000, ["bash", "-c", "if rfkill list bluetooth | grep -q \"Soft blocked: yes\"; then echo \"disabled\"; else bt=$(bluetoothctl devices Connected | head -n1 | awk '{for(i=3;i<=NF;++i) printf \"%s \", $i; print \"\"}'); echo \"${bt:-disconnected}\"; fi"], out => out.trim())
 
-const profileMode = createPoll("Balanced", 2000, ["bash", "-c", "asusctl profile get || echo 'Active profile: Balanced'"], out => {
+const profileMode = createPoll("Balanced", 10000, ["bash", "-c", "asusctl profile get || echo 'Active profile: Balanced'"], out => {
     const match = out.match(/Active profile:\s+(.*)/)
     return match ? match[1].trim() : "Balanced"
 })
@@ -250,16 +271,16 @@ function SlashLighting() {
 
 function MediaPlayer() {
     return (
-        <box cssClasses={["section"]} orientation={Gtk.Orientation.VERTICAL} spacing={5} visible={mediaStatus.as(s => s !== "")}>
-            <label cssClasses={["label"]} label={mediaTitle.as(t => t || "Unknown Title")} xalign={0.5} />
-            <label cssClasses={["value"]} label={mediaArtist.as(a => a || "Unknown Artist")} xalign={0.5} />
+        <box cssClasses={["section"]} orientation={Gtk.Orientation.VERTICAL} spacing={5} visible={mediaData.as(s => s !== "")}>
+            <label cssClasses={["label"]} label={mediaData.as(d => d.split("|")[1]?.substring(0, 35) || "Unknown Title")} xalign={0.5} />
+            <label cssClasses={["value"]} label={mediaData.as(d => d.split("|")[2]?.substring(0, 35) || "Unknown Artist")} xalign={0.5} />
             
             <box cssClasses={["row"]} orientation={Gtk.Orientation.HORIZONTAL} spacing={10} halign={Gtk.Align.CENTER}>
                 <button onClicked={() => execAsync(["playerctl", "previous"]).catch(console.error)}>
                     <label label="<" />
                 </button>
                 <button onClicked={() => execAsync(["playerctl", "play-pause"]).catch(console.error)}>
-                    <label label="-" />
+                    <label label={mediaData.as(d => d.split("|")[0] === "Playing" ? "-" : ">")} />
                 </button>
                 <button onClicked={() => execAsync(["playerctl", "next"]).catch(console.error)}>
                     <label label=">" />
