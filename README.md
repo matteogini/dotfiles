@@ -28,6 +28,14 @@
 | :---: | :---: |
 | <img src="preview/clipboard.png" width="400"/> | <img src="preview/power-menu.png" width="400"/> |
 
+| Control Center (Quick Settings) | Control Center (Advanced Settings) |
+| :---: | :---: |
+| <img src="preview/cc-quick.png" width="400"/> | <img src="preview/cc-advanced.png" width="400"/> |
+
+| Control Center (Light Theme) |  |
+| :---: | :---: |
+| <img src="preview/cc-light.png" width="400"/> | |
+
 </details>
 
 ## ✨ Features
