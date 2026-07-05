@@ -8,7 +8,7 @@ end
 
 
 # Added by Antigravity CLI installer
-set -gx PATH "/home/matteo/.local/bin" $PATH
+set -gx PATH "$HOME/.local/bin" $PATH
 alias clock="termdown"
 
 # Custom Go path
@@ -16,7 +16,7 @@ set -gx GOPATH $HOME/.local/share/go
 set -gx PATH $GOPATH/bin $PATH
 
 # opencode
-fish_add_path /home/matteo/.opencode/bin
+fish_add_path $HOME/.opencode/bin
 
 # bun
 set --export BUN_INSTALL "$HOME/.bun"

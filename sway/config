@@ -90,6 +90,7 @@ exec swayidle -w \
     bindsym $mod+r exec $menu
     bindsym $mod+w exec $browser
     bindsym $mod+o exec obsidian
+    bindsym $mod+z exec ags toggle control-center
 
     # Lock the screen manually
     bindsym $mod+Escape exec swaylock -f
@@ -265,7 +266,7 @@ bindsym Mod1+Down resize grow height 30px
     # Additional custom media/spotify shortcuts
     bindsym --locked $mod+XF86AudioRaiseVolume exec playerctl next
     bindsym --locked $mod+XF86AudioLowerVolume exec playerctl previous
-    bindsym --locked $mod+XF86AudioMicMute exec /home/matteo/.local/bin/spotify_restart.sh
+    bindsym --locked $mod+XF86AudioMicMute exec ~/.local/bin/spotify_restart.sh
 
     # Special keys to adjust brightness via brightnessctl + WOB
     bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%- | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
@@ -283,7 +284,7 @@ bar {
 
     # When the status_command prints a new line to stdout, swaybar updates.
     # Show battery instead of date/time
-    status_command /home/matteo/.config/sway/status.sh
+    status_command ~/.config/sway/status.sh
 
     colors {
         statusline #888888
@@ -303,6 +304,7 @@ exec cliphist list | tail -n +501 | cliphist delete
 
 # Blue Light Filter / Night Mode
 exec wlsunset -t 5000
+exec cd ~/.config/ags && ags run
 
 #
 # Ported from Hyprland
