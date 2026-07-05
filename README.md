@@ -32,7 +32,7 @@
 | :---: | :---: |
 | <img src="preview/cc-quick.png" width="400"/> | <img src="preview/cc-advanced.png" width="400"/> |
 
-| Control Center (Light Theme) |  |
+| Light |  |
 | :---: | :---: |
 | <img src="preview/cc-light.png" width="400"/> | |
 
@@ -61,6 +61,7 @@
 ├── sway/         # Sway configs and scripts
 ├── swaylock/     # Swaylock configuration
 ├── tofi/         # Tofi menus (app launcher, wifi, power)
+├── wallpapers/   # System wallpapers
 └── wob/          # Wob (overlay bar) configuration
 ```
 
