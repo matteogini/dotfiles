@@ -34,6 +34,9 @@ exec rm -f $WOBSOCK && mkfifo $WOBSOCK && tail -f $WOBSOCK | wob -c ~/.config/wo
 
 ### Output configuration
 #
+# Enable Variable Refresh Rate (VRR) / Adaptive Sync for better battery life
+output * adaptive_sync on
+#
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
 output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill
 #
