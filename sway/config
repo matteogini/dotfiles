@@ -316,4 +316,10 @@ for_window [class="(?i)xdg-desktop-portal-gtk"] floating enable, resize set 900 
 for_window [app_id="(?i)Spotify"] floating enable, resize set 800 600, move position center, move container to workspace " "
 for_window [class="(?i)Spotify"] floating enable, resize set 800 600, move position center, move container to workspace " "
 
+# Window border colors
+# class                 border  bground text    indicator child_border
+client.focused          #666666 #666666 #ffffff #666666   #666666
+client.focused_inactive #333333 #333333 #888888 #333333   #333333
+client.unfocused        #333333 #333333 #888888 #333333   #333333
+
 include /etc/sway/config.d/*

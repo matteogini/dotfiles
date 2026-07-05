@@ -10,6 +10,25 @@
 
 </div>
 
+## 📸 Overview
+
+<details open>
+<summary><b>Click to expand screenshots</b></summary>
+
+| Clean Desktop | Tiled Windows |
+| :---: | :---: |
+| <img src="preview/desktop.png" width="400"/> | <img src="preview/windows.png" width="400"/> |
+
+| Terminal | App Launcher |
+| :---: | :---: |
+| <img src="preview/terminal.png" width="400"/> | <img src="preview/app-launcher.png" width="400"/> |
+
+| Clipboard Manager | Power Menu |
+| :---: | :---: |
+| <img src="preview/clipboard.png" width="400"/> | <img src="preview/power-menu.png" width="400"/> |
+
+</details>
+
 ## ✨ Features
 
 - **Window Manager**: [Sway](https://swaywm.org/) - A dynamic tiling Wayland compositor that's a drop-in replacement for i3.
