@@ -1,0 +1,61 @@
+* {
+  transition: none;
+  border-radius: 0px;
+  box-shadow: none;
+  font-family: monospace;
+}
+
+window {
+  background-color: transparent;
+}
+
+.ControlCenter {
+  background-color: #000000;
+  border: 1px solid #333333;
+  padding: 15px;
+  color: #ffffff;
+}
+
+.row {
+  margin-top: 5px;
+}
+
+.label {
+  color: #888888;
+  margin-right: 15px;
+}
+
+slider {
+  padding: 0;
+  margin: 0;
+}
+
+slider trough {
+  min-height: 4px;
+  background-color: #333333;
+}
+
+slider highlight {
+  background-color: #ffffff;
+}
+
+button {
+  background-color: #000000;
+  border: 1px solid #333333;
+  color: #888888;
+  padding: 6px 12px;
+}
+
+button:focus,
+button:hover,
+button:active {
+  border-color: #666666;
+  color: #ffffff;
+  background-color: #111111;
+}
+
+button.active {
+  border-color: #ffffff;
+  color: #000000;
+  background-color: #ffffff;
+}
