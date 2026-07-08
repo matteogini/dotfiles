@@ -38,7 +38,7 @@ exec rm -f $WOBSOCK && mkfifo $WOBSOCK && tail -f $WOBSOCK | wob -c ~/.config/wo
 output * adaptive_sync on
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
-output * bg /home/matteo/Projects/dotfiles/wallpapers/wallpaper.jpg fit
+output * bg /home/matteo/Projects/dotfiles/wallpapers/wallpaper.png center
 #
 # Example configuration:
 #
