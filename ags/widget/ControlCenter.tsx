@@ -71,6 +71,8 @@ const wifiMode = createPoll("disabled", 6000, ["bash", "-c", "if [ \"$(nmcli rad
 
 const btMode = createPoll("disabled", 6000, ["bash", "-c", "if rfkill list bluetooth | grep -q \"Soft blocked: yes\"; then echo \"disabled\"; else bt=$(bluetoothctl devices Connected | head -n1 | awk '{for(i=3;i<=NF;++i) printf \"%s \", $i; print \"\"}'); echo \"${bt:-disconnected}\"; fi"], out => out.trim())
 
+const dndMode = createPoll("default", 2000, ["makoctl", "mode"], out => out.includes("do-not-disturb") ? "do-not-disturb" : "default")
+
 const profileMode = createPoll("Balanced", 10000, ["bash", "-c", "asusctl profile get || echo 'Active profile: Balanced'"], out => {
     const match = out.match(/Active profile:\s+(.*)/)
     return match ? match[1].trim() : "Balanced"
@@ -157,6 +159,10 @@ function ToggleRow() {
         execAsync(["bash", "-c", "~/.config/tofi/tofi-bluetooth.sh"]).catch(console.error)
     }
 
+    const toggleDnd = () => {
+        execAsync(["bash", "-c", "if makoctl mode | grep -q do-not-disturb; then makoctl mode -r do-not-disturb; else makoctl mode -a do-not-disturb; fi"]).catch(console.error)
+    }
+
     return (
         <box cssClasses={["row"]} orientation={Gtk.Orientation.HORIZONTAL} spacing={10}>
             <button hexpand onClicked={openWifi} cssClasses={["toggle-button"]}>
@@ -175,6 +181,11 @@ function ToggleRow() {
                         if (v === "disconnected") return "BT On";
                         return v;
                     })} />
+                </box>
+            </button>
+            <button hexpand onClicked={toggleDnd} cssClasses={["toggle-button"]}>
+                <box halign={Gtk.Align.CENTER} spacing={5}>
+                    <label label={dndMode.as(v => v === "do-not-disturb" ? "DND On" : "DND Off")} />
                 </box>
             </button>
         </box>

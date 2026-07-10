@@ -41,7 +41,7 @@
 ## ✨ Features
 
 - **Window Manager**: [Sway](https://swaywm.org/) - A dynamic tiling Wayland compositor that's a drop-in replacement for i3.
-- **Terminal Emulator**: [Foot](https://codeberg.org/dnkl/foot) - A fast, lightweight, and minimalistic Wayland terminal emulator.
+- **Terminal Emulator**: [Ghostty](https://github.com/mitchellh/ghostty) - A fast, feature-rich, and modern Wayland terminal emulator.
 - **Application Launcher**: [Tofi](https://github.com/philj56/tofi) - A very fast and simple dmenu/rofi replacement for Wayland.
 - **Shell**: [Fish](https://fishshell.com/) - With custom prompts, frozen key bindings, and useful aliases.
 - **Control Center**: [AGS](https://github.com/Aylur/ags) - A heavily customized GTK4/Astal widget providing a centralized hub for ASUS hardware controls (Aura, Slash lighting, Power profiles), Media playback, and system toggles.
@@ -56,7 +56,7 @@
 ├── bin/          # Custom scripts and binaries
 ├── fastfetch/    # Fastfetch config
 ├── fish/         # Fish shell config and functions
-├── foot/         # Foot terminal config
+├── ghostty/      # Ghostty terminal config
 ├── nano/         # Nano editor config
 ├── sway/         # Sway configs and scripts
 ├── swaylock/     # Swaylock configuration
@@ -73,7 +73,7 @@
 ## 🚀 Installation
 *(Assuming Arch Linux / Pacman-based distribution)*
 
-1. Ensure the core packages are installed (`sway`, `swaylock`, `foot`, `fish`, `tofi`, `fastfetch`, `wob`, `wl-clipboard`, `ags`).
+1. Ensure the core packages are installed (`sway`, `swaylock`, `ghostty`, `fish`, `tofi`, `fastfetch`, `wob`, `wl-clipboard`, `ags`).
 2. Clone this repository into your `~/.config` or use the included `ricesync` script from `bin/` to sync the dotfiles.
 3. Reload Sway.
 

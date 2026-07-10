@@ -14,8 +14,7 @@ set $down j
 set $up k
 set $right l
 # Your preferred terminal emulator
-set $term footclient
-exec foot --server
+set $term ghostty
 # Your preferred application launcher
 set $menu ~/.config/tofi/app-launcher.sh
 set $browser zen-browser
@@ -82,6 +81,7 @@ exec swayidle -w \
 #
     # Start a terminal
     bindsym $mod+q exec $term
+    bindsym $mod+Shift+q exec ghostty
 
     # Kill focused window
     bindsym $mod+c kill
@@ -185,7 +185,7 @@ exec swayidle -w \
     # bindsym $mod+s layout stacking
     # bindsym $mod+w layout tabbed
     # bindsym $mod+e layout toggle split
-    bindsym $mod+e exec footclient yazi
+    bindsym $mod+e exec ghostty -e yazi
     bindsym $mod+shift+e exec pcmanfm-qt
 
     # Make the current focus fullscreen
