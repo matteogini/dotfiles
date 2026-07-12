@@ -1,6 +1,7 @@
 background-color=#000000
 border-color=#333333
 border-size=1
+default-timeout=60000
 
 [mode=do-not-disturb]
 invisible=1
