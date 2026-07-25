@@ -187,7 +187,7 @@ exec swayidle -w \
     # bindsym $mod+w layout tabbed
     # bindsym $mod+e layout toggle split
     bindsym $mod+e exec ghostty -e yazi
-    bindsym $mod+shift+e exec pcmanfm-qt
+    bindsym $mod+shift+e exec nautilus -w
 
     # Make the current focus fullscreen
     bindsym $mod+f fullscreen
