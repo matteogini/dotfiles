@@ -37,7 +37,7 @@ exec rm -f $WOBSOCK && mkfifo $WOBSOCK && tail -f $WOBSOCK | wob -c ~/.config/wo
 output * adaptive_sync on
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
-output * bg /home/matteo/Projects/dotfiles/wallpapers/wallpaper.png center
+output * bg "/home/matteo/.config/sway/wallpaper/Twilight_in_the_Wilderness.jpg" fill
 #
 # Example configuration:
 #
@@ -91,6 +91,7 @@ exec swayidle -w \
     bindsym $mod+w exec $browser
     bindsym $mod+o exec obsidian
     bindsym $mod+z exec ags toggle control-center
+    bindsym $mod+t exec ~/.config/tofi/tofi-theme.sh
 
     # Lock the screen manually
     bindsym $mod+Escape exec swaylock -f
@@ -289,7 +290,7 @@ bar {
     colors {
         statusline #888888
         background #000000
-        inactive_workspace #00000000 #00000000 #5c5c5c
+        inactive_workspace #000000 #000000 #5c5c5c
         focused_workspace #000000 #000000 #ffffff
     }
 }

@@ -15,6 +15,10 @@ cursor-style-blink = false
 # Other
 shell-integration = fish
 confirm-close-surface = false
+tab-inherit-working-directory = true
+window-inherit-working-directory = false
+working-directory = home
+split-inherit-working-directory = false
 
 # Theme (Managed by switch_theme.sh)
 config-file = theme
