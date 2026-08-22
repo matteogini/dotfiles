@@ -12,10 +12,10 @@ fi
 WALLPAPER_PATH="$WALLPAPER_DIR/$SELECTED_WALL"
 
 # Apply wallpaper immediately
-swaymsg output "*" bg "\"$WALLPAPER_PATH\"" fill
+swaymsg output "*" bg "\"$WALLPAPER_PATH\"" fit "#000000"
 
 # Make it persistent in sway configs (escaping | in sed)
-sed -i "s|^output \* bg .*$|output * bg \"$WALLPAPER_PATH\" fill|" "$SWAY_CONFIG"
+sed -i "s|^output \* bg .*$|output * bg \"$WALLPAPER_PATH\" fit #000000|" "$SWAY_CONFIG"
 if [ -f "$DOTFILES_SWAY_CONFIG" ]; then
-    sed -i "s|^output \* bg .*$|output * bg \"$WALLPAPER_PATH\" fill|" "$DOTFILES_SWAY_CONFIG"
+    sed -i "s|^output \* bg .*$|output * bg \"$WALLPAPER_PATH\" fit #000000|" "$DOTFILES_SWAY_CONFIG"
 fi
