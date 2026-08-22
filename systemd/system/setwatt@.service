@@ -1,0 +1,6 @@
+[Unit]
+Description=RyzenAdj Power Limits (%iW)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/setwatt %i

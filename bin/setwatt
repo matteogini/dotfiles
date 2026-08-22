@@ -1,0 +1,181 @@
+#!/bin/bash
+
+# Configuration file paths
+CONFIG_USER="${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
+CONFIG_FALLBACK="/home/matteo/.config/setwatt.conf"
+CONFIG_GLOBAL="/etc/setwatt.conf"
+
+# Built-in fallback values
+DEFAULT_AC_WATT=25
+DEFAULT_BAT_WATT=5
+DEFAULT_THRESHOLD=15
+
+# Determine target config file for writing
+get_writable_config() {
+    if [ -n "$HOME" ] && [ -d "${XDG_CONFIG_HOME:-$HOME/.config}" ]; then
+        echo "${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
+    elif [ -f "$CONFIG_FALLBACK" ] || [ -d "/home/matteo/.config" ]; then
+        echo "$CONFIG_FALLBACK"
+    else
+        echo "$CONFIG_GLOBAL"
+    fi
+}
+
+# Load configuration
+load_config() {
+    AC_WATT=$DEFAULT_AC_WATT
+    BAT_WATT=$DEFAULT_BAT_WATT
+    THRESHOLD=$DEFAULT_THRESHOLD
+
+    if [ -f "$CONFIG_GLOBAL" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_GLOBAL" 2>/dev/null
+    fi
+
+    if [ -n "$HOME" ] && [ -f "$CONFIG_USER" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_USER" 2>/dev/null
+    elif [ -f "$CONFIG_FALLBACK" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_FALLBACK" 2>/dev/null
+    fi
+}
+
+# Save configuration
+save_config() {
+    local target_cfg
+    target_cfg=$(get_writable_config)
+    
+    mkdir -p "$(dirname "$target_cfg")" 2>/dev/null
+    
+    cat > "$target_cfg" << EOF
+# Setwatt Power Limits Configuration
+AC_WATT=${AC_WATT}
+BAT_WATT=${BAT_WATT}
+THRESHOLD=${THRESHOLD}
+EOF
+    echo "💾 Saved defaults to $target_cfg:"
+    echo "   • AC Default:      ${AC_WATT}W"
+    echo "   • Battery Default: ${BAT_WATT}W"
+
+    # Also mirror to dotfiles repo if directory exists and running as user
+    if [ -d "/home/matteo/Projects/dotfiles" ] && [ -w "/home/matteo/Projects/dotfiles" ]; then
+        cp "$target_cfg" "/home/matteo/Projects/dotfiles/setwatt.conf" 2>/dev/null
+    fi
+}
+
+# Show help
+show_help() {
+    cat << 'EOF'
+Usage: setwatt [<watts> | auto | config [ac|bat <W>] | -h]
+
+Commands:
+  <number>               Apply specific wattage (e.g. setwatt 15)
+  auto                   Apply default wattage for current power source
+  config                 Show configured defaults
+  config ac <watts>      Set default AC wattage
+  config bat <watts>     Set default Battery wattage
+  -h, --help             Show this help
+EOF
+    exit 0
+}
+
+# Helper to run ryzenadj with or without sudo depending on EUID
+run_ryzenadj() {
+    if [ "$EUID" -eq 0 ]; then
+        ryzenadj "$@"
+    else
+        sudo ryzenadj "$@"
+    fi
+}
+
+load_config
+
+# Parse help
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    show_help
+fi
+
+# Parse config commands
+if [ "$1" = "config" ] || [ "$1" = "--config" ] || [ "$1" = "-c" ]; then
+    shift
+    if [ -z "$1" ]; then
+        echo "⚙️  Setwatt Configuration:"
+        echo "   • AC Default:        ${AC_WATT}W"
+        echo "   • Battery Default:   ${BAT_WATT}W"
+        echo "   • Savings Threshold: ${THRESHOLD}W"
+        echo ""
+        echo "   Config file:"
+        if [ -n "$HOME" ] && [ -f "$CONFIG_USER" ]; then
+            echo "   $CONFIG_USER"
+        elif [ -f "$CONFIG_FALLBACK" ]; then
+            echo "   $CONFIG_FALLBACK"
+        elif [ -f "$CONFIG_GLOBAL" ]; then
+            echo "   $CONFIG_GLOBAL"
+        else
+            echo "   (Built-in defaults active)"
+        fi
+        exit 0
+    elif [ "$1" = "ac" ] && [ -n "$2" ]; then
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+            echo "Error: Wattage must be a positive integer" >&2
+            exit 1
+        fi
+        AC_WATT=$2
+        save_config
+        exit 0
+    elif [ "$1" = "bat" ] || [ "$1" = "battery" ] && [ -n "$2" ]; then
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+            echo "Error: Wattage must be a positive integer" >&2
+            exit 1
+        fi
+        BAT_WATT=$2
+        save_config
+        exit 0
+    elif [[ "$1" =~ ^[0-9]+$ ]] && [[ "$2" =~ ^[0-9]+$ ]]; then
+        AC_WATT=$1
+        BAT_WATT=$2
+        save_config
+        exit 0
+    else
+        echo "Usage:"
+        echo "  setwatt config            (show defaults)"
+        echo "  setwatt config ac <W>     (set AC default)"
+        echo "  setwatt config bat <W>    (set battery default)"
+        echo "  setwatt config <AC> <BAT> (set both defaults)"
+        exit 1
+    fi
+fi
+
+# Auto mode: detect AC vs Battery
+if [ "$1" = "auto" ] || [ -z "$1" ]; then
+    if [ -f /sys/class/power_supply/ACAD/online ] && [ "$(cat /sys/class/power_supply/ACAD/online)" = "1" ]; then
+        WATT=$AC_WATT
+        MODE="AC (Plugged In)"
+    else
+        WATT=$BAT_WATT
+        MODE="Battery"
+    fi
+    echo "⚡ Auto-detected power source: $MODE -> Setting to ${WATT}W"
+else
+    WATT=$1
+fi
+
+# Ensure WATT is numeric
+if ! [[ "$WATT" =~ ^[0-9]+$ ]]; then
+    echo "Usage: setwatt [<number>|auto|config|--help]"
+    echo "Example: setwatt 15, setwatt auto, setwatt config"
+    exit 1
+fi
+
+MW=$((WATT * 1000))
+
+if [ "$WATT" -le "$THRESHOLD" ]; then
+    echo "🔋 Ultra Power Saving Mode ($WATT W)..."
+    run_ryzenadj --stapm-limit=$MW --fast-limit=$MW --slow-limit=$MW --power-saving
+else
+    echo "🚀 Performance Mode ($WATT W)..."
+    run_ryzenadj --stapm-limit=$MW --fast-limit=$MW --slow-limit=$MW --max-performance
+fi
+
+echo "✅ Done! All limits have been applied ($WATT W)."

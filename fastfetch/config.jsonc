@@ -3,7 +3,7 @@
   "logo": {
     "source": "arch_small",
     "padding": {
-      "top": 6,    
+      "top": 6,    // <--- Questo lo centra verticalmente rispetto ai 3 blocchi
       "left": 3
     },
     "color": { "1": "white", "2": "white" }
@@ -16,7 +16,7 @@
     "title",
     { "type": "separator", "string": "━━━━━━━━━━━━━━━" },
 
-    // --- OS ---
+    // --- RAMO OS ---
     { "type": "custom", "format": "󰣇 OS", "outputColor": "white" },
     { "type": "kernel",   "key": " ├─ 󰒋", "keyColor": "white" },
     { "type": "uptime",   "key": " ├─ 󱎫", "keyColor": "white" },
@@ -25,14 +25,14 @@
 
     "break",
 
-    // --- WM ---
+    // --- RAMO WM ---
     { "type": "custom", "format": "󱂬 WM", "outputColor": "white" },
     { "type": "wm",       "key": " ├─ 󱂬", "keyColor": "white" },
     { "type": "terminal", "key": " └─ 󰆍", "keyColor": "white" },
 
     "break",
 
-    // --- PC ---
+    // --- RAMO PC ---
     { "type": "custom", "format": "󰌢 PC", "outputColor": "white" },
     { "type": "host",     "key": " ├─ 󰌢", "keyColor": "white" },
     { "type": "cpu",      "key": " ├─ 󰻠", "keyColor": "white" },

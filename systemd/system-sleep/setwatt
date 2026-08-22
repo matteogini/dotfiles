@@ -1,0 +1,5 @@
+#!/bin/bash
+# Re-apply the appropriate wattage limit automatically upon waking up from sleep
+if [ "$1" = "post" ]; then
+    /usr/local/bin/setwatt auto &
+fi

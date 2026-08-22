@@ -1,30 +1,61 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk } from "ags/gtk4"
 import { execAsync } from "ags/process"
-import { createState } from "gnim"
+import { createState, Accessor } from "gnim"
 
-// Smart Poll: Only runs commands when the Control Center is visible!
-function createPoll<T>(defaultVal: T, intervalMs: number, cmd: string[], parser: (out: string, prev?: T) => T) {
-    const state = createState(defaultVal);
-    let prev = defaultVal;
-    
-    const update = () => {
-        execAsync(cmd).then(out => {
-            prev = parser(out, prev);
-            state.set(prev);
-        }).catch(() => {});
-    };
+// Smart Poll: Only runs commands when the Control Center is visible or on demand
+const pollComputers: (() => void)[] = []
 
-    setInterval(() => {
-        const win = app.windows.find(w => w.name === "control-center");
-        if (win && win.visible) {
-            update();
+export function refreshAllPolls() {
+    pollComputers.forEach((fn) => fn())
+}
+
+function createPoll<T>(init: T, intervalMs: number, execOrFn: string[], transform?: (stdout: string, prev?: T) => T): Accessor<T> {
+    let currentValue = init
+    let timer: any = null
+    const subscribers = new Set<() => void>()
+
+    function set(value: T) {
+        if (value !== currentValue) {
+            currentValue = value
+            Array.from(subscribers).forEach((cb) => cb())
         }
-    }, intervalMs);
+    }
 
-    // Initial fetch to populate data once
-    update();
-    return state;
+    let hasFetched = false;
+
+    function compute(force = false) {
+        const win = app.windows.find(w => w.name === "control-center")
+        if (force || !hasFetched || (win && (win.visible || (win.get_visible && win.get_visible())))) {
+            hasFetched = true;
+            execAsync(execOrFn).then((stdout) => {
+                set(transform ? transform(stdout, currentValue) : (stdout as T))
+            }).catch((err) => {
+                console.error("Poll error for", execOrFn, err)
+            })
+        }
+    }
+
+    pollComputers.push(() => compute(true))
+
+    function subscribe(callback: () => void): () => void {
+        if (subscribers.size === 0) {
+            setTimeout(() => compute())
+            timer = setInterval(() => compute(), intervalMs)
+        }
+
+        subscribers.add(callback)
+
+        return () => {
+            subscribers.delete(callback)
+            if (subscribers.size === 0 && timer) {
+                clearInterval(timer)
+                timer = null
+            }
+        }
+    }
+
+    return new Accessor(() => currentValue, subscribe)
 }
 
 // Polling bindings
@@ -53,27 +84,27 @@ const kbd = createPoll(0, 2000, ["asusctl", "leds", "get"], (out) => {
 
 const mediaData = createPoll("||", 2500, ["bash", "-c", "playerctl metadata --format '{{status}}|{{title}}|{{artist}}' 2>/dev/null || echo ''"], out => out.trim())
 
-const batLimit = createPoll(0.8, 60000, ["bash", "-c", "awk -F'[:,]' '/charge_control_end_threshold/ {print int($2); exit}' /etc/asusd/asusd.ron || echo 80"], (out, prev) => {
+const batLimit = createPoll(0.8, 10000, ["bash", "-c", "awk -F'[:,]' '/charge_control_end_threshold/ {print int($2); exit}' /etc/asusd/asusd.ron || echo 80"], (out, prev) => {
     const val = parseInt(out)
     return isNaN(val) ? (prev ?? 0.8) : val / 100
 })
 
-const cpuWatt = createPoll(0.5, 120000, ["bash", "-c", "sudo ryzenadj -i 2>/dev/null | awk -F'|' '/STAPM LIMIT/ {print int($3)}'"], (out, prev) => {
+const cpuWatt = createPoll(0.5, 3000, ["/home/matteo/.local/bin/getwatt", "-r"], (out, prev) => {
     if (!out || out.trim() === "") return prev ?? 0.5;
-    const val = parseInt(out)
+    const val = parseInt(out.trim())
     if (isNaN(val)) return prev ?? 0.5;
     return Math.max(0, Math.min(1, (val - 5) / 45)) // Map 5W-50W back to 0.0-1.0
 })
 
-const gpuMode = createPoll("Integrated", 10000, ["supergfxctl", "-g"], out => out.trim())
+const gpuMode = createPoll("Integrated", 5000, ["supergfxctl", "-g"], out => out.trim())
 
-const wifiMode = createPoll("disabled", 6000, ["bash", "-c", "if [ \"$(nmcli radio wifi)\" = \"disabled\" ]; then echo 'disabled'; else ssid=$(nmcli -t -f type,name connection show --active | awk -F: '$1==\"802-11-wireless\"{print $2}' | head -n1); echo \"${ssid:-disconnected}\"; fi"], out => out.trim())
+const wifiMode = createPoll("disabled", 4000, ["bash", "-c", "if [ \"$(nmcli radio wifi)\" = \"disabled\" ]; then echo 'disabled'; else ssid=$(nmcli -t -f type,name connection show --active | awk -F: '$1==\"802-11-wireless\"{print $2}' | head -n1); echo \"${ssid:-disconnected}\"; fi"], out => out.trim())
 
-const btMode = createPoll("disabled", 6000, ["bash", "-c", "if rfkill list bluetooth | grep -q \"Soft blocked: yes\"; then echo \"disabled\"; else bt=$(bluetoothctl devices Connected | head -n1 | awk '{for(i=3;i<=NF;++i) printf \"%s \", $i; print \"\"}'); echo \"${bt:-disconnected}\"; fi"], out => out.trim())
+const btMode = createPoll("disabled", 4000, ["bash", "-c", "if rfkill list bluetooth | grep -q \"Soft blocked: yes\"; then echo \"disabled\"; else bt=$(bluetoothctl devices Connected | head -n1 | awk '{for(i=3;i<=NF;++i) printf \"%s \", $i; print \"\"}'); echo \"${bt:-disconnected}\"; fi"], out => out.trim())
 
 const dndMode = createPoll("default", 2000, ["makoctl", "mode"], out => out.includes("do-not-disturb") ? "do-not-disturb" : "default")
 
-const profileMode = createPoll("Balanced", 10000, ["bash", "-c", "asusctl profile get || echo 'Active profile: Balanced'"], out => {
+const profileMode = createPoll("Balanced", 5000, ["bash", "-c", "asusctl profile get || echo 'Active profile: Balanced'"], out => {
     const match = out.match(/Active profile:\s+(.*)/)
     return match ? match[1].trim() : "Balanced"
 })
@@ -363,6 +394,11 @@ export default function ControlCenter(gdkmonitor: Gdk.Monitor) {
       gdkmonitor={gdkmonitor}
       marginTop={10}
       marginRight={10}
+      onNotifyVisible={(self) => {
+        if (self.visible) {
+          refreshAllPolls()
+        }
+      }}
     >
       <ControlCenterContent />
     </window>

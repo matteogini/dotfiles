@@ -1,0 +1,10 @@
+[Unit]
+Description=Setwatt Login Timer
+
+[Timer]
+# Runs exactly 30 seconds after your user account logs in
+OnStartupSec=30
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

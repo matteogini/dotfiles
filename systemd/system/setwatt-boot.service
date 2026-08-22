@@ -1,0 +1,10 @@
+[Unit]
+Description=Apply RyzenAdj Power Limits on Boot
+After=power-profiles-daemon.service asusd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/setwatt auto
+
+[Install]
+WantedBy=multi-user.target

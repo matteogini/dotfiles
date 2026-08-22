@@ -1,0 +1,90 @@
+/* Ghostty Custom GTK Style - OLED Minimal & Slim Tabs */
+
+/* Headerbar azzerata */
+headerbar {
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Barra delle schede (Tab Bar) - Sottile e Nera */
+tabbar {
+    background-color: #000000 !important;
+    background: #000000 !important;
+    min-height: 24px !important;
+    max-height: 26px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+tabbar tabbox {
+    background-color: #000000 !important;
+    background: #000000 !important;
+    min-height: 24px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Stile singolo tab - Sottile, compatto e minimale */
+tabbar tab {
+    background-color: #000000 !important;
+    background: #000000 !important;
+    color: #777777 !important;
+    min-height: 22px !important;
+    padding: 2px 10px !important;
+    margin: 0 1px !important;
+    border: none !important;
+    border-radius: 2px !important;
+    box-shadow: none !important;
+    font-family: "JetBrainsMono Nerd Font", monospace !important;
+    font-size: 11px !important;
+}
+
+/* Tab attivo / selezionato */
+tabbar tab:checked,
+tabbar tab:selected {
+    background-color: #161616 !important;
+    background: #161616 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-bottom: 2px solid #555555 !important;
+}
+
+/* Tab al passaggio del mouse (hover) */
+tabbar tab:hover {
+    background-color: #0f0f0f !important;
+    color: #cccccc !important;
+}
+
+/* Rimuovi completamente i separatori verticali grigi */
+tabbar separator,
+tabbar .separator {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    min-width: 0 !important;
+    opacity: 0 !important;
+}
+
+/* Pulsante 'x' di chiusura del tab minimale */
+tabbar tab button,
+tabbar tab button.close {
+    padding: 0 2px !important;
+    min-height: 14px !important;
+    min-width: 14px !important;
+    color: #666666 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 2px !important;
+}
+
+tabbar tab button:hover {
+    color: #ffffff !important;
+    background: #2a2a2a !important;
+}

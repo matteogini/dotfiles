@@ -1,0 +1,6 @@
+[Unit]
+Description=Setwatt Login Service
+
+[Service]
+Type=oneshot
+ExecStart=/home/matteo/.local/bin/setwatt-login.sh

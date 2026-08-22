@@ -22,3 +22,15 @@ split-inherit-working-directory = false
 
 # Theme (Managed by switch_theme.sh)
 config-file = theme
+
+# Tab Bar & Window Style (OLED Monochrome Minimal)
+gtk-titlebar = false
+gtk-titlebar-style = native
+gtk-toolbar-style = flat
+window-show-tab-bar = auto
+gtk-tabs-location = top
+gtk-wide-tabs = false
+window-title-font-family = "JetBrainsMono Nerd Font"
+window-new-tab-position = current
+gtk-custom-css = /home/matteo/.config/ghostty/style.css
+

@@ -97,7 +97,7 @@ exec swayidle -w \
     bindsym $mod+Escape exec swaylock -f
 
     # Lock the screen when closing the laptop lid
-    bindswitch lid:on exec swaylock -f
+    # bindswitch lid:on exec swaylock -f
 
     # Network and Bluetooth menus
     bindsym $mod+Shift+w exec ~/.config/tofi/tofi-wifi.sh

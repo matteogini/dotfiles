@@ -1,0 +1,140 @@
+#!/bin/bash
+
+# Configuration file paths
+CONFIG_USER="${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
+CONFIG_FALLBACK="/home/matteo/.config/setwatt.conf"
+CONFIG_GLOBAL="/etc/setwatt.conf"
+
+# Built-in fallback values
+DEFAULT_AC_WATT=25
+DEFAULT_BAT_WATT=5
+DEFAULT_THRESHOLD=15
+
+# Load configuration
+load_config() {
+    AC_WATT=$DEFAULT_AC_WATT
+    BAT_WATT=$DEFAULT_BAT_WATT
+    THRESHOLD=$DEFAULT_THRESHOLD
+
+    if [ -f "$CONFIG_GLOBAL" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_GLOBAL" 2>/dev/null
+    fi
+
+    if [ -n "$HOME" ] && [ -f "$CONFIG_USER" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_USER" 2>/dev/null
+    elif [ -f "$CONFIG_FALLBACK" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_FALLBACK" 2>/dev/null
+    fi
+}
+
+load_config
+
+# Show help documentation
+show_help() {
+    cat << 'EOF'
+Usage: getwatt [ac | bat | all] [-r | -v | -j | -h]
+
+Options:
+  ac, bat, all  Print default AC, Battery, or all 3 wattages
+  -r, --raw     Print raw number(s) only (e.g. 25 or '20 25 5')
+  -v            Print detailed power breakdown
+  -j            Output as JSON
+  -h, --help    Show this help
+EOF
+    exit 0
+}
+
+# Handle --help / -h immediately without invoking ryzenadj
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    show_help
+fi
+
+# Handle queries for configured AC or Battery defaults without invoking ryzenadj (instant response!)
+case "$1" in
+    ac|--ac)
+        if [ "$2" = "-r" ] || [ "$2" = "--raw" ] || [ "$2" = "-n" ] || [ "$2" = "--number" ]; then
+            echo "$AC_WATT"
+        else
+            echo "${AC_WATT}W"
+        fi
+        exit 0
+        ;;
+    bat|battery|--bat|--battery)
+        if [ "$2" = "-r" ] || [ "$2" = "--raw" ] || [ "$2" = "-n" ] || [ "$2" = "--number" ]; then
+            echo "$BAT_WATT"
+        else
+            echo "${BAT_WATT}W"
+        fi
+        exit 0
+        ;;
+esac
+
+# Helper to run ryzenadj with or without sudo depending on EUID
+run_ryzenadj() {
+    if [ "$EUID" -eq 0 ]; then
+        ryzenadj -i 2>/dev/null
+    else
+        sudo ryzenadj -i 2>/dev/null
+    fi
+}
+
+INFO=$(run_ryzenadj)
+
+STAPM=$(echo "$INFO" | awk -F'|' '/STAPM LIMIT/ {print int($3)}')
+FAST=$(echo "$INFO" | awk -F'|' '/PPT LIMIT FAST/ {print int($3)}')
+SLOW=$(echo "$INFO" | awk -F'|' '/PPT LIMIT SLOW/ {print int($3)}')
+
+# Check AC state
+if [ -f /sys/class/power_supply/ACAD/online ]; then
+    if [ "$(cat /sys/class/power_supply/ACAD/online)" = "1" ]; then
+        PWR_STATE="AC (Plugged In)"
+        PWR_CODE="AC"
+    else
+        PWR_STATE="Battery"
+        PWR_CODE="Battery"
+    fi
+else
+    PWR_STATE="Unknown"
+    PWR_CODE="Unknown"
+fi
+
+if [ -z "$STAPM" ] || [ "$STAPM" -eq 0 ]; then
+    echo "Error: Could not read power limits from ryzenadj" >&2
+    exit 1
+fi
+
+case "$1" in
+    all|-a|--all)
+        if [ "$2" = "-r" ] || [ "$2" = "--raw" ] || [ "$2" = "-n" ] || [ "$2" = "--number" ]; then
+            echo "$STAPM $AC_WATT $BAT_WATT"
+        elif [ "$2" = "-j" ] || [ "$2" = "--json" ]; then
+            echo "{\"current\": $STAPM, \"default_ac\": $AC_WATT, \"default_bat\": $BAT_WATT, \"stapm\": $STAPM, \"fast\": $FAST, \"slow\": $SLOW, \"power_source\": \"$PWR_CODE\"}"
+        else
+            echo "Current: ${STAPM}W | AC: ${AC_WATT}W | Battery: ${BAT_WATT}W"
+        fi
+        ;;
+    -r|--raw|-n|--number)
+        echo "$STAPM"
+        ;;
+    -j|--json)
+        echo "{\"current\": $STAPM, \"default_ac\": $AC_WATT, \"default_bat\": $BAT_WATT, \"stapm\": $STAPM, \"fast\": $FAST, \"slow\": $SLOW, \"power_source\": \"$PWR_CODE\"}"
+        ;;
+    -v|--verbose)
+        echo "⚡ Current Power Limit: ${STAPM}W"
+        echo "   • Power Source:      $PWR_STATE"
+        echo "   • STAPM Limit:       ${STAPM}W"
+        echo "   • Fast PPT:          ${FAST}W"
+        echo "   • Slow PPT:          ${SLOW}W"
+        echo ""
+        echo "⚙️  Configured Defaults:"
+        echo "   • AC Default:        ${AC_WATT}W"
+        echo "   • Battery Default:   ${BAT_WATT}W"
+        echo "   • Savings Threshold: ${THRESHOLD}W"
+        ;;
+    *)
+        echo "${STAPM}W"
+        ;;
+esac

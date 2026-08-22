@@ -11,6 +11,9 @@ end
 set -gx PATH "$HOME/.local/bin" $PATH
 alias clock="termdown"
 
+# Minimal ls configuration (overriding default eza -al)
+alias ls='eza --group-directories-first --icons=always'
+
 # Custom Go path
 set -gx GOPATH $HOME/.local/share/go
 set -gx PATH $GOPATH/bin $PATH

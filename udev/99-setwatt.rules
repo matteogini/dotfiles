@@ -1,0 +1,2 @@
+# Fires on charger plug/unplug event to dynamically apply configured AC or Battery limits
+SUBSYSTEM=="power_supply", ACTION=="change", ENV{POWER_SUPPLY_NAME}=="ACAD", RUN+="/usr/bin/systemctl start --no-block setwatt-boot.service"
