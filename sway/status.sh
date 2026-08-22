@@ -37,10 +37,16 @@ while true; do
 
   current_time=$(date +%H:%M)
 
-  if [ "$status" = "Charging" ]; then
-    echo "$current_time $gpu$temp$power +$cap"
+  if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then
+    lid="[ lid disabled ]                                                               "
   else
-    echo "$current_time $gpu$temp$power $cap"
+    lid=""
+  fi
+
+  if [ "$status" = "Charging" ]; then
+    echo "$lid$current_time $gpu$temp$power +$cap"
+  else
+    echo "$lid$current_time $gpu$temp$power $cap"
   fi
   sleep 60
 done

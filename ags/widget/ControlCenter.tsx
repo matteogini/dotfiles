@@ -109,6 +109,8 @@ const profileMode = createPoll("Balanced", 5000, ["bash", "-c", "asusctl profile
     return match ? match[1].trim() : "Balanced"
 })
 
+const lidSuspendState = createPoll("Suspends", 3000, ["bash", "-c", "if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then echo 'Ignores'; else echo 'Suspends'; fi"], out => out.trim())
+
 
 function SliderRow({ label, stateVar, formatCommand, displayFormat, debounceMs = 0, lockMs = 3000 }: { label: string, stateVar: any, formatCommand: (val: number) => string, displayFormat: (val: number) => string, debounceMs?: number, lockMs?: number }) {
   const initialVal = stateVar?.peek ? stateVar.peek() : stateVar;
@@ -173,6 +175,24 @@ function GPUSelector() {
         <box halign={Gtk.Align.CENTER} spacing={5}>
             <label label={gpuMode} />
             <label label=" (Click to Switch)" />
+        </box>
+      </button>
+    </box>
+  )
+}
+
+function LidSuspendRow() {
+  const toggleLid = () => {
+    execAsync(["bash", "-c", "~/.local/bin/toggle_lid_suspend"]).catch(console.error)
+  }
+
+  return (
+    <box cssClasses={["row"]} orientation={Gtk.Orientation.HORIZONTAL} spacing={5}>
+      <label cssClasses={["label"]} label="Lid Action" widthRequest={85} xalign={0} />
+      <button hexpand onClicked={toggleLid}>
+        <box halign={Gtk.Align.CENTER} spacing={5}>
+            <label label={lidSuspendState} />
+            <label label=" (Toggle)" />
         </box>
       </button>
     </box>
@@ -375,6 +395,7 @@ function ControlCenterContent() {
                     <SliderRow label="CPU Watt" stateVar={cpuWatt} displayFormat={(v) => `${Math.round(v * 45 + 5)}W`} formatCommand={(v) => `setwatt ${Math.round(v * 45 + 5)}`} debounceMs={500} lockMs={6000} />
                     <SliderRow label="Bat Limit" stateVar={batLimit} displayFormat={(v) => `${Math.max(20, Math.round(v * 100))}%`} formatCommand={(v) => `asusctl battery limit ${Math.max(20, Math.round(v * 100))}`} debounceMs={500} />
                     <GPUSelector />
+                    <LidSuspendRow />
                 </box>
             </box>
         </box>
