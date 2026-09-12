@@ -1,0 +1,209 @@
+#!/bin/bash
+# Records per-session agent state for the swaybar agents indicator.
+# Shared by Claude Code (~/.claude/settings.json) and Antigravity CLI
+# (~/.gemini/config/hooks.json), which have different payload shapes.
+#
+#   usage: agent-state.sh <claude|agy> <ready|busy|wait|done|end|sub+|sub-> [win]
+#
+# Hook JSON arrives on stdin. State lives in one tab-separated file per
+# session, named "<source>:<session id>", under $XDG_RUNTIME_DIR/claude-agents:
+#
+#   state <TAB> agent_pid <TAB> sway_con_id <TAB> label <TAB> subagent_count
+#
+# Always exits 0 so a broken bar can never block an agent.
+
+src=${1:-}
+state=${2:-}
+want_win=${3:-}
+[ -n "$src" ] && [ -n "$state" ] || exit 0
+
+dir="${XDG_RUNTIME_DIR:-/tmp}/claude-agents"
+mkdir -p "$dir/.locks" 2>/dev/null || exit 0
+
+payload=$(cat 2>/dev/null)
+
+# Claude Code sends session_id/cwd; agy sends conversationId/workspacePaths.
+sid=$(jq -r '.session_id // .conversationId // empty' <<<"$payload" 2>/dev/null)
+[ -n "$sid" ] || exit 0
+sid=${sid//[^A-Za-z0-9._-]/_}
+
+# Wake the bar immediately instead of waiting out its sleep.
+nudge() {
+  local bp
+  bp=$(cat "${XDG_RUNTIME_DIR:-/tmp}/swaystatus.pid" 2>/dev/null)
+  [ -n "$bp" ] && kill -USR1 "$bp" 2>/dev/null
+  return 0
+}
+
+
+# Claude Code fires Notification for two unrelated things: a permission prompt,
+# and a plain "waiting for your input" nudge after a minute of idling. Only the
+# first is a red "?" -- the second would repaint a finished session as blocked
+# a minute after it finished. PermissionRequest carries no message, so an empty
+# one stays trusted.
+if [ "$state" = wait ]; then
+  msg=$(jq -r '.message // empty' <<<"$payload" 2>/dev/null)
+  case ${msg,,} in
+    "") ;;
+    *permission*|*approv*|*confirm*|*wants\ to\ run*) ;;
+    *) exit 0 ;;
+  esac
+fi
+
+# agy reports "fullyIdle": false when it stops mid-turn; only a fully idle
+# stop means the agent is actually waiting for you.
+if [ "$state" = done ] && [ "$(jq -r '.fullyIdle | tostring' <<<"$payload" 2>/dev/null)" = false ]; then
+  state=busy
+fi
+
+# The agent process that spawned this hook. This is the state key: one block
+# per running agent, not per conversation -- agy mints a new conversationId as
+# it works, and one block per id would pile up stale entries for a process that
+# is still alive. It also lets the bar drop entries whose process is gone.
+# A bar block stands for an interactive session you could switch to. Everything
+# else sharing the binary name is infrastructure or a viewer: `claude daemon
+# run` (where a --bg job lives, reparented to init and outliving every session),
+# `claude agents`, mcp, plugin, update. Only `attach` opens a real session.
+# NOTE: this predicate is duplicated in ~/.config/sway/status.sh -- keep both
+# copies in step.
+NOT_SESSION_claude='agents|attach|auth|auto-mode|daemon|doctor|gateway|import|install|kill|logs|mcp|plugin|plugins|project|respawn|rm|setup-token|stop|ultrareview|update|upgrade'
+NOT_SESSION_agy='agent|agents|changelog|help|install|mcp|mic-serve|models|plugin|plugins|update'
+
+is_session() {
+  local pid=$1 comm bad arg1 a
+  local -a args=()
+  # an interactive session's stdin is its terminal
+  case $(readlink "/proc/$pid/fd/0" 2>/dev/null) in /dev/pts/*) ;; *) return 1 ;; esac
+  comm=$(cat "/proc/$pid/comm" 2>/dev/null) || return 1
+  case $comm in
+    claude) bad=$NOT_SESSION_claude ;;
+    agy)    bad=$NOT_SESSION_agy ;;
+    *)      return 1 ;;
+  esac
+  mapfile -d '' -t args < "/proc/$pid/cmdline" 2>/dev/null || return 1
+  arg1=${args[1]:-}
+  case $arg1 in
+    ''|-*) ;;                                        # bare or flags: a session
+    *) [[ $arg1 =~ ^($bad)$ ]] && return 1 ;;        # a management subcommand
+  esac
+  for a in "${args[@]}"; do                          # print mode is a one-shot
+    case $a in -p|--print) return 1 ;; esac
+  done
+  return 0
+}
+
+agent_pid() {
+  local p=$PPID i found=
+  # Keep the outermost match, not the first: an agent spawns helper processes
+  # of its own (the claude daemon, a nested `claude -p`) that share its name,
+  # and attributing a hook to one of those would split a single session into
+  # two blocks. Work belonging to a helper belongs to the session that owns it.
+  for i in $(seq 1 10); do
+    [ -r "/proc/$p/comm" ] || break
+    [ "$(</proc/$p/comm)" = "$src" ] && is_session "$p" && found=$p
+    p=$(awk '/^PPid:/{print $2; exit}' "/proc/$p/status" 2>/dev/null)
+    [ -n "$p" ] && [ "$p" != 0 ] || break
+  done
+  printf '%s' "$found"
+}
+
+pid=$(agent_pid)
+if [ -z "$pid" ] && [ "$src" = claude ] && [ -n "${CLAUDE_JOB_DIR:-}" ]; then
+  # A background job (claude --bg). It has no terminal of its own, so it is not
+  # an interactive session -- but it is a real unit of work with a dedicated
+  # process ($CLAUDE_PID, the repl under the daemon's pty host), so it can be
+  # shown and pruned like anything else. Keyed by job id, not pid, so a respawn
+  # keeps its block.
+  src=bg
+  want_win=          # nothing to focus
+  sid=${CLAUDE_JOB_DIR%/}
+  sid=${sid##*/}
+  sid=${sid//[^A-Za-z0-9._-]/_}
+  pid=${CLAUDE_PID:-}
+  [ -n "$pid" ] && [ -d "/proc/$pid" ] || exit 0
+  key="bg:$sid"
+else
+  # Neither a terminal session nor a background job: a scripted one-shot, or
+  # the daemon itself. Nothing to show, and no lifetime to track.
+  [ -n "$pid" ] || exit 0
+  key="$src:$pid"
+fi
+f="$dir/$key"
+
+# Container id of this session's terminal, captured only at session start and
+# prompt submit -- the moments the user provably just typed into this window.
+# The container pid must also be an ancestor of this agent, which rules out
+# recording a browser or editor that happens to hold focus. It cannot tell two
+# windows of one terminal apart when that terminal is single-process (ghostty),
+# hence the restriction to those two events.
+sway_con() {
+  local sock=${SWAYSOCK:-} cid cpid p i
+  [ -S "$sock" ] || sock=$(printf '%s\n' /run/user/"$(id -u)"/sway-ipc.*.sock 2>/dev/null | head -1)
+  [ -S "$sock" ] || return
+  [ -n "$pid" ] || return
+  read -r cid cpid < <(SWAYSOCK=$sock swaymsg -t get_tree 2>/dev/null |
+    jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.focused == true) |
+           "\(.id) \(.pid // 0)"' 2>/dev/null | head -1)
+  [ -n "$cid" ] && [ -n "$cpid" ] && [ "$cpid" != 0 ] || return
+  p=$pid
+  for i in $(seq 1 8); do
+    [ -n "$p" ] && [ "$p" != 0 ] || return
+    [ "$p" = "$cpid" ] && { printf '%s' "$cid"; return; }
+    p=$(awk '/^PPid:/{print $2; exit}' "/proc/$p/status" 2>/dev/null)
+  done
+}
+
+if [ "$state" = end ]; then
+  rm -f "$f" "$dir/.locks/$key"
+  nudge
+  exit 0
+fi
+
+# Claude sends .cwd; agy sends .workspacePaths, which can be empty -- then the
+# hook's own cwd is the best guess, but only if nothing better was stored before.
+basename_of() {
+  local v=${1%/}
+  v=${v##*/}
+  printf '%s' "${v//[^A-Za-z0-9._-]/_}"
+}
+label=$(jq -r '.cwd // (.workspacePaths[0]? // empty) // empty' <<<"$payload" 2>/dev/null)
+[ -n "$label" ] && label=$(basename_of "$label")
+
+# Subagent hooks for one session can overlap, so serialise read-modify-write.
+exec 9>"$dir/.locks/$key" || exit 0
+flock -w 2 9 || exit 0
+
+old_state= old_pid= old_con= old_label= old_n=
+[ -f "$f" ] && IFS=$'\t' read -r old_state old_pid old_con old_label old_n < "$f"
+# "-" is the empty placeholder: tab is IFS whitespace, so a genuinely empty
+# field would collapse and shift every later column left.
+[ "$old_pid" = - ] && old_pid=
+[ "$old_con" = - ] && old_con=
+[ "$old_label" = - ] && old_label=
+
+n=${old_n:-0}
+case $state in
+  sub+) n=$((n + 1)); state=busy ;;
+  sub-) n=$((n - 1)); [ "$n" -lt 0 ] && n=0; state=${old_state:-busy} ;;
+  done|ready) n=0 ;;
+esac
+
+con=$old_con
+if [ "$want_win" = win ]; then
+  c=$(sway_con)
+  [ -n "$c" ] && con=$c
+fi
+
+[ -n "$pid" ] || pid=$old_pid
+[ -n "$label" ] || label=$old_label
+[ -n "$label" ] || label=$(basename_of "$PWD")
+
+[ -n "$pid" ]   || pid=-
+[ -n "$con" ]   || con=-
+[ -n "$label" ] || label=-
+[ -n "$n" ]     || n=0
+
+printf '%s\t%s\t%s\t%s\t%s\n' "$state" "$pid" "$con" "$label" "$n" > "$f"
+flock -u 9
+nudge
+exit 0

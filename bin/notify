@@ -135,17 +135,15 @@ if [ -f "$HOME/.config/notify.env" ]; then
     source "$HOME/.config/notify.env"
 fi
 
-if [ -z "$NTFY_ENDPOINT" ]; then
-    notify-send "$TITLE" "$MESSAGE"
-    exit 0
-fi
+# Always send local desktop notification
+notify-send "$TITLE" "$MESSAGE" 2>/dev/null || true
 
-# Try sending to ntfy, fallback to local notify-send on failure
-if ! curl -s --fail \
-  -H "Title: $TITLE" \
-  -d "$MESSAGE" \
-  "$NTFY_ENDPOINT" > /dev/null; then
-    notify-send "$TITLE" "$MESSAGE (ntfy failed)" 2>/dev/null || true
+if [ -n "$NTFY_ENDPOINT" ]; then
+    # Also try sending to ntfy in the background
+    curl -4 -s --connect-timeout 5 -m 10 --fail \
+      -H "Title: $TITLE" \
+      -d "$MESSAGE" \
+      "$NTFY_ENDPOINT" > /dev/null &
 fi
 
 exit 0

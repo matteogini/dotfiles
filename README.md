@@ -62,6 +62,7 @@
 ├── swaylock/     # Swaylock configuration
 ├── tofi/         # Tofi menus (app launcher, wifi, power)
 ├── wallpapers/   # System wallpapers
+├── watt/         # Power limit configuration (setwatt)
 └── wob/          # Wob (overlay bar) configuration
 ```
 

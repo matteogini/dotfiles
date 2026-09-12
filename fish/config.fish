@@ -24,3 +24,5 @@ fish_add_path $HOME/.opencode/bin
 # bun
 set --export BUN_INSTALL "$HOME/.bun"
 set --export PATH $BUN_INSTALL/bin $PATH
+
+thefuck --alias | source

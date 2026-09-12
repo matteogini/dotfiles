@@ -111,6 +111,9 @@ const profileMode = createPoll("Balanced", 5000, ["bash", "-c", "asusctl profile
 
 const lidSuspendState = createPoll("Suspends", 3000, ["bash", "-c", "if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then echo 'Ignores'; else echo 'Suspends'; fi"], out => out.trim())
 
+// "off", or "on <n>" with the number of live Claude Code / Antigravity sessions
+const agentsState = createPoll("on 0", 3000, ["bash", "-c", "~/.local/bin/agent-indicator status"], out => out.trim())
+
 
 function SliderRow({ label, stateVar, formatCommand, displayFormat, debounceMs = 0, lockMs = 3000 }: { label: string, stateVar: any, formatCommand: (val: number) => string, displayFormat: (val: number) => string, debounceMs?: number, lockMs?: number }) {
   const initialVal = stateVar?.peek ? stateVar.peek() : stateVar;
@@ -192,6 +195,30 @@ function LidSuspendRow() {
       <button hexpand onClicked={toggleLid}>
         <box halign={Gtk.Align.CENTER} spacing={5}>
             <label label={lidSuspendState} />
+            <label label=" (Toggle)" />
+        </box>
+      </button>
+    </box>
+  )
+}
+
+function AgentsRow() {
+  const toggleAgents = () => {
+    execAsync(["bash", "-c", "~/.local/bin/agent-indicator toggle"])
+      .then(() => refreshAllPolls())
+      .catch(console.error)
+  }
+
+  return (
+    <box cssClasses={["row"]} orientation={Gtk.Orientation.HORIZONTAL} spacing={5}>
+      <label cssClasses={["label"]} label="Agents" widthRequest={85} xalign={0} />
+      <button hexpand onClicked={toggleAgents}>
+        <box halign={Gtk.Align.CENTER} spacing={5}>
+            <label label={agentsState.as(v => {
+                if (v.startsWith("off")) return "Hidden"
+                const n = parseInt(v.split(" ")[1] ?? "0")
+                return n > 0 ? `Shown · ${n} active` : "Shown · none"
+            })} />
             <label label=" (Toggle)" />
         </box>
       </button>
@@ -375,6 +402,7 @@ function ControlCenterContent() {
                 <box orientation={Gtk.Orientation.VERTICAL} spacing={10} visible={activeTab.as(v => v === 0)}>
                     <MediaPlayer />
                     <ToggleRow />
+                    <AgentsRow />
                     <label label="SYSTEM" xalign={0} cssClasses={["label"]} />
                     <SliderRow label="Volume" stateVar={vol} displayFormat={(v) => `${Math.round(v * 100)}%`} formatCommand={(v) => `wpctl set-volume @DEFAULT_AUDIO_SINK@ ${v.toFixed(2)}`} />
                     <SliderRow label="Mic" stateVar={mic} displayFormat={(v) => `${Math.round(v * 100)}%`} formatCommand={(v) => `wpctl set-volume @DEFAULT_AUDIO_SOURCE@ ${v.toFixed(2)}`} />

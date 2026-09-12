@@ -37,7 +37,7 @@ exec rm -f $WOBSOCK && mkfifo $WOBSOCK && tail -f $WOBSOCK | wob -c ~/.config/wo
 output * adaptive_sync on
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
-output * bg "/home/matteo/.config/sway/wallpaper/Le_Semeur_au_soleil_couchant.jpg" fit #000000
+output * bg "/home/matteo/.config/sway/wallpaper/La_valorosa_Temeraire.jpg" fit #000000
 #
 # Example configuration:
 #
@@ -49,9 +49,9 @@ output * bg "/home/matteo/.config/sway/wallpaper/Le_Semeur_au_soleil_couchant.jp
 #
 # Active swayidle configuration
 exec swayidle -w \
-         timeout 300 'swaylock -f' \
+         # timeout 300 'swaylock -f' \
          timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-         before-sleep 'swaylock -f'
+         # before-sleep 'swaylock -f'
 #
 # This will lock your screen after 300 seconds of inactivity, then turn off
 # your displays after another 300 seconds, and turn your screens back on when
@@ -319,8 +319,10 @@ smart_borders on
 for_window [title="^(Apri file|Open File|Salva come|Save As|Sfoglia|Library)$"] floating enable, resize set 800 500, move position center
 for_window [app_id="(?i)xdg-desktop-portal-gtk"] floating enable, resize set 900 600, move position center
 for_window [class="(?i)xdg-desktop-portal-gtk"] floating enable, resize set 900 600, move position center
-for_window [app_id="(?i)Spotify"] floating enable, resize set 800 600, move position center, move container to workspace " "
-for_window [class="(?i)Spotify"] floating enable, resize set 800 600, move position center, move container to workspace " "
+for_window [app_id="(?i)Spotify"] floating enable, resize set 800 600, move position center, move --no-auto-back-and-forth container to workspace " "
+for_window [class="(?i)Spotify"] floating enable, resize set 800 600, move position center, move --no-auto-back-and-forth container to workspace " "
+for_window [app_id="(?i)telegram"] floating enable, resize set 400 750, move position center
+for_window [class="(?i)telegram"] floating enable, resize set 400 750, move position center
 
 # Window border colors
 # class                 border  bground text    indicator child_border

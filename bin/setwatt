@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Configuration file paths
-CONFIG_USER="${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
-CONFIG_FALLBACK="/home/matteo/.config/setwatt.conf"
+CONFIG_USER="${XDG_CONFIG_HOME:-$HOME/.config}/watt/setwatt.conf"
+CONFIG_LEGACY="${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
+CONFIG_FALLBACK="/home/matteo/.config/watt/setwatt.conf"
 CONFIG_GLOBAL="/etc/setwatt.conf"
 
 # Built-in fallback values
@@ -13,7 +14,7 @@ DEFAULT_THRESHOLD=15
 # Determine target config file for writing
 get_writable_config() {
     if [ -n "$HOME" ] && [ -d "${XDG_CONFIG_HOME:-$HOME/.config}" ]; then
-        echo "${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
+        echo "${XDG_CONFIG_HOME:-$HOME/.config}/watt/setwatt.conf"
     elif [ -f "$CONFIG_FALLBACK" ] || [ -d "/home/matteo/.config" ]; then
         echo "$CONFIG_FALLBACK"
     else
@@ -35,6 +36,9 @@ load_config() {
     if [ -n "$HOME" ] && [ -f "$CONFIG_USER" ]; then
         # shellcheck disable=SC1090
         source "$CONFIG_USER" 2>/dev/null
+    elif [ -n "$HOME" ] && [ -f "$CONFIG_LEGACY" ]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_LEGACY" 2>/dev/null
     elif [ -f "$CONFIG_FALLBACK" ]; then
         # shellcheck disable=SC1090
         source "$CONFIG_FALLBACK" 2>/dev/null
@@ -59,7 +63,9 @@ EOF
     echo "   • Battery Default: ${BAT_WATT}W"
 
     # Also mirror to dotfiles repo if directory exists and running as user
-    if [ -d "/home/matteo/Projects/dotfiles" ] && [ -w "/home/matteo/Projects/dotfiles" ]; then
+    if [ -d "/home/matteo/Projects/dotfiles/watt" ] && [ -w "/home/matteo/Projects/dotfiles/watt" ]; then
+        cp "$target_cfg" "/home/matteo/Projects/dotfiles/watt/setwatt.conf" 2>/dev/null
+    elif [ -d "/home/matteo/Projects/dotfiles" ] && [ -w "/home/matteo/Projects/dotfiles" ]; then
         cp "$target_cfg" "/home/matteo/Projects/dotfiles/setwatt.conf" 2>/dev/null
     fi
 }

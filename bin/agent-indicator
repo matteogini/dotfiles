@@ -1,0 +1,39 @@
+#!/bin/bash
+# Show or hide the swaybar agent indicator.
+#
+#   agent-indicator on | off | toggle | status
+#
+# The flag lives under ~/.config so the choice survives a reboot. status
+# prints "off", or "on <n>" with the number of live agent sessions -- the
+# ags control center renders that directly.
+
+FLAG="${XDG_CONFIG_HOME:-$HOME/.config}/agent-indicator.off"
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-agents"
+
+# Redraw the bar now rather than at its next tick.
+nudge() {
+  local bp
+  bp=$(cat "${XDG_RUNTIME_DIR:-/tmp}/swaystatus.pid" 2>/dev/null)
+  [ -n "$bp" ] && kill -USR1 "$bp" 2>/dev/null
+  return 0
+}
+
+count() {
+  local n=0 f pid
+  for f in "$STATE_DIR"/*; do
+    [ -f "$f" ] || continue
+    pid=$(cut -f2 "$f" 2>/dev/null)
+    [ "$pid" = - ] || [ -d "/proc/$pid" ] || continue
+    n=$((n + 1))
+  done
+  printf '%s' "$n"
+}
+
+case ${1:-status} in
+  on)     rm -f "$FLAG"; nudge ;;
+  off)    : > "$FLAG"; nudge ;;
+  toggle) if [ -e "$FLAG" ]; then rm -f "$FLAG"; else : > "$FLAG"; fi; nudge ;;
+  status) if [ -e "$FLAG" ]; then echo off; else echo "on $(count)"; fi ;;
+  *)      echo "usage: agent-indicator on|off|toggle|status" >&2; exit 2 ;;
+esac
+exit 0
