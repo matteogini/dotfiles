@@ -3,3 +3,8 @@
 .DS_Store
 *.swp
 .gemini/
+
+sway/wallpaper/overriding/
+sway/wallpaper/Full_Logo*
+sway/wallpaper/Logo*
+sway/wallpaper/Blueprint*

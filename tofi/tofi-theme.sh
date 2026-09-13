@@ -3,7 +3,7 @@ WALLPAPER_DIR="$HOME/.config/sway/wallpaper"
 SWAY_CONFIG="$HOME/.config/sway/config"
 DOTFILES_SWAY_CONFIG="$HOME/Projects/dotfiles/sway/config"
 
-SELECTED_WALL=$(ls -1 "$WALLPAPER_DIR" | tofi --prompt-text="Theme: ")
+SELECTED_WALL=$(cd "$WALLPAPER_DIR" && find . -maxdepth 2 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | sed 's|^\./||' | sort | tofi --prompt-text="Theme: ")
 
 if [ -z "$SELECTED_WALL" ]; then
     exit 0
