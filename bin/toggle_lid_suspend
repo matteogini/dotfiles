@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Auto-escalate to root if not already
+if [ "$EUID" -ne 0 ]; then
+  exec sudo "$0" "$@"
+fi
+
+# Define the configuration directory and file
+CONF_DIR="/etc/systemd/logind.conf.d"
+CONF_FILE="$CONF_DIR/ignore-lid-switch.conf"
+
+# Check if the configuration file already exists
+if [ -f "$CONF_FILE" ]; then
+    echo "Status: Lid switch suspend is currently DISABLED."
+    echo "Action: Re-enabling default suspend on lid close..."
+    rm -f "$CONF_FILE"
+else
+    echo "Status: Lid switch suspend is currently ENABLED."
+    echo "Action: Disabling suspend on lid close..."
+    
+    mkdir -p "$CONF_DIR"
+    echo -e "[Login]\nHandleLidSwitch=ignore\nHandleLidSwitchExternalPower=ignore" > "$CONF_FILE"
+fi
+
+echo "Applying changes by reloading systemd-logind..."
+# Sending SIGHUP safely reloads the configuration without terminating your graphical session
+systemctl kill -s HUP systemd-logind
+
+if [ -f "$CONF_FILE" ]; then
+    echo "Success! Your laptop will now stay awake when you close the lid."
+else
+    echo "Success! Your laptop will now suspend normally when you close the lid."
+fi

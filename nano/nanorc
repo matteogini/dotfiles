@@ -10,7 +10,7 @@ set autoindent  # Allinea automaticamente il cursore alla riga precedente
 # set mouse       # Permette di usare il mouse per posizionare il cursore
 set tabsize 4   # Imposta la dimensione del tab a 4 spazi
 set tabstospaces # Converte i tab in spazi
-set linenumbers      # Abilita i numeri di riga a sinistra
+# set linenumbers      # Abilita i numeri di riga a sinistra
 set numbercolor gray  # Cambia il colore (puoi usare: white, black, blue, green, ecc.)
 
 ## --- SINTASSI ---

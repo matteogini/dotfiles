@@ -1,0 +1,25 @@
+#!/bin/bash
+# Toggle between standard and minimal swaybar modes.
+#
+#   swaybar-mode standard | minimal | toggle | status
+#
+# The flag lives under ~/.config so the choice survives a reboot.
+# status prints "minimal" or "standard" -- the ags control center renders that directly.
+
+FLAG="${XDG_CONFIG_HOME:-$HOME/.config}/swaybar-minimal"
+
+nudge() {
+  local bp
+  bp=$(cat "${XDG_RUNTIME_DIR:-/tmp}/swaystatus.pid" 2>/dev/null)
+  [ -n "$bp" ] && kill -USR1 "$bp" 2>/dev/null
+  return 0
+}
+
+case ${1:-status} in
+  standard) rm -f "$FLAG"; nudge ;;
+  minimal)  : > "$FLAG"; nudge ;;
+  toggle)   if [ -e "$FLAG" ]; then rm -f "$FLAG"; else : > "$FLAG"; fi; nudge ;;
+  status)   if [ -e "$FLAG" ]; then echo "minimal"; else echo "standard"; fi ;;
+  *)        echo "usage: swaybar-mode standard|minimal|toggle|status" >&2; exit 2 ;;
+esac
+exit 0

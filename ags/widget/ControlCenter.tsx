@@ -114,6 +114,9 @@ const lidSuspendState = createPoll("Suspends", 3000, ["bash", "-c", "if [ -f /et
 // "off", or "on <n>" with the number of live Claude Code / Antigravity sessions
 const agentsState = createPoll("on 0", 3000, ["bash", "-c", "~/.local/bin/agent-indicator status"], out => out.trim())
 
+// "standard" or "minimal" swaybar mode
+const swaybarMode = createPoll("standard", 3000, ["bash", "-c", "~/.local/bin/swaybar-mode status"], out => out.trim())
+
 
 function SliderRow({ label, stateVar, formatCommand, displayFormat, debounceMs = 0, lockMs = 3000 }: { label: string, stateVar: any, formatCommand: (val: number) => string, displayFormat: (val: number) => string, debounceMs?: number, lockMs?: number }) {
   const initialVal = stateVar?.peek ? stateVar.peek() : stateVar;
@@ -219,6 +222,26 @@ function AgentsRow() {
                 const n = parseInt(v.split(" ")[1] ?? "0")
                 return n > 0 ? `Shown · ${n} active` : "Shown · none"
             })} />
+            <label label=" (Toggle)" />
+        </box>
+      </button>
+    </box>
+  )
+}
+
+function SwaybarRow() {
+  const toggleSwaybar = () => {
+    execAsync(["bash", "-c", "~/.local/bin/swaybar-mode toggle"])
+      .then(() => refreshAllPolls())
+      .catch(console.error)
+  }
+
+  return (
+    <box cssClasses={["row"]} orientation={Gtk.Orientation.HORIZONTAL} spacing={5}>
+      <label cssClasses={["label"]} label="Swaybar" widthRequest={85} xalign={0} />
+      <button hexpand onClicked={toggleSwaybar}>
+        <box halign={Gtk.Align.CENTER} spacing={5}>
+            <label label={swaybarMode.as(v => v === "minimal" ? "Minimal" : "Standard")} />
             <label label=" (Toggle)" />
         </box>
       </button>
@@ -403,6 +426,7 @@ function ControlCenterContent() {
                     <MediaPlayer />
                     <ToggleRow />
                     <AgentsRow />
+                    <SwaybarRow />
                     <label label="SYSTEM" xalign={0} cssClasses={["label"]} />
                     <SliderRow label="Volume" stateVar={vol} displayFormat={(v) => `${Math.round(v * 100)}%`} formatCommand={(v) => `wpctl set-volume @DEFAULT_AUDIO_SINK@ ${v.toFixed(2)}`} />
                     <SliderRow label="Mic" stateVar={mic} displayFormat={(v) => `${Math.round(v * 100)}%`} formatCommand={(v) => `wpctl set-volume @DEFAULT_AUDIO_SOURCE@ ${v.toFixed(2)}`} />

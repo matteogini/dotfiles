@@ -13,6 +13,7 @@
 
 STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-agents"
 INDICATOR_OFF="${XDG_CONFIG_HOME:-$HOME/.config}/agent-indicator.off"
+MINIMAL_FLAG="${XDG_CONFIG_HOME:-$HOME/.config}/swaybar-minimal"
 PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/swaystatus.pid"
 SAMPLE=60      # seconds between battery samples
 MAX_AGENTS=6   # agent blocks before the rest collapse into "+N"
@@ -248,6 +249,13 @@ agent_blocks() {
 
 # Resolve static paths and values once at startup
 TEMP_FILE=$(grep -l "k10temp" /sys/class/hwmon/hwmon*/name 2>/dev/null | head -n 1 | sed 's/name/temp1_input/')
+ASUS_HWMON=""
+for d in /sys/class/hwmon/hwmon*; do
+  if [ -r "$d/name" ] && [ "$(<"$d/name")" = "asus" ]; then
+    ASUS_HWMON="$d"
+    break
+  fi
+done
 gpu_mode=$(supergfxctl -g 2>/dev/null)
 if [ -n "$gpu_mode" ]; then
   gpu_char=${gpu_mode:0:1}
@@ -301,11 +309,32 @@ while true; do
       temp=""
     fi
 
-    if [ "$status" = "Charging" ]; then
-      right="$gpu$temp$power +$cap"
-    else
-      right="$gpu$temp$power $cap"
+    f_cpu=0 f_gpu=0 f_mid=0 max_fan=0
+    if [ -n "$ASUS_HWMON" ] && [ -d "$ASUS_HWMON" ]; then
+      read -r f_cpu < "$ASUS_HWMON/fan1_input" 2>/dev/null || f_cpu=0
+      read -r f_gpu < "$ASUS_HWMON/fan2_input" 2>/dev/null || f_gpu=0
+      read -r f_mid < "$ASUS_HWMON/fan3_input" 2>/dev/null || f_mid=0
+      max_fan=$f_cpu
+      [ "${f_gpu:-0}" -gt "$max_fan" ] && max_fan=$f_gpu
+      [ "${f_mid:-0}" -gt "$max_fan" ] && max_fan=$f_mid
     fi
+
+    if [ "$max_fan" -le 0 ]; then
+      fans="off "
+    else
+      fans="${max_fan}rpm "
+    fi
+
+    if [ "$status" = "Charging" ]; then
+      plus="+"
+    else
+      plus=""
+    fi
+
+    pwr_str=""
+    [ -n "$power" ] && pwr_str="$power "
+    right="$gpu$temp$fans$pwr_str$plus$cap"
+
     last_sample=$now
     discover_agents
     discover_bg_jobs
@@ -313,14 +342,19 @@ while true; do
 
   printf -v clock '%(%H:%M)T' -1
 
-  if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then
-    lid='{"full_text":"[ lid disabled ]","color":"'"$C_WAIT"'","separator":false,"separator_block_width":14},'
+  if [ -f "$MINIMAL_FLAG" ]; then
+    printf '%s[{"full_text":"%s %s%s","separator":false,"separator_block_width":12}]\n' \
+      "$sep" "$clock" "$plus" "$cap"
   else
-    lid=""
-  fi
+    if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then
+      lid='{"full_text":"[ lid disabled ]","color":"'"$C_WAIT"'","separator":false,"separator_block_width":14},'
+    else
+      lid=""
+    fi
 
-  printf '%s[%s%s{"full_text":"%s %s","separator":false,"separator_block_width":12}]\n' \
-    "$sep" "$(agent_blocks)" "$lid" "$clock" "$right"
+    printf '%s[%s%s{"full_text":"%s %s","separator":false,"separator_block_width":12}]\n' \
+      "$sep" "$(agent_blocks)" "$lid" "$clock" "$right"
+  fi
   sep=","
 
   # A nudge that landed while rendering would otherwise wait out the sleep.
