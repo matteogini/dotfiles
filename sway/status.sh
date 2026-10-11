@@ -16,6 +16,8 @@ INDICATOR_OFF="${XDG_CONFIG_HOME:-$HOME/.config}/agent-indicator.off"
 MINIMAL_FLAG="${XDG_CONFIG_HOME:-$HOME/.config}/swaybar-minimal"
 PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/swaystatus.pid"
 SAMPLE=60      # seconds between battery samples
+RETRY=2        # resample interval inside the fast window below
+FAST=30        # seconds of fast sampling after start / plug / unplug
 MAX_AGENTS=6   # agent blocks before the rest collapse into "+N"
 
 C_BUSY="#d8a657"   # working
@@ -29,6 +31,8 @@ trap 'rm -f "$PIDFILE"' EXIT
 
 nudged=0
 trap 'nudged=1' USR1   # interrupts the sleep below -> instant redraw
+replug=0
+trap 'replug=1' USR2   # a charger came or went -> resample right away
 
 # Consume click events on stdin. Never writes to stdout; asks the main loop
 # for a redraw by signalling it.
@@ -271,7 +275,25 @@ printf '{"version":1,"click_events":true}\n[\n'
 exec 3<&0
 read_clicks <&3 &
 
+# Plugging or unplugging a charger raises a uevent on ACAD or the USB-C
+# supply; turn that into a resample instead of waiting out SAMPLE. BAT1's own
+# events are skipped: they also fire on routine capacity updates.
+watch_power() {
+  local line
+  udevadm monitor --udev --subsystem-match=power_supply 2>/dev/null |
+    while IFS= read -r line; do
+      case $line in
+        UDEV*/power_supply/BAT*) ;;
+        UDEV*) kill -USR2 "$main_pid" 2>/dev/null || break ;;
+      esac
+    done
+}
+command -v udevadm >/dev/null && watch_power </dev/null &
+
 prev_charge=""
+prev_status=""
+trend=""
+fast_until=0
 last_sample=0
 right=""
 sep=""
@@ -280,25 +302,40 @@ while true; do
   nudged=0
   printf -v now '%(%s)T' -1
 
+  # A charger change makes the old charge reading meaningless for direction.
+  if [ "$replug" = 1 ]; then
+    replug=0
+    prev_charge="" trend="" last_sample=0
+    fast_until=$((now + FAST))
+  fi
+
   if [ $((now - last_sample)) -ge "$SAMPLE" ]; then
     cap=$(cat /sys/class/power_supply/BAT1/capacity 2>/dev/null)
     status=$(cat /sys/class/power_supply/BAT1/status 2>/dev/null)
+    # Also covers bar start (prev_status empty) and a missed uevent.
+    if [ "$status" != "$prev_status" ]; then
+      prev_charge="" trend=""
+      fast_until=$((now + FAST))
+    fi
+    prev_status=$status
 
-    # Average power since the previous sample. The gap is measured rather than
-    # assumed, so a SIGUSR1 redraw in between cannot skew the reading.
+    # Instantaneous power: current_now x voltage_now at the moment of sampling.
     curr_charge=$(cat /sys/class/power_supply/BAT1/charge_now 2>/dev/null)
     voltage=$(cat /sys/class/power_supply/BAT1/voltage_now 2>/dev/null)
-    elapsed=$((now - last_sample))
+    current=$(cat /sys/class/power_supply/BAT1/current_now 2>/dev/null)
+    power=$(awk -v cur="$current" -v vol="$voltage" \
+      'BEGIN { if(cur>0) printf "%.1fW", (cur * vol) / 1000000000000 }')
 
-    if [ -n "$prev_charge" ] && [ -n "$curr_charge" ] && [ "$status" = "Discharging" ] &&
-       [ "$last_sample" -gt 0 ] && [ "$elapsed" -gt 0 ]; then
-      diff=$((prev_charge - curr_charge))
-      power=$(awk -v diff="$diff" -v vol="$voltage" -v el="$elapsed" \
-        'BEGIN { printf "%.1fW", (diff * (3600 / el) * vol) / 1000000000000 }')
-    else
-      current=$(cat /sys/class/power_supply/BAT1/current_now 2>/dev/null)
-      power=$(awk -v cur="$current" -v vol="$voltage" \
-        'BEGIN { if(cur>0) printf "%.1fW", (cur * vol) / 1000000000000 }')
+    # The EC reports "Charging" whenever a charger is attached, even one too
+    # weak to cover the load (a 5 V USB-C brick), and current_now is unsigned.
+    # So only the charge counter tells which way the current flows. It moves in
+    # 1 mAh steps, so the last direction it moved in stands until it moves again.
+    if [ -n "$prev_charge" ] && [ -n "$curr_charge" ]; then
+      if [ "$curr_charge" -gt "$prev_charge" ]; then
+        trend=up
+      elif [ "$curr_charge" -lt "$prev_charge" ]; then
+        trend=down
+      fi
     fi
     prev_charge="$curr_charge"
 
@@ -325,8 +362,12 @@ while true; do
       fans="${max_fan}rpm "
     fi
 
-    if [ "$status" = "Charging" ]; then
+    if [ "$status" = "Charging" ] && [ "$trend" = down ]; then
+      plus="!"   # plugged in, but still losing charge
+    elif [ "$status" = "Charging" ] && [ "$trend" = up ]; then
       plus="+"
+    elif [ "$status" = "Charging" ] && [ "$now" -ge "$fast_until" ]; then
+      plus="+"   # counter flat for the whole fast window: charger covers load
     else
       plus=""
     fi
@@ -336,6 +377,9 @@ while true; do
     right="$gpu$temp$fans$pwr_str$plus$cap"
 
     last_sample=$now
+    # Sample fast for a while after start or a charger change, so the counter
+    # gets to move and the marker settles within seconds.
+    [ "$now" -lt "$fast_until" ] && last_sample=$((now - SAMPLE + RETRY))
     discover_agents
     discover_bg_jobs
   fi
@@ -358,7 +402,7 @@ while true; do
   sep=","
 
   # A nudge that landed while rendering would otherwise wait out the sleep.
-  [ "$nudged" = 1 ] && continue
+  [ "$nudged" = 1 ] || [ "$replug" = 1 ] && continue
 
   printf -v t '%(%s)T' -1
   remain=$((last_sample + SAMPLE - t))
