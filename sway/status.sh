@@ -10,6 +10,9 @@
 #   left click  -- focus that session's terminal
 #   middle click -- dismiss that session's block
 #   right click  -- dismiss every finished session
+#
+# Left click on the clock / stats block opens the `mon` monitor, or closes
+# it if it is already open.
 
 STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-agents"
 INDICATOR_OFF="${XDG_CONFIG_HOME:-$HOME/.config}/agent-indicator.off"
@@ -42,8 +45,18 @@ read_clicks() {
     line=${line#"["}
     line=${line#","}
     [ -n "$line" ] || continue
-    IFS=$'\t' read -r name inst btn < <(
-      jq -r '[.name // "", .instance // "", (.button // 0)] | @tsv' <<<"$line" 2>/dev/null)
+    # \x1f, not a tab: bash merges adjacent tabs, so a block without an
+    # instance would shift the button into the instance field.
+    IFS=$'\x1f' read -r name inst btn < <(
+      jq -r '[.name // "", .instance // "", (.button // 0 | tostring)] | join("\u001f")' \
+        <<<"$line" 2>/dev/null)
+    if [ "$name" = sys ]; then
+      [ "$btn" = 1 ] && { swaymsg -q '[app_id="^local\.mon$"] kill' ||
+        setsid -f ghostty --class=local.mon --window-width=24 --window-height=6 \
+          -e "$HOME/.local/bin/mon" \
+          </dev/null >/dev/null 2>&1; }
+      continue
+    fi
     [ "$name" = claude ] || continue
     case $btn in
       1)
@@ -387,7 +400,7 @@ while true; do
   printf -v clock '%(%H:%M)T' -1
 
   if [ -f "$MINIMAL_FLAG" ]; then
-    printf '%s[{"full_text":"%s %s%s","separator":false,"separator_block_width":12}]\n' \
+    printf '%s[{"name":"sys","full_text":"%s %s%s","separator":false,"separator_block_width":12}]\n' \
       "$sep" "$clock" "$plus" "$cap"
   else
     if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then
@@ -396,7 +409,7 @@ while true; do
       lid=""
     fi
 
-    printf '%s[%s%s{"full_text":"%s %s","separator":false,"separator_block_width":12}]\n' \
+    printf '%s[%s%s{"name":"sys","full_text":"%s %s","separator":false,"separator_block_width":12}]\n' \
       "$sep" "$(agent_blocks)" "$lid" "$clock" "$right"
   fi
   sep=","

@@ -323,6 +323,8 @@ for_window [app_id="(?i)Spotify"] floating enable, resize set 800 600, move posi
 for_window [class="(?i)Spotify"] floating enable, resize set 800 600, move position center, move --no-auto-back-and-forth container to workspace " "
 for_window [app_id="(?i)telegram"] floating enable, resize set 400 750, move position center
 for_window [class="(?i)telegram"] floating enable, resize set 400 750, move position center
+# mon (left click on the bar's clock / stats block): small monitor under the bar, top right
+for_window [app_id="^local\.mon$"] floating enable, move position 1148 6
 
 # Window border colors
 # class                 border  bground text    indicator child_border

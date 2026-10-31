@@ -1,0 +1,399 @@
+#!/usr/bin/env python3
+"""mon: a minimal terminal monitor.
+
+CPU, CPU temperature, RAM, swap, network, chip watts and battery watts, each
+with a history graph. Graphs drop out when the window is too narrow and grow
+taller when it is tall. Reads only /proc and /sys, no dependencies.
+Quit with q or Esc.
+"""
+
+import argparse
+import collections
+import curses
+import glob
+import locale
+import os
+import time
+
+HISTORY = 2000          # samples kept; the graph shows as many as fit
+LABEL_W, VALUE_W, GAP = 5, 14, 2
+MIN_GRAPH = 10          # narrower than this and only the numbers are shown
+MAX_GRAPH = 60          # wider graphs just leave a big empty band on wide screens
+MAX_BLOCK = 4           # rows per metric: up to 3 of graph plus a blank line
+BLOCKS = " ▁▂▃▄▅▆▇█"
+
+CYAN, YELLOW, GREEN, MAGENTA, BLUE, RED = range(1, 7)
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except (OSError, TypeError):
+        return None
+
+
+def read_num(path):
+    try:
+        return int(read(path))
+    except (TypeError, ValueError):
+        return None
+
+
+def hwmons():
+    for d in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+        yield d, read(d + "/name")
+
+
+def find_temp():
+    for d, name in hwmons():
+        if name in ("k10temp", "zenpower", "coretemp"):
+            return d + "/temp1_input"
+    return None
+
+
+def find_chip_power():
+    """Package power that needs no root.
+
+    RAPL energy_uj is root-only on recent kernels, but on AMD APUs the amdgpu
+    driver of the integrated GPU reports the whole package (CPU + iGPU) as PPT.
+    """
+    fallback = None
+    for d, name in hwmons():
+        if name != "amdgpu":
+            continue
+        f = next((d + "/" + n for n in ("power1_input", "power1_average")
+                  if os.path.exists(d + "/" + n)), None)
+        if f is None:
+            continue
+        if read(d + "/device/boot_vga") == "1":
+            return f
+        fallback = fallback or f
+    return fallback
+
+
+def read_cpu():
+    with open("/proc/stat") as f:
+        v = [int(x) for x in f.readline().split()[1:9]]
+    return sum(v), v[3] + v[4]          # total, idle + iowait
+
+
+def read_meminfo():
+    info = {}
+    with open("/proc/meminfo") as f:
+        for line in f:
+            k, v = line.split(":", 1)
+            info[k] = int(v.split()[0]) * 1024
+    return info
+
+
+def read_net():
+    """Byte counters of physical interfaces that are up.
+
+    Requiring a backing device skips lo, docker/veth/bridges and VPN tunnels,
+    whose traffic is either local or already counted on the real interface.
+    """
+    out = {}
+    for d in glob.glob("/sys/class/net/*"):
+        if not os.path.exists(d + "/device") or read(d + "/operstate") != "up":
+            continue
+        rx = read_num(d + "/statistics/rx_bytes")
+        tx = read_num(d + "/statistics/tx_bytes")
+        if rx is not None and tx is not None:
+            out[os.path.basename(d)] = (rx, tx)
+    return out
+
+
+def gib(b):
+    return b / 1024 ** 3
+
+
+def fmt_rate(b):
+    for unit in ("B", "K", "M", "G"):
+        if b < 1024 or unit == "G":
+            return f"{b:.1f}{unit}" if unit != "B" and b < 10 else f"{b:.0f}{unit}"
+        b /= 1024
+
+
+class Metric:
+    def __init__(self, label, color, lo=0, hi=None, floor=1):
+        self.label, self.color = label, color
+        self.lo, self.hi, self.floor = lo, hi, floor
+        self.hist = collections.deque(maxlen=HISTORY)
+        self.value, self.detail, self.warn = "…", "", False
+
+    def push(self, v, value, detail="", warn=False):
+        self.hist.append(v)
+        self.value, self.detail, self.warn = value, detail, warn
+
+    def scale(self, data):
+        if self.hi is not None:
+            return self.lo, self.hi
+        peak = max((abs(v) for v in data if v is not None), default=0)
+        return 0, max(self.floor, peak)
+
+    def value_attr(self):
+        if self.warn:
+            return curses.color_pair(RED) | curses.A_BOLD
+        return curses.color_pair(self.color) | curses.A_BOLD
+
+    def column_attr(self, v):
+        return curses.color_pair(self.color)
+
+
+class BatteryMetric(Metric):
+    """Signed battery power: green while charging, red while draining."""
+
+    def _color(self, v):
+        return RED if v is not None and v < 0 else GREEN
+
+    def value_attr(self):
+        v = self.hist[-1] if self.hist else None
+        return curses.color_pair(RED if self.warn else self._color(v)) | curses.A_BOLD
+
+    def column_attr(self, v):
+        return curses.color_pair(self._color(v))
+
+
+class Monitor:
+    def __init__(self):
+        self.temp_path = find_temp()
+        self.chip_path = find_chip_power()
+        self.bat = next(iter(sorted(glob.glob("/sys/class/power_supply/BAT*"))), None)
+        self.bat_status, self.last_charge, self.trend = None, None, 0
+        self.prev_t = time.monotonic()
+        self.prev_cpu = read_cpu()
+        self.prev_net = read_net()
+
+        self.cpu = Metric("CPU", CYAN, hi=100)
+        self.temp = Metric("TEMP", YELLOW, lo=30, hi=100)
+        self.ram = Metric("RAM", GREEN, hi=100)
+        self.swap = Metric("SWAP", MAGENTA, hi=100)
+        self.net = Metric("NET", BLUE, floor=100 * 1024)
+        self.chip = Metric("CPU W", YELLOW, floor=15)
+        self.batw = BatteryMetric("BAT W", GREEN, floor=20)
+        self.metrics = [self.cpu, self.temp, self.ram, self.swap,
+                        self.net, self.chip, self.batw]
+
+    def sample(self):
+        now = time.monotonic()
+        dt, self.prev_t = now - self.prev_t, now
+
+        total, idle = read_cpu()
+        dtot, didle = total - self.prev_cpu[0], idle - self.prev_cpu[1]
+        self.prev_cpu = (total, idle)
+        pct = 100 * (1 - didle / dtot) if dtot > 0 else 0.0
+        self.cpu.push(pct, f"{pct:3.0f}%", warn=pct >= 90)
+
+        t = read_num(self.temp_path)
+        if t is None:
+            self.temp.push(None, "—")
+        else:
+            t /= 1000
+            self.temp.push(t, f"{t:3.0f}°C", warn=t >= 85)
+
+        mem = read_meminfo()
+        for metric, total_k, free_k in ((self.ram, "MemTotal", "MemAvailable"),
+                                        (self.swap, "SwapTotal", "SwapFree")):
+            size = mem.get(total_k, 0)
+            if not size:
+                metric.push(None, "nessuna")
+                continue
+            used = size - mem.get(free_k, 0)
+            p = 100 * used / size
+            metric.push(p, f"{gib(used):4.1f}G {p:3.0f}%",
+                        f"di {gib(size):.1f}G", warn=p >= 90)
+
+        net = read_net()
+        common = net.keys() & self.prev_net.keys()
+        rx = sum(net[i][0] - self.prev_net[i][0] for i in common) / dt
+        tx = sum(net[i][1] - self.prev_net[i][1] for i in common) / dt
+        self.prev_net = net
+        self.net.push(rx + tx, f"↓{fmt_rate(rx)} ↑{fmt_rate(tx)}",
+                      ", ".join(sorted(net)) or "offline")
+
+        uw = read_num(self.chip_path)
+        if uw is None:
+            self.chip.push(None, "—")
+        else:
+            self.chip.push(uw / 1e6, f"{uw / 1e6:4.1f} W", "CPU + iGPU")
+
+        self.sample_battery()
+
+    def sample_battery(self):
+        p = self.bat
+        status = read(f"{p}/status") if p else None
+        if status is None:
+            self.batw.push(None, "—")
+            return
+        cap = read_num(p + "/capacity")
+        uw = read_num(p + "/power_now")
+        if uw is None:
+            cur, volt = read_num(p + "/current_now"), read_num(p + "/voltage_now")
+            uw = cur * volt / 1e6 if cur is not None and volt is not None else 0
+        watts = abs(uw) / 1e6
+
+        # The EC says "Charging" whenever a charger is attached, even one too
+        # weak to cover the load, and current_now is unsigned. Only the trend
+        # of the charge counter tells which way the current really flows.
+        # It moves in coarse steps, so remember which way it last moved.
+        if status != self.bat_status:
+            self.bat_status, self.last_charge, self.trend = status, None, 0
+        charge = read_num(p + "/charge_now") or read_num(p + "/energy_now")
+        if charge is not None and self.last_charge is not None and charge != self.last_charge:
+            self.trend = 1 if charge > self.last_charge else -1
+        if charge is not None:
+            self.last_charge = charge
+
+        weak = self.trend < 0 and status != "Discharging"
+        if status == "Discharging" or weak:
+            sign, detail = -1, "caricatore debole" if weak else "a batteria"
+        else:
+            sign = 1
+            detail = {"Charging": "in carica", "Full": "carica"}.get(status, "collegato")
+
+        signed = sign * watts
+        text = "0.0 W" if watts < 0.05 else f"{signed:+.1f} W"
+        if cap is not None:
+            text += f" {cap}%"
+        if weak:
+            text += " !"
+        self.batw.push(signed, text, detail, warn=weak)
+
+
+def put(scr, y, x, text, attr=0):
+    rows, cols = scr.getmaxyx()
+    if y >= rows or x >= cols:
+        return
+    try:
+        scr.addstr(y, x, text[:cols - x], attr)
+    except curses.error:  # writing the bottom-right cell always "fails"
+        pass
+
+
+def draw_graph(scr, y, x, h, w, m):
+    data = list(m.hist)[-w:]
+    lo, hi = m.scale(data)
+    span = (hi - lo) or 1
+    x0 = x + w - len(data)
+    for j in range(x, x0):  # no history yet: a faint baseline marks the area
+        put(scr, y + h - 1, j, BLOCKS[1], curses.color_pair(m.color) | curses.A_DIM)
+    for j, v in enumerate(data):
+        if v is None:
+            continue
+        f = min(max((abs(v) - lo) / span, 0), 1)
+        eighths = max(1, round(f * h * 8))
+        attr = m.column_attr(v)
+        for r in range(h):
+            cell = min(max(eighths - r * 8, 0), 8)
+            if not cell:
+                break
+            put(scr, y + h - 1 - r, x0 + j, BLOCKS[cell], attr)
+
+
+def draw_boxes(scr, metrics, rows, cols):
+    """One rounded box per metric, titled with its label: for big windows."""
+    n = len(metrics)
+    gh = min(MAX_BLOCK - 1, rows // n - 2)
+    gw = min(MAX_GRAPH, cols - VALUE_W - GAP - 6)
+    box_w, box_h = VALUE_W + GAP + gw + 4, gh + 2   # 4 = two borders, two spaces
+    x0 = max(0, (cols - box_w) // 2)
+    y0 = max(0, (rows - n * box_h) // 2)
+
+    for i, m in enumerate(metrics):
+        y = y0 + i * box_h
+        edge = curses.color_pair(m.color) | curses.A_DIM
+        put(scr, y, x0, "╭" + "─" * (box_w - 2) + "╮", edge)
+        for r in range(1, box_h - 1):
+            put(scr, y + r, x0, "│", edge)
+            put(scr, y + r, x0 + box_w - 1, "│", edge)
+        put(scr, y + box_h - 1, x0, "╰" + "─" * (box_w - 2) + "╯", edge)
+        put(scr, y, x0 + 2, f" {m.label} ", curses.A_BOLD)
+
+        put(scr, y + 1, x0 + 2, m.value.lstrip(), m.value_attr())
+        if gh >= 2 and m.detail:
+            put(scr, y + 2, x0 + 2, m.detail, curses.A_DIM)
+        draw_graph(scr, y + 1, x0 + 2 + VALUE_W + GAP, gh, gw, m)
+
+
+def draw(scr, metrics):
+    scr.erase()
+    rows, cols = scr.getmaxyx()
+    n = len(metrics)
+    text_w = LABEL_W + GAP + VALUE_W
+    gw = min(MAX_GRAPH, cols - text_w - GAP - 2)
+    graphs = gw >= MIN_GRAPH
+    if graphs and rows // n >= 3:   # room for a border above and below each graph
+        draw_boxes(scr, metrics, rows, cols)
+        scr.refresh()
+        return
+    block = max(1, min(MAX_BLOCK, rows // n)) if graphs else 1
+    gh = block - 1 if block >= 3 else block   # leave a gap between tall graphs
+
+    # Fixed-size content box, centred, so it does not shift as values change.
+    width = text_w + (GAP + gw if graphs else 0)
+    height = n * block - (block - gh)         # no gap after the last metric
+    x0 = max(0, (cols - width) // 2)
+    y0 = max(0, (rows - height) // 2)
+    vx = x0 + LABEL_W + GAP
+    gx = vx + VALUE_W + GAP
+
+    for i, m in enumerate(metrics):
+        y = y0 + i * block
+        if y >= rows:
+            break
+        put(scr, y, x0, m.label, curses.A_BOLD)
+        put(scr, y, vx, m.value, m.value_attr())
+        if graphs:
+            if block >= 2 and m.detail:
+                put(scr, y + 1, vx, m.detail, curses.A_DIM)
+            draw_graph(scr, y, gx, gh, gw, m)
+    scr.refresh()
+
+
+def run(scr, interval):
+    curses.curs_set(0)
+    curses.use_default_colors()
+    for pair, color in ((CYAN, curses.COLOR_CYAN), (YELLOW, curses.COLOR_YELLOW),
+                        (GREEN, curses.COLOR_GREEN), (MAGENTA, curses.COLOR_MAGENTA),
+                        (BLUE, curses.COLOR_BLUE), (RED, curses.COLOR_RED)):
+        curses.init_pair(pair, color, -1)
+
+    mon = Monitor()
+    next_t = time.monotonic() + min(0.3, interval)  # first rates need a short gap
+    dirty = True
+    while True:
+        now = time.monotonic()
+        if now >= next_t:
+            mon.sample()
+            next_t += interval
+            if next_t < now:
+                next_t = now + interval
+            dirty = True
+        if dirty:
+            draw(scr, mon.metrics)
+            dirty = False
+        scr.timeout(max(1, int((next_t - time.monotonic()) * 1000)))
+        ch = scr.getch()
+        if ch in (ord("q"), ord("Q"), 27):
+            return
+        if ch == curses.KEY_RESIZE:
+            dirty = True
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Monitor minimale: CPU, temperatura, "
+                                 "RAM, swap, rete, watt CPU e batteria.")
+    ap.add_argument("-i", "--interval", type=float, default=5.0,
+                    help="secondi tra un aggiornamento e l'altro (default 5)")
+    args = ap.parse_args()
+    locale.setlocale(locale.LC_ALL, "")
+    os.environ.setdefault("ESCDELAY", "25")
+    try:
+        curses.wrapper(run, max(0.2, args.interval))
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()

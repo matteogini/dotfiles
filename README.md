@@ -70,6 +70,7 @@
 - `tofi-wifi.sh`, `tofi-bluetooth.sh`, `tofi-slash.sh`: Tofi-based GUIs to easily connect to networks, bluetooth devices, and set ASUS Slash lighting animations.
 - `pack_workspaces.py`: Custom script to organize Sway workspaces.
 - `smart_clipboard.sh`: Quick clipboard management via wl-clipboard and tofi.
+- `mon`: Minimal terminal monitor (CPU, temperature, RAM, swap, network, CPU and battery watts) with history graphs. Left click on the swaybar clock opens or closes it in a small floating window.
 
 ## 🚀 Installation
 *(Assuming Arch Linux / Pacman-based distribution)*
