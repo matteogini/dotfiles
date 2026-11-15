@@ -109,6 +109,9 @@ const profileMode = createPoll("Balanced", 5000, ["bash", "-c", "asusctl profile
     return match ? match[1].trim() : "Balanced"
 })
 
+// power-profiles-daemon profile: drives the CPU EPP (amd-pstate), independent of the asusctl profile
+const ppdMode = createPoll("balanced", 5000, ["bash", "-c", "powerprofilesctl get || echo balanced"], out => out.trim())
+
 const lidSuspendState = createPoll("Suspends", 3000, ["bash", "-c", "if [ -f /etc/systemd/logind.conf.d/ignore-lid-switch.conf ]; then echo 'Ignores'; else echo 'Suspends'; fi"], out => out.trim())
 
 // "off", or "on <n>" with the number of live Claude Code / Antigravity sessions
@@ -145,6 +148,9 @@ function SliderRow({ label, stateVar, formatCommand, displayFormat, debounceMs =
         drawValue={false}
         value={sliderVal}
         onValueChanged={(self) => {
+          // value-changed also fires when a poll moves the slider; writing that value back would re-apply it
+          const polled = stateVar?.peek ? stateVar.peek() : stateVar;
+          if (Math.abs(self.value - polled) < 1e-6) return;
           lastUserEdit = Date.now();
           setDisplayVal(displayFormat(self.value))
           const cmd = formatCommand(self.value)
@@ -331,6 +337,24 @@ function PowerProfiles() {
     )
 }
 
+function CpuEppProfiles() {
+    const setPpd = (p: string) => execAsync(["powerprofilesctl", "set", p]).then(() => refreshAllPolls()).catch(console.error)
+    return (
+        <box cssClasses={["row"]} orientation={Gtk.Orientation.HORIZONTAL} spacing={5}>
+            <label cssClasses={["label"]} label="CPU EPP" widthRequest={85} xalign={0} />
+            <button hexpand onClicked={() => setPpd("power-saver")}>
+                <label label={ppdMode.as(v => v === "power-saver" ? "✓ Saver" : "Saver")} />
+            </button>
+            <button hexpand onClicked={() => setPpd("balanced")}>
+                <label label={ppdMode.as(v => v === "balanced" ? "✓ Balanced" : "Balanced")} />
+            </button>
+            <button hexpand onClicked={() => setPpd("performance")}>
+                <label label={ppdMode.as(v => v === "performance" ? "✓ Perf" : "Perf")} />
+            </button>
+        </box>
+    )
+}
+
 const AURA_EFFECTS = ["static", "breathe", "pulse"];
 
 function AuraEffects() {
@@ -444,6 +468,7 @@ function ControlCenterContent() {
                 <box orientation={Gtk.Orientation.VERTICAL} spacing={10} visible={activeTab.as(v => v === 2)}>
                     <label label="PERFORMANCE" xalign={0} cssClasses={["label"]} />
                     <PowerProfiles />
+                    <CpuEppProfiles />
                     <SliderRow label="CPU Watt" stateVar={cpuWatt} displayFormat={(v) => `${Math.round(v * 45 + 5)}W`} formatCommand={(v) => `setwatt ${Math.round(v * 45 + 5)}`} debounceMs={500} lockMs={6000} />
                     <SliderRow label="Bat Limit" stateVar={batLimit} displayFormat={(v) => `${Math.max(20, Math.round(v * 100))}%`} formatCommand={(v) => `asusctl battery limit ${Math.max(20, Math.round(v * 100))}`} debounceMs={500} />
                     <GPUSelector />
