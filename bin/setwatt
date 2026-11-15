@@ -6,6 +6,10 @@ CONFIG_LEGACY="${XDG_CONFIG_HOME:-$HOME/.config}/setwatt.conf"
 CONFIG_FALLBACK="/home/matteo/.config/watt/setwatt.conf"
 CONFIG_GLOBAL="/etc/setwatt.conf"
 
+# While this file exists, "auto" (charger plug/unplug, resume, boot, login) re-applies
+# the wattage stored in it instead of the AC/Battery default, until "setwatt release".
+HOLD_FILE="/home/matteo/.config/watt/setwatt.hold"
+
 # Built-in fallback values
 DEFAULT_AC_WATT=25
 DEFAULT_BAT_WATT=5
@@ -73,7 +77,7 @@ EOF
 # Show help
 show_help() {
     cat << 'EOF'
-Usage: setwatt [<watts> | auto | config [ac|bat <W>] | -h]
+Usage: setwatt [<watts> | auto | config [ac|bat <W>] | hold [<W>] | release | -h]
 
 Commands:
   <number>               Apply specific wattage (e.g. setwatt 15)
@@ -81,6 +85,8 @@ Commands:
   config                 Show configured defaults
   config ac <watts>      Set default AC wattage
   config bat <watts>     Set default Battery wattage
+  hold [<watts>]         Stop plug/unplug from changing the limit (keeps current or <watts>)
+  release                End the hold and apply the default for the current power source
   -h, --help             Show this help
 EOF
     exit 0
@@ -110,6 +116,9 @@ if [ "$1" = "config" ] || [ "$1" = "--config" ] || [ "$1" = "-c" ]; then
         echo "   • AC Default:        ${AC_WATT}W"
         echo "   • Battery Default:   ${BAT_WATT}W"
         echo "   • Savings Threshold: ${THRESHOLD}W"
+        if [ -f "$HOLD_FILE" ]; then
+            echo "   • Hold:              ON at $(cat "$HOLD_FILE")W (setwatt release to end)"
+        fi
         echo ""
         echo "   Config file:"
         if [ -n "$HOME" ] && [ -f "$CONFIG_USER" ]; then
@@ -153,18 +162,51 @@ if [ "$1" = "config" ] || [ "$1" = "--config" ] || [ "$1" = "-c" ]; then
     fi
 fi
 
+if [ "$1" = "hold" ]; then
+    if [ -n "$2" ]; then
+        HELD=$2
+    else
+        HELD=$(/home/matteo/.local/bin/getwatt -r 2>/dev/null)
+    fi
+    if [ -n "$2" ] && ! [[ "$HELD" =~ ^[0-9]+$ ]]; then
+        echo "Error: Wattage must be a positive integer" >&2
+        exit 1
+    elif ! [[ "$HELD" =~ ^[0-9]+$ ]]; then
+        echo "Error: could not read the current wattage; use: setwatt hold <watts>" >&2
+        exit 1
+    fi
+    echo "$HELD" > "$HOLD_FILE" || exit 1
+    echo "🔒 Hold ON: plugging/unplugging the charger keeps ${HELD}W (end with: setwatt release)"
+    # With no wattage given the current limit is already in place
+    [ -z "$2" ] && exit 0
+    set -- "$HELD"
+elif [ "$1" = "release" ]; then
+    rm -f "$HOLD_FILE"
+    echo "🔓 Hold OFF"
+    set -- auto
+fi
+
 # Auto mode: detect AC vs Battery
 if [ "$1" = "auto" ] || [ -z "$1" ]; then
-    if [ -f /sys/class/power_supply/ACAD/online ] && [ "$(cat /sys/class/power_supply/ACAD/online)" = "1" ]; then
-        WATT=$AC_WATT
-        MODE="AC (Plugged In)"
+    if [ -f "$HOLD_FILE" ]; then
+        WATT=$(cat "$HOLD_FILE")
+        echo "🔒 Hold ON -> keeping ${WATT}W (end with: setwatt release)"
     else
-        WATT=$BAT_WATT
-        MODE="Battery"
+        if [ -f /sys/class/power_supply/ACAD/online ] && [ "$(cat /sys/class/power_supply/ACAD/online)" = "1" ]; then
+            WATT=$AC_WATT
+            MODE="AC (Plugged In)"
+        else
+            WATT=$BAT_WATT
+            MODE="Battery"
+        fi
+        echo "⚡ Auto-detected power source: $MODE -> Setting to ${WATT}W"
     fi
-    echo "⚡ Auto-detected power source: $MODE -> Setting to ${WATT}W"
 else
     WATT=$1
+    # A manual change during a hold (e.g. the AGS slider) becomes the held value
+    if [ -f "$HOLD_FILE" ] && [[ "$WATT" =~ ^[0-9]+$ ]]; then
+        echo "$WATT" > "$HOLD_FILE"
+    fi
 fi
 
 # Ensure WATT is numeric
